@@ -1,0 +1,23 @@
+.centrar {
+    text-align: center;
+    margin: center;
+}
+
+.imapeque img {
+    width: 180px;
+    height: 180px;
+}
+
+.logosminis {
+    width: 60px;
+    height: 30px;
+}
+
+.log-card {
+    width: '100%';
+    max-width: '410px'
+}
+
+.no-cuenta-a{
+    color: gray;
+}

@@ -1,0 +1,11 @@
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background-color: rgb(28, 32, 36);
+  color: rgba(255, 255, 255, 1);
+}
+
+main {
+  margin-left: 150px;
+  padding: 20px;
+}
