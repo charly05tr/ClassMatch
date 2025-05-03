@@ -10,24 +10,59 @@ aside {
     border-right: rgba(240,240,240, 0.5) outset 1px;
     
     a {
+        display: flex;
+        gap: 10px;
+        max-height: 50px;
         padding: 15px 20px;
         text-decoration: none;
         font-size: 16px;
         color: rgba(255, 255, 255, 1);
-        display: block;
-        transition: 0.3s;
+        align-items: center;
     }
+
 
     a:hover {
         background-color: rgb(18,18,18);
     }
-
-    h2 {
+    
+    h1 {
         text-align: center;
+        font-size: 30px;
+        padding: 15px 20px;
     }
     button {
         padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px
     }
+    
 }
-  
+
+@media (max-width: 768px) {
+    h1 {
+        display: none;
+    }
+    aside {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        width: 100px;
+        justify-items: center;
+    }
+    aside a {
+        text-align: center;
+        padding: 10px 0px;
+        font-size: 18px;
+    }
+    main {margin-left: 0;}
+    aside a p{
+        display: none;
+    }
+    aside button  {
+        display: none;
+    }
+    
+}
   

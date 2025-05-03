@@ -35,7 +35,7 @@ function LoginPage() {
     };
     return (
         <>
-            <div class="background">
+            <div className="background">
                 <ul>
                     <li></li>
                     <li></li>

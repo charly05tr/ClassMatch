@@ -46,7 +46,7 @@ function RegisterPage() {
             <form onSubmit={handleSubmit}>
                 <input id='reg-name' type='text' placeholder='Name' onChange={(e) => setName(e.target.value)} value={name} required></input>
                 <input id='reg-first-name' type='text' placeholder='First Name' onChange={(e) => setFirstName(e.target.value)} value={firstName} required></input>
-                <input id='reg-username' type='text' placeholder='Username' onChange={(e) => setUserName(e.target.value)} value={userName} required></input>
+                <input  type='text' placeholder='Username' onChange={(e) => setUserName(e.target.value)} value={userName} required></input>
                 <input id='reg-email' type='email' placeholder='Email' onChange={(e) => setEmail(e.target.value)} value={email} required></input>
                 <input id='reg-password' type='password' placeholder='Password' onChange={(e) => setPassword(e.target.value)} value={password} required></input>
                 <input id='reg-confirm' type='password' placeholder='Confirm Password' onChange={(e) => setConfirmation(e.target.value)} value={confirmation} required></input>
