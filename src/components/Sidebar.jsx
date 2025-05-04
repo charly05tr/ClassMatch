@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import './sidebar.css'; 
 
 
-function Sidebar({ isLoggedIn, onLogout }) {
+function Sidebar({ isLoggedIn, onLogout, userId}) {
   return (
     <aside> 
       <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">Class Match</h1>
@@ -32,7 +32,7 @@ function Sidebar({ isLoggedIn, onLogout }) {
             {" "}
             <p>Search</p>
           </Link>
-          <Link to="/profile">
+          <Link to={`/profile/${userId}`}>
             <i className="fa-regular fa-circle-user fa-solid fa-lg"></i>
             {" "}
             <p>Profile</p>

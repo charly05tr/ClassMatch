@@ -67,7 +67,7 @@ const SocialLinkTypeCombobox = ({ socialOptions, selectedValue, onValueChange, c
   const comboboxInputClassName = clsx(
     'w-10 rounded-lg shadow py-2 px-3 text-sm leading-tight', // Estilos base (copiados de tu select nativo)
     'focus:outline-none focus:ring-2 focus:ring-offset-2', // Estilos de foco mejorados
-    'bg-transparent text-gray-700 border-gray-300 focus:ring-blue-500 focus:border-blue-500', // Estilos modo claro (ajusta colores si es necesario)
+    'bg-transparent text-gray-700 border-gray-300 focus:ring-gray-500 focus:border-blue-500', // Estilos modo claro (ajusta colores si es necesario)
     'dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:ring-offset-gray-900 dark:focus:ring-blue-600 dark:focus:border-blue-600', // Estilos modo oscuro (ajusta colores)
     className // Clases pasadas desde el padre (como w-1/3)
   );

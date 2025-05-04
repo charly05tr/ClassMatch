@@ -84,11 +84,11 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                         <div className='mb-20 section undefined scroll-m-20 w-full mx-auto container lg:max-w-4xl md:max-w-2xl'>
                         <ol className='relative mt-16'>
                         {workExperience && Array.isArray(workExperience) && workExperience.map((entry, index) => (
-                            <li>    
-                                <div key={index} className="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]">
+                            <li key={index}>    
+                                <div className="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]">
                                     <div className='relative pb-12 md:col-span-2'>
                                         <div className='sticky top-0'>
-                                            <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">•</span>
+                                            <span className="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">•</span>
                                             <h3 className="text-xl font-bold text-yellow-400" >
                                                 {entry.position} 
                                             </h3>

@@ -4,11 +4,17 @@ import SocialLinksEditor from '/src/components/SocialLinks'
 import WorkExperienceEditor from '/src/components/WorkExperience'
 import EditableField from '/src/components/EditableField'
 import { BriefcaseIcon, UserIcon, CodeBracketIcon } from '@heroicons/react/20/solid';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faTrashCan, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import './profilePage.css'
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 function ProfilePage() {
+    const { id } = useParams();
+    const { state } = useLocation();
+    const navigate = useNavigate();
+    const index = state ? state.index : 0;
+
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -26,13 +32,27 @@ function ProfilePage() {
     const [originalProfileData, setOriginalProfileData] = useState(null)
     const [originalProjects, setOriginalProjects] = useState(null)
     const firstInputRef = useRef(null)
+    const [isOwner, setIsOwner] = useState(false)
 
-    // Efecto 1: Cargar datos del perfil al montar
+    useEffect(() => {
+        const checkLoginStatus = async () => {
+          
+            const res = await fetch("http://localhost:5000/debug", { credentials: "include" })
+            if (res.ok) {
+              const data = await res.json()
+              if (String(data.user_id) === String(id)) {
+                setIsOwner(true)
+              }
+            }
+        }
+        checkLoginStatus()
+    }, [id])
+
     useEffect(() => {
         const fetchProfileData = async () => {
-            setIsLoading(true) // Inicia carga
+            setIsLoading(true) 
             try {
-                const res = await fetch("http://localhost:5000/profile", {
+                const res = await fetch(`http://localhost:5000/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -95,20 +115,19 @@ function ProfilePage() {
         }
 
         fetchProfileData()
-    }, [])
+    }, [id])
 
     // Efecto 2: Cargar datos de proyectos cuando userId esté disponible o cambie
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch('http://localhost:5000/projects', {
+                const res = await fetch(`http://localhost:5000/projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
 
                 if (res.ok) {
                     const data = await res.json()
-                    console.log(Array.isArray(data))
                     setProjects(data || [])
                     setOriginalProjects(data || [])
                 } else {
@@ -126,9 +145,12 @@ function ProfilePage() {
             }
         }
         fetchProjects()
-    }, [])
-
+    }, [id])
+  
     const handleProjectChange = (index, field, value) => {
+        if (!isOwner) {
+            return
+        }
         const newProjects = [...projects]
         if (newProjects[index]) {
             newProjects[index][field] = value
@@ -138,6 +160,9 @@ function ProfilePage() {
 
     // Manejar la adición de un nuevo proyecto
     const handleAddProject = () => {
+        if (!isOwner) {
+            return
+        }
         const newProject = {
             tempId: Date.now(),
             name: "",
@@ -152,17 +177,22 @@ function ProfilePage() {
 
     // Manejar la eliminación de un proyecto por índice
     const handleRemoveProject = (indexToRemove) => {
+        if (!isOwner) {
+            return
+        }
         const projectsAfterRemoval = projects.filter((_, index) => index !== indexToRemove)
         setProjects(projectsAfterRemoval)
     }
 
     // Manejador para guardar TODOS los cambios (perfil y proyectos)
     const handleSaveChanges = async () => {
+        if (!isOwner) {
+            return
+        }
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
-        console.log(experience)
         try {
-            const profileRes = await fetch('http://localhost:5000/profile', {
+            const profileRes = await fetch(`http://localhost:5000/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -185,7 +215,7 @@ function ProfilePage() {
                 return
             }
             const profileSavedData = await profileRes.json()
-            console.log("Profile saved successfully", profileSavedData)
+            console.log("Profile saved successfully")
 
             setOriginalProfileData({ ...originalProfileData, ...profileSavedData })
             setName(profileSavedData.name)
@@ -199,7 +229,7 @@ function ProfilePage() {
              // Guardar la experiencia original después de guardar
 
             // Guardar Proyectos (enviando el array completo)
-            const projectsRes = await fetch('http://localhost:5000/projects', {
+            const projectsRes = await fetch(`http://localhost:5000/projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -248,6 +278,9 @@ function ProfilePage() {
 
     //handlers para work experience
     const handleAddWorkExperience = () => {
+        if (!isOwner) {
+            return
+        }
         setExperience([
             ...experience,
             {
@@ -260,12 +293,18 @@ function ProfilePage() {
     }
 
     const handleRemoveWorkExperience = (indexToRemove) => {
+        if (!isOwner) {
+            return
+        }
 
         setExperience(experience.filter((_, index) => index !== indexToRemove))
     }
 
 
     const handleWorkExperienceChange = (indexToUpdate, field, value) => {
+        if (!isOwner) {
+            return
+        }
 
         const updatedWorkExperience = [...experience]
 
@@ -278,6 +317,9 @@ function ProfilePage() {
 
     // Manejador para cancelar la edición
     const handleCancelEdit = () => {
+        if (!isOwner) {
+            return
+        }
         if (originalProfileData) {
             setName(originalProfileData.name)
             setFirstName(originalProfileData.firstName)
@@ -316,44 +358,60 @@ function ProfilePage() {
 
     if (originalProfileData === null || originalProjects === null) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+            <div className="flex items-center justify-center w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
                 <div className="text-center text-gray-600">Loading profile data...</div>
             </div>
         )
     }
-    console.log("Profile data loaded:", originalProfileData)
-    console.log("Projects data loaded:", originalProjects)
 
     return (
         <main className="profile-container">
             <div>
                 <div className="header">
                     <h2>Profile</h2>
-                    {!isEditing ? (
-                        <button
-                            className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                            onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
-                        >
-                            Edit Profile
-                        </button>
-                    ) : (
+                    {
+                        (isOwner)
+                       ?(!isEditing ? (
                         <div className="flex items-center gap-4">
                             <button
-                                type="button"
-                                className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                                onClick={handleCancelEdit}
+                                className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
                             >
-                                Cancel
+                                Edit Profile
                             </button>
-                            <button
-                                type="button"
-                                className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                                onClick={handleSaveChanges}
+                            {(state)?<button
+                                onClick={() => navigate('/', { state: { index } })}
+                                className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
                             >
-                                Save Changes
-                            </button>
+                                <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+                                {' '}Regresar
+                            </button>:''}
                         </div>
-                    )}
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                    onClick={handleCancelEdit}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                    onClick={handleSaveChanges}
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        )):(state)?(<button
+                            onClick={() => navigate('/', { state: { index } })}
+                            className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                        >
+                            <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+                            {' '}Regresar
+                        </button>):''
+                    }
                 </div>
                 <div className="profile-content">
                     {(isEditing) ?
@@ -531,7 +589,7 @@ function ProfilePage() {
                 )}
 
                 <h1 className='mt-5 text-3xl font-semibold flex item-center'><UserIcon className="h-8 w-8 inline-block mr-2 mt-1" />About me</h1>
-                <div className="mb-20 profile-content  font-mono text-pretty">
+                <div className="mb-20 profile-content  font-mono text-pretty text-white-900">
                     {(aboutMe === "" && !isEditing) ? (<p className="text-gray-400 text-medium mb-2 ml-5 mt-3">No about me added yet.</p>) : 
                     <EditableField
                         label="About Me"

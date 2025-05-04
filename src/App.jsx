@@ -14,6 +14,7 @@ import SearchPage from './pages/SearchPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null)
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -22,6 +23,7 @@ function App() {
         if (res.ok) {
           const data = await res.json();
           setIsLoggedIn(data.authenticated);
+          setUserId(data.user_id)
         } else {
            setIsLoggedIn(false);
         }
@@ -57,14 +59,14 @@ function App() {
   return (
     <Router>
       <div style={{ display: 'flex' }} > 
-        <Sidebar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+        <Sidebar isLoggedIn={isLoggedIn} onLogout={handleLogout} userId={userId}/>
 
         <main style={{ flexGrow: 1, padding: '20px' }} className="relative  w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"> 
           <Routes>
             <Route path="/" element={<HomePage />} />
             {isLoggedIn ? (
               <>
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/:id" element={<ProfilePage />} />
                 <Route path="/messages" element={<MessagesPage />} />
                 <Route path="/matches" element={<MatchesPage />} /> 
                 <Route path="/search" element={<SearchPage />} />   
