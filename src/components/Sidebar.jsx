@@ -7,7 +7,7 @@ import './sidebar.css';
 function Sidebar({ isLoggedIn, onLogout }) {
   return (
     <aside> 
-      <h1>Class Match</h1>
+      <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">Class Match</h1>
 
       <Link to="/">
         <i className="fas fa-house"></i> 
@@ -44,19 +44,19 @@ function Sidebar({ isLoggedIn, onLogout }) {
           <button onClick={onLogout} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1em', fontFamily: 'inherit', textAlign: 'left' }}>
              <i className="fas fa-right-from-bracket"></i> 
              {" "}
-             <p>Cerrar Sesión</p>
+             <p>Log Out</p>
           </button>
       ) : (
          <>
              <Link to="/login">
                 <i className="fas fa-sign-in-alt"></i> 
                 {" "}
-                Iniciar Sesión
+                Log In
              </Link>
              <Link to="/register">
                  <i className="fas fa-user-plus"></i> 
                  {" "}
-                 Registro
+                 Register
              </Link>
          </>
       )}
