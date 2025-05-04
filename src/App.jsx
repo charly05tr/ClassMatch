@@ -56,10 +56,10 @@ function App() {
 
   return (
     <Router>
-      <div style={{ display: 'flex' }}> 
+      <div style={{ display: 'flex' }} > 
         <Sidebar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
 
-        <main style={{ flexGrow: 1, padding: '20px' }}> 
+        <main style={{ flexGrow: 1, padding: '20px' }} className="relative  w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"> 
           <Routes>
             <Route path="/" element={<HomePage />} />
             {isLoggedIn ? (

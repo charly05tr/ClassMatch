@@ -1,248 +1,101 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faLinkedin, faGithub, faYoutube } from '@fortawesome/free-brands-svg-icons';
-import { faLink, faGlobe, faTimes, faPlus, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useEffect, useRef } from 'react'
 
-const EditableField = ({ label, value, onChange, type = 'text', isTextArea = false, stateKey, isEditing }) => {
-   
-    const readOnlyInputStyle = "border-none outline-none bg-transparent cursor-pointer text-gray-800 py-2 px-3";
-   
-    const editableInputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-text";
-    
-    const cursorOnlyStyle = "border-none outline-none bg-transparent focus:ring-0 focus:outline-none";
-
-    const fieldContainerStyle = "mb-4";
-   
-    const textViewHoverStyle = "hover:bg-black-100 rounded";
-
-    return (
-        <div className={`${fieldContainerStyle} ${!isEditing ? textViewHoverStyle : ''}`}>
-            <label className="block text-white-700 text-sm font-bold mb-2" htmlFor={stateKey}>{label}</label>
-            {isTextArea ? (
-                <textarea
-                    value={value}
-                    onChange={isEditing ? onChange : undefined}
-                    readOnly={!isEditing} 
-                    className={`w-full  ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`} 
-                    rows="4"
-                    placeholder={`Enter ${label.toLowerCase()}`}
-                    id={stateKey}
-                    style={{ color: 'white', border:'none',minHeight: '1.5em', resize: isEditing ? 'vertical' : 'none', overflow: 'hidden' }}
-                ></textarea>
-            ) : (
-                <input
-                    value={value}
-                    onChange={isEditing ? onChange : undefined} 
-                    readOnly={!isEditing} 
-                    className={`w-full ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`} 
-                    placeholder={`Enter ${label.toLowerCase()}`}
-                    id={stateKey}
-                    style={{ minHeight: '1.5em', color:'white'}}
-                />
-            )}
-        </div>
-    );
-};
-
-const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
-    const socialOptions = [
-        { value: 'instagram', label: 'Instagram', icon: faInstagram },
-        { value: 'linkedin', label: 'LinkedIn', icon: faLinkedin },
-        { value: 'github', label: 'GitHub', icon: faGithub },
-        { value: 'youtube', label: 'YouTube', icon: faYoutube },
-        { value: 'website', label: 'Website', icon: faGlobe }, 
-    ];
-
-    const handleLinkTypeChange = (index, type) => {
-        const newLinks = [...socialLinks];
-        newLinks[index].type = type;
-        onChange(newLinks);
-    };
-
-    const handleLinkUrlChange = (index, url) => {
-        const newLinks = [...socialLinks];
-        newLinks[index].url = url;
-        onChange(newLinks);
-    };
-
-    const handleAddLink = () => {
-        onChange([...socialLinks, { type: '', url: '' }]);
-    };
-
-    const handleRemoveLink = (indexToRemove) => {
-        onChange(socialLinks.filter((_, index) => index !== indexToRemove));
-    };
-
-    const getSocialIcon = (type) => {
-        const option = socialOptions.find(opt => opt.value === type);
-        return option ? option.icon : faLink; // Icono genérico si no se encuentra
-    };
-
-    return (
-        <div className="mb-6">
-            <label className="block text-white-700 text-sm font-bold mb-2">{isEditing ? ('Social links'):('')}</label>
-            {isEditing ? (
-                <div className="border rounded p-3">
-                    {socialLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 mb-3 last:mb-0">
-                            {/* Selector de Tipo */}
-                            <select
-                                value={link.type}
-                                onChange={(e) => handleLinkTypeChange(index, e.target.value)}
-                                className="shadow border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm w-1/3" // Ajustar ancho
-                            >
-                                <option value="">-- Select Type --</option>
-                                {socialOptions.map(option => (
-                                    <option key={option.value} value={option.value}>{option.label}</option>
-                                ))}
-                            </select>
-                            {/* Input de URL */}
-                            <input
-                                type="text"
-                                value={link.url}
-                                onChange={(e) => handleLinkUrlChange(index, e.target.value)}
-                                placeholder="URL or Username"
-                                className="shadow appearance-none border rounded w-2/3 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-sm" // Ajustar ancho
-                            />
-                            {/* Botón de Eliminar */}
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveLink(index)}
-                                className="text-red-600 hover:text-red-800 text-lg p-1"
-                                title="Remove Link"
-                            >
-                                <FontAwesomeIcon icon={faTrashCan} />
-                            </button>
-                        </div>
-                    ))}
-                    {/* Botón Agregar Más */}
-                    <button
-                        type="button"
-                        onClick={handleAddLink}
-                        className="mt-2 bg-blue-500 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center gap-2"
-                    >
-                         <FontAwesomeIcon icon={faPlus} /> Add Link
-                    </button>
-                </div>
-            ) : (
-                // Modo Visualización
-                <div className="flex flex-wrap gap-4">
-                    {socialLinks.length === 0 ? (
-                        <p className="text-gray-600 text-sm">No social links added.</p>
-                    ) : (
-                        socialLinks.map((link, index) => link.type && link.url && ( // Solo mostrar si tiene tipo y URL
-                            <a
-                                key={index}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-white-600 hover:underline flex items-center gap-1 text-sm"
-                                title={socialOptions.find(opt => opt.value === link.type)?.label || link.type}
-                            >
-                                <FontAwesomeIcon icon={getSocialIcon(link.type)} />
-                                {socialOptions.find(opt => opt.value === link.type)?.label || link.type} 
-                            </a>
-                        ))
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
+import SocialLinksEditor from '/src/components/SocialLinks'
+import WorkExperienceEditor from '/src/components/WorkExperience'
+import EditableField from '/src/components/EditableField'
+import { BriefcaseIcon, UserIcon, CodeBracketIcon } from '@heroicons/react/20/solid';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import './profilePage.css'
 
 function ProfilePage() {
-    const [isEditing, setIsEditing] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); 
+    const [isEditing, setIsEditing] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
 
-    const [userId, setUserId] = useState(null); 
-    const [name, setName] = useState("");
-    const [firstName, setFirstName] = useState("");
-    const [profileDescription, setProfileDescription] = useState("");
-    const [aboutMe, setAboutMe] = useState("");
-    const [profilePicture, setProfilePicture] = useState("");
-    const [experience, setExperience] = useState("");
-    const [profesion, setprofesion] = useState("");
-    const [socialLinks, setSocialLinks] = useState("[]");
+    const [userId, setUserId] = useState(null)
+    const [name, setName] = useState("")
+    const [firstName, setFirstName] = useState("")
+    const [profileDescription, setProfileDescription] = useState("")
+    const [aboutMe, setAboutMe] = useState("")
+    const [profilePicture, setProfilePicture] = useState("")
+    const [experience, setExperience] = useState("[]")
+    const [profesion, setprofesion] = useState("")
+    const [socialLinks, setSocialLinks] = useState("[]")
 
-    
-    const [projects, setProjects] = useState([]);
-
-    const [originalProfileData, setOriginalProfileData] = useState(null);
-    const [originalProjects, setOriginalProjects] = useState(null); 
-    const firstInputRef = useRef(null);
-
+    const [projects, setProjects] = useState([])
+    const [originalProfileData, setOriginalProfileData] = useState(null)
+    const [originalProjects, setOriginalProjects] = useState(null)
+    const firstInputRef = useRef(null)
 
     // Efecto 1: Cargar datos del perfil al montar
     useEffect(() => {
         const fetchProfileData = async () => {
-            setIsLoading(true); // Inicia carga
+            setIsLoading(true) // Inicia carga
             try {
                 const res = await fetch("http://localhost:5000/profile", {
                     method: "GET",
                     credentials: "include"
-                });
+                })
 
                 if (res.ok) {
-                    const data = await res.json();
+                    const data = await res.json()
+                    const loadedWorkExperience = Array.isArray(data.experience) ? data.experience : [];
                     const loadedData = {
-                        userId: data.id || null, 
+                        userId: data.id || null,
                         name: data.name || "",
                         firstName: data.first_name || "",
                         profileDescription: data.profile_description || "",
                         aboutMe: data.about_me || "",
                         profilePicture: data.profile_picture || "",
-                        experience: data.experience || "",
                         profesion: data.profesion || "",
                         socialLinks: data.social_links || "[]",
-                    };
-                    setUserId(loadedData.userId);
-                    setName(loadedData.name);
-                    setFirstName(loadedData.firstName);
-                    setProfileDescription(loadedData.profileDescription);
-                    setAboutMe(loadedData.aboutMe);
-                    setProfilePicture(loadedData.profilePicture);
-                    setExperience(loadedData.experience);
-                    setprofesion(loadedData.profesion);
-                    setSocialLinks(loadedData.socialLinks);
-                    setOriginalProfileData(loadedData);
+                        experience: loadedWorkExperience,
+                    }
+                    setUserId(loadedData.userId)
+                    setExperience(loadedWorkExperience)
+                    setName(loadedData.name)
+                    setFirstName(loadedData.firstName)
+                    setProfileDescription(loadedData.profileDescription)
+                    setAboutMe(loadedData.aboutMe)
+                    setProfilePicture(loadedData.profilePicture)
+                    setprofesion(loadedData.profesion)
+                    setSocialLinks(loadedData.socialLinks)
+                    setOriginalProfileData(loadedData)
                 } else {
-                    console.error("Error fetching profile data or profile not found", res.status);
-                    
-                    const emptyData = { userId: null, name: "", firstName: "", profileDescription: "", aboutMe: "", profilePicture: "", experience: "", profesion: "", socialLinks: "" };
-                    setUserId(emptyData.userId);
-                    setName(emptyData.name);
-                    setFirstName(emptyData.firstName);
-                    setProfileDescription(emptyData.profileDescription);
-                    setAboutMe(emptyData.aboutMe);
-                    setProfilePicture(emptyData.profilePicture);
-                    setExperience(emptyData.experience);
-                    setprofesion(emptyData.profesion);
-                    setSocialLinks(emptyData.socialLinks);
-                    setOriginalProfileData(emptyData);
+                    console.error("Error fetching profile data or profile not found", res.status)
+
+                    const emptyData = { userId: null, name: "", firstName: "", profileDescription: "", aboutMe: "", profilePicture: "", experience: "", profesion: "", socialLinks: "" }
+                    setUserId(emptyData.userId)
+                    setName(emptyData.name)
+                    setFirstName(emptyData.firstName)
+                    setProfileDescription(emptyData.profileDescription)
+                    setAboutMe(emptyData.aboutMe)
+                    setProfilePicture(emptyData.profilePicture)
+                    setExperience(emptyData.experience)
+                    setprofesion(emptyData.profesion)
+                    setSocialLinks(emptyData.socialLinks)
+                    setOriginalProfileData(emptyData)
                 }
             } catch (err) {
-                console.error("Network error fetching profile", err);
-
-                const emptyData = { userId: null, name: "", firstName: "", profileDescription: "", aboutMe: "", profilePicture: "", experience: "", profesion: "", socialLinks: "" };
-                 setUserId(emptyData.userId);
-                 setName(emptyData.name);
-                 setFirstName(emptyData.firstName);
-                 setProfileDescription(emptyData.profileDescription);
-                 setAboutMe(emptyData.aboutMe);
-                 setProfilePicture(emptyData.profilePicture);
-                 setExperience(emptyData.experience);
-                 setprofesion(emptyData.profesion);
-                 setSocialLinks(emptyData.socialLinks);
-                setOriginalProfileData(emptyData);
+                console.error("Network error fetching profile", err)
+                const emptyData = { userId: null, name: "", firstName: "", profileDescription: "", aboutMe: "", profilePicture: "", experience: "", profesion: "", socialLinks: "" }
+                setUserId(emptyData.userId)
+                setName(emptyData.name)
+                setFirstName(emptyData.firstName)
+                setProfileDescription(emptyData.profileDescription)
+                setAboutMe(emptyData.aboutMe)
+                setProfilePicture(emptyData.profilePicture)
+                setExperience(emptyData.experience)
+                setprofesion(emptyData.profesion)
+                setSocialLinks(emptyData.socialLinks)
+                setOriginalProfileData(emptyData)
             } finally {
-                setIsLoading(false);
+                setIsLoading(false)
             }
-        };
+        }
 
-        fetchProfileData();
-    }, []); 
-
+        fetchProfileData()
+    }, [])
 
     // Efecto 2: Cargar datos de proyectos cuando userId esté disponible o cambie
     useEffect(() => {
@@ -251,37 +104,37 @@ function ProfilePage() {
                 const res = await fetch('http://localhost:5000/projects', {
                     method: 'GET',
                     credentials: 'include'
-                });
+                })
 
                 if (res.ok) {
-                    const data = await res.json();  
-                    console.log(Array.isArray(data));
-                    setProjects(data || []); 
-                    setOriginalProjects(data || []); 
+                    const data = await res.json()
+                    console.log(Array.isArray(data))
+                    setProjects(data || [])
+                    setOriginalProjects(data || [])
                 } else {
-                    console.error("Error fetching projects data or projects not found", res.status);
-                    setProjects([]);
-                    setOriginalProjects([]);
+                    console.error("Error fetching projects data or projects not found", res.status)
+                    setProjects([])
+                    setOriginalProjects([])
                 }
             } catch (e) {
-                console.error("Network error fetching projects", e);
-                setProjects([]);
-                setOriginalProjects([]);
-            } 
-            finally {
-                setIsLoading(false); 
+                console.error("Network error fetching projects", e)
+                setProjects([])
+                setOriginalProjects([])
             }
-        };
-        fetchProjects(); 
-    }, []); 
+            finally {
+                setIsLoading(false)
+            }
+        }
+        fetchProjects()
+    }, [])
 
     const handleProjectChange = (index, field, value) => {
-        const newProjects = [...projects]; 
+        const newProjects = [...projects]
         if (newProjects[index]) {
-             newProjects[index][field] = value; 
-             setProjects(newProjects); 
+            newProjects[index][field] = value
+            setProjects(newProjects)
         }
-    };
+    }
 
     // Manejar la adición de un nuevo proyecto
     const handleAddProject = () => {
@@ -293,311 +146,341 @@ function ProfilePage() {
             url_code: "",
             url_preview: "",
             tecnologies: "",
-        };
-        setProjects([...projects, newProject]); 
-    };
+        }
+        setProjects([...projects, newProject])
+    }
 
     // Manejar la eliminación de un proyecto por índice
     const handleRemoveProject = (indexToRemove) => {
-        const projectsAfterRemoval = projects.filter((_, index) => index !== indexToRemove);
-        setProjects(projectsAfterRemoval);
-    };
-
+        const projectsAfterRemoval = projects.filter((_, index) => index !== indexToRemove)
+        setProjects(projectsAfterRemoval)
+    }
 
     // Manejador para guardar TODOS los cambios (perfil y proyectos)
     const handleSaveChanges = async () => {
-        const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null;
-        const profileMethod = isUpdatingProfile ? "PUT" : "POST";
-
+        const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
+        const profileMethod = isUpdatingProfile ? "PUT" : "POST"
+        console.log(experience)
         try {
-             const profileRes = await fetch('http://localhost:5000/profile', {
-                 method: profileMethod,
-                 headers: { "Content-Type": "application/json" },
-                 credentials: "include",
-                 body: JSON.stringify({
-                     'name': name,
-                     'first_name': firstName,
-                     'profile_description': profileDescription,
-                     'about_me': aboutMe,
-                     'profile_picture': profilePicture,
-                     'experience': experience,
-                     'profesion': profesion,
-                     'social_links': socialLinks,
-                 })
-             });
+            const profileRes = await fetch('http://localhost:5000/profile', {
+                method: profileMethod,
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    'name': name,
+                    'first_name': firstName,
+                    'profile_description': profileDescription,
+                    'about_me': aboutMe,
+                    'profile_picture': profilePicture,
+                    'experience': experience,
+                    'profesion': profesion,
+                    'social_links': socialLinks,
+                })
+            })
 
-             if (!profileRes.ok) {
-                 const errorData = await profileRes.json();
-                 console.error("Error saving profile:", errorData.error || "Unknown error");
-                 alert("Error saving profile: " + (errorData.error || "Unknown error")); 
-                
-                 return; 
-             }
-             const profileSavedData = await profileRes.json();
-             console.log("Profile saved successfully", profileSavedData);
-            
-             setOriginalProfileData({...originalProfileData, ...profileSavedData}); 
+            if (!profileRes.ok) {
+                const errorData = await profileRes.json()
+                console.error("Error saving profile:", errorData.error || "Unknown error")
+                alert("Error saving profile: " + (errorData.error || "Unknown error"))
+                return
+            }
+            const profileSavedData = await profileRes.json()
+            console.log("Profile saved successfully", profileSavedData)
 
+            setOriginalProfileData({ ...originalProfileData, ...profileSavedData })
+            setName(profileSavedData.name)
+            setFirstName(profileSavedData.first_name)
+            setProfileDescription(profileSavedData.profile_description)
+            setAboutMe(profileSavedData.about_me)
+            setProfilePicture(profileSavedData.profile_picture)
+            setprofesion(profileSavedData.profesion)
+            setSocialLinks(profileSavedData.social_links)
+            setExperience(profileSavedData.experience)
+             // Guardar la experiencia original después de guardar
 
-             // Guardar Proyectos (enviando el array completo)
-             const projectsRes = await fetch('http://localhost:5000/projects', {
-                 method: 'PUT', 
-                 headers: { "Content-Type": "application/json" },
-                 credentials: "include",
-                 body: JSON.stringify({ userId: userId, projects: projects })
-             });
+            // Guardar Proyectos (enviando el array completo)
+            const projectsRes = await fetch('http://localhost:5000/projects', {
+                method: 'PUT',
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ userId: userId, projects: projects })
+            })
 
-             if(!projectsRes.ok) {
-                 const errorData = await projectsRes.json();
-                 console.error("Error saving projects:", errorData.error || "Unknown error");
-                 console.log("Error saving projects: " + (errorData.error || "Unknown error")); 
-                 
-                 return; 
-             }
-             const projectsSavedData = await projectsRes.json();
-             console.log("Projects saved successfully", projectsSavedData);
-             let updatedProjectList = []; 
+            if (!projectsRes.ok) {
+                const errorData = await projectsRes.json()
+                console.error("Error saving projects:", errorData.error || "Unknown error")
+                console.log("Error saving projects: " + (errorData.error || "Unknown error"))
 
-             
-             if (projectsSavedData && typeof projectsSavedData === 'object') {
-                 const owned = Array.isArray(projectsSavedData.owned_projects) ? projectsSavedData.owned_projects : [];
-                 const collaborated = Array.isArray(projectsSavedData.collaborated_projects) ? projectsSavedData.collaborated_projects : [];
-                 updatedProjectList = owned.concat(collaborated);   
-             } else if (Array.isArray(projectsSavedData)) {
-                 updatedProjectList = projectsSavedData;
-                 console.warn("Backend /projects PUT returned an array directly, expected user object.");
+                return
+            }
+            const projectsSavedData = await projectsRes.json()
+            console.log("Projects saved successfully", projectsSavedData)
+            let updatedProjectList = []
 
-             } else {
-                 
-                 console.error("Backend /projects PUT returned unexpected data type:", projectsSavedData);
-                 
-                 updatedProjectList = projects; 
-                 console.log("Projects saved, but received unexpected data format from server.");
-             }
-             const processedUpdatedProjects = updatedProjectList.map(project => ({
-                ...project, 
-            }));
+            if (projectsSavedData && typeof projectsSavedData === 'object') {
+                const owned = Array.isArray(projectsSavedData.owned_projects) ? projectsSavedData.owned_projects : []
+                const collaborated = Array.isArray(projectsSavedData.collaborated_projects) ? projectsSavedData.collaborated_projects : []
+                updatedProjectList = owned.concat(collaborated)
+            } else if (Array.isArray(projectsSavedData)) {
+                updatedProjectList = projectsSavedData
+                console.warn("Backend /projects PUT returned an array directly, expected user object.")
 
-             setProjects(processedUpdatedProjects); 
-             setOriginalProjects(processedUpdatedProjects); 
+            } else {
 
-           
-            setIsEditing(false); 
-            console.log("Profile and projects saved successfully!"); 
-        } catch(err) {
-            console.error("Network error during save:", err);
+                console.error("Backend /projects PUT returned unexpected data type:", projectsSavedData)
+
+                updatedProjectList = projects
+                console.log("Projects saved, but received unexpected data format from server.")
+            }
+            const processedUpdatedProjects = updatedProjectList.map(project => ({
+                ...project,
+            }))
+
+            setProjects(processedUpdatedProjects)
+            setOriginalProjects(processedUpdatedProjects)
+
+            setIsEditing(false)
+            console.log("Profile and projects saved successfully!")
+        } catch (err) {
+            console.error("Network error during save:", err)
         }
-    };
+    }
 
+    //handlers para work experience
+    const handleAddWorkExperience = () => {
+        setExperience([
+            ...experience,
+            {
+                position: '',
+                company: '',
+                description: '',
+                dates: '',
+            }
+        ])
+    }
+
+    const handleRemoveWorkExperience = (indexToRemove) => {
+
+        setExperience(experience.filter((_, index) => index !== indexToRemove))
+    }
+
+
+    const handleWorkExperienceChange = (indexToUpdate, field, value) => {
+
+        const updatedWorkExperience = [...experience]
+
+        updatedWorkExperience[indexToUpdate] = {
+            ...updatedWorkExperience[indexToUpdate],
+            [field]: value,
+        }
+        setExperience(updatedWorkExperience);
+    }
 
     // Manejador para cancelar la edición
     const handleCancelEdit = () => {
         if (originalProfileData) {
-            setName(originalProfileData.name);
-            setFirstName(originalProfileData.firstName);
-            setProfileDescription(originalProfileData.profileDescription);
-            setAboutMe(originalProfileData.aboutMe);
-            setProfilePicture(originalProfileData.profilePicture);
-            setExperience(originalProfileData.experience);
-            setprofesion(originalProfileData.profesion);
-            setSocialLinks(originalProfileData.socialLinks);
+            setName(originalProfileData.name)
+            setFirstName(originalProfileData.firstName)
+            setProfileDescription(originalProfileData.profileDescription)
+            setAboutMe(originalProfileData.aboutMe)
+            setProfilePicture(originalProfileData.profilePicture)
+            setprofesion(originalProfileData.profesion)
+            setSocialLinks(originalProfileData.socialLinks)
+
+            const originalWorkExperienceData = Array.isArray(originalProfileData.experience) ? originalProfileData.experience : [];
+            setExperience(originalWorkExperienceData);
         } else {
-             
-             setName(""); setFirstName(""); setProfileDescription(""); setAboutMe("");
-             setProfilePicture(""); setExperience(""); setprofesion(""); setSocialLinks("");
+            setName(""); setFirstName(""); setProfileDescription(""); setAboutMe("")
+            setProfilePicture(""); setExperience(""); setprofesion(""); setSocialLinks("")
         }
 
-        
         if (originalProjects) {
-            setProjects(originalProjects);   
+            setProjects(originalProjects)
         } else {
-            setProjects([]); 
+            setProjects([])
         }
 
-        setIsEditing(false); 
-    };
+        setIsEditing(false)
+    }
 
     useEffect(() => {
         if (isEditing && firstInputRef.current) {
-             setTimeout(() => {
-                firstInputRef.current.focus();
+            setTimeout(() => {
+                firstInputRef.current.focus()
                 if (firstInputRef.current.value.length) {
-                     firstInputRef.current.setSelectionRange(firstInputRef.current.value.length, firstInputRef.current.value.length);
-                 }
-             }, 0);
+                    firstInputRef.current.setSelectionRange(firstInputRef.current.value.length, firstInputRef.current.value.length)
+                }
+            }, 0)
         }
-    }, [isEditing]);
+    }, [isEditing])
 
-     if (originalProfileData === null || originalProjects === null) {
+    if (originalProfileData === null || originalProjects === null) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                 <div className="text-center text-gray-600">Loading profile data...</div>
+                <div className="text-center text-gray-600">Loading profile data...</div>
             </div>
-        );
+        )
     }
-    console.log("Profile data loaded:", originalProfileData);
-    console.log("Projects data loaded:", originalProjects);
+    console.log("Profile data loaded:", originalProfileData)
+    console.log("Projects data loaded:", originalProjects)
 
     return (
         <main className="profile-container">
             <div>
-
                 <div className="header">
-                    <h2 className="text-2xl font-bold">Profile</h2>
-                   
-                    {!isEditing ? ( 
-                         <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            onClick={() => setIsEditing(true)}
+                    <h2>Profile</h2>
+                    {!isEditing ? (
+                        <button
+                            className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                            onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
                         >
                             Edit Profile
                         </button>
-                    ) : ( 
-                         <div className="flex items-center gap-4">
-                             <button
-                                 type="button"
-                                 className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                                 onClick={handleCancelEdit}
-                             >
-                                 Cancel
-                             </button>
-                              <button
-                                 type="button"
-                                 className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                                 onClick={handleSaveChanges}
-                             >
-                                 Save Changes
-                             </button>
-                         </div>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="button"
+                                className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                onClick={handleCancelEdit}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                onClick={handleSaveChanges}
+                            >
+                                Save Changes
+                            </button>
+                        </div>
                     )}
                 </div>
-                {(isEditing) ? 
-                  (<EditableField
-                     label="Profile Picture URL"
-                     value={profilePicture}
-                     onChange={(e) => setProfilePicture(e.target.value)}   
-                     isEditing={isEditing}
-                     stateKey="profilePicture"
-                 />)
-                 :(<div>
-                        {
-                            (profilePicture === "") ?
-                            <img src="https://via.placeholder.com/150" alt="Profile" className="w-32 h-32 rounded-full object-cover mb-4" />
-                            :<img src={profilePicture} alt="Profile" className="w-32 h-32 rounded-full object-cover mb-4" />
-                        }
-                 </div>)}
-                 <h1>{name} {firstName}</h1>
-                 {(isEditing) ?
-                 (<EditableField
-                     label="Description"
-                     value={profileDescription}
-                     onChange={(e) => setProfileDescription(e.target.value)}
-                     isTextArea={true}
-                     isEditing={isEditing}
-                     stateKey="profileDescription"
-                 />):(<div className="text-white-500">{profileDescription}</div>)}
-
+                <div className="profile-content">
+                    {(isEditing) ?
+                        (<div className='flex flex-row items-center gap-2'>
+                            <div>
+                            {
+                                (profilePicture === "") ?
+                                    <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
+                                    : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
+                            }
+                            </div>
+                            <div className='mt-4'>
+                            <EditableField
+                                label="Profile Picture URL"
+                                displayLabel={false}
+                                value={profilePicture}
+                                onChange={(e) => setProfilePicture(e.target.value)}
+                                isEditing={isEditing}
+                                stateKey="profilePicture"
+                            />
+                            </div>
+                        </div>)
+                        : (<div>
+                            {
+                                (profilePicture === "") ?
+                                    <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
+                                    : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
+                            }
+                        </div>)}
+                    <h1 className='text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white'>{name} {firstName}</h1>
+                    {(isEditing) ?
+                        (<EditableField
+                            label="Description"
+                            value={profileDescription}
+                            onChange={(e) => setProfileDescription(e.target.value)}
+                            isTextArea={true}
+                            isEditing={isEditing}
+                            stateKey="profileDescription"
+                        />) : (<div className="mt-2 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300">{profileDescription}</div>)}
+                </div>
                     <SocialLinksEditor
-                     socialLinks={socialLinks}
-                     onChange={setSocialLinks} 
-                     isEditing={isEditing}
-                  />
-                    {(isEditing) ?(<EditableField
-                     label="Occupation"
-                     value={profesion}
-                     onChange={(e) => setprofesion(e.target.value)}
-                     isEditing={isEditing}
-                     stateKey="profesion"
-                 />):''}
-                   
-                  <EditableField
-                     label="Work experience"
-                     value={experience}
-                     onChange={(e) => setExperience(e.target.value)}
-                     isTextArea={true}
-                     isEditing={isEditing}
-                     stateKey="experience"
-                 />
-                 <EditableField
-                     label="About Me"
-                     value={aboutMe}
-                     onChange={(e) => setAboutMe(e.target.value)}
-                     isTextArea={true}
-                     isEditing={isEditing}
-                     stateKey="aboutMe"
-                 />
-
-
-                <h3 className="text-xl font-semibold mt-6 mb-4">Projects</h3>
+                        socialLinks={socialLinks}
+                        onChange={setSocialLinks}
+                        isEditing={isEditing}
+                    />
+                <div>
+                    <h1 className='text-3xl mb-4 font-semibold item-center'><BriefcaseIcon className="h-8 w-8 inline-block mr-2 mb-1" />Work experience</h1>
+                    <WorkExperienceEditor
+                        workExperience={experience}
+                        onAdd={handleAddWorkExperience}
+                        onRemove={handleRemoveWorkExperience}
+                        onChange={handleWorkExperienceChange}
+                        isEditing={isEditing}
+                    />
+                </div>
+                <h3 className="text-3xl font-semibold flex item-center"><CodeBracketIcon className="h-8 w-8 inline-block mr-2 mt-1 mb-5 ml-1" />Projects</h3>
 
                 {isEditing ? (
 
-                    <div className=" p-4"> 
+                    <div className='project-content mb-20 shadow rounded'>
                         {projects.map((project, index) => (
-                            <div key={project.id || project.tempId} className=""> 
-                                <div className="flex justify-between items-center mb-2">
-                                     <h4 className="text-lg font-medium">{`Project ${index + 1}`}</h4>
-                                     <button
+                            <div key={project.id || project.tempId} className="">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-lg font-medium mb-3">{`Project ${index + 1}`}</h4>
+                                    <button
                                         type="button"
-                                        className="text-red-600 hover:text-red-800 text-sm"
                                         onClick={() => handleRemoveProject(index)}
+                                        className="top-2 right-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600 text-lg"
+                                        title="Remove project"
                                     >
-                                        Remove
+                                        <FontAwesomeIcon icon={faTrashCan} />
                                     </button>
                                 </div>
-
-                                <EditableField
-                                     label="Project Name"
-                                     value={project.project_name}
-                                     onChange={(e) => handleProjectChange(index, 'project_name', e.target.value)}
-                                     isEditing={isEditing}
-                                     stateKey={`project-name-${index}`} 
-                                 />
-                                <EditableField
-                                     label="Description"
-                                     value={project.description}
-                                     onChange={(e) => handleProjectChange(index, 'description', e.target.value)}
-                                     isTextArea={true}
-                                     isEditing={isEditing}
-                                     stateKey={`project-description-${index}`}
-                                 />
-                                 <EditableField
-                                     label="Image URL"
-                                     value={project.project_image}
-                                     onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
-                                     isEditing={isEditing}
-                                     stateKey={`project-image-${index}`}
-                                 />
-                                  <EditableField
-                                     label="Code URL"
-                                     value={project.code_url}
-                                     onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
-                                     type="url" // O "url"
-                                     isEditing={isEditing}
-                                     stateKey={`project-code-${index}`}
-                                 />
-                                  <EditableField
-                                     label="Preview URL"
-                                     value={project.preview_url}
-                                     onChange={(e) => handleProjectChange(index, 'preview_url', e.target.value)}
-                                     type="text" // O "url"
-                                     isEditing={isEditing}
-                                     stateKey={`project-preview-${index}`}
-                                 />
-                                  <EditableField
-                                     label="Technologies"
-                                     value={project.tecnologies} 
-                                     onChange={(e) => handleProjectChange(index, 'tecnologies', e.target.value)}
-                                     isTextArea={true}
-                                     isEditing={isEditing}
-                                     stateKey={`project-tecnologies-${index}`}
-                                 />
+                                <div className='grid grid-cols-2 gap-y-4 gap-x-20'>
+                                    <EditableField
+                                        label="Project Name"
+                                        value={project.project_name}
+                                        onChange={(e) => handleProjectChange(index, 'project_name', e.target.value)}
+                                        isEditing={isEditing}
+                                        stateKey={`project-name-${index}`}
+                                    />
+                                    <EditableField
+                                        label="Description"
+                                        value={project.description}
+                                        onChange={(e) => handleProjectChange(index, 'description', e.target.value)}
+                                        isTextArea={true}
+                                        isEditing={isEditing}
+                                        stateKey={`project-description-${index}`}
+                                    />
+                                    <EditableField
+                                        label="Image URL"
+                                        value={project.project_image}
+                                        onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
+                                        isEditing={isEditing}
+                                        stateKey={`project-image-${index}`}
+                                    />
+                                    <EditableField
+                                        label="Code URL"
+                                        value={project.code_url}
+                                        onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
+                                        type="url" // O "url"
+                                        isEditing={isEditing}
+                                        stateKey={`project-code-${index}`}
+                                    />
+                                    <EditableField
+                                        label="Preview URL"
+                                        value={project.preview_url}
+                                        onChange={(e) => handleProjectChange(index, 'preview_url', e.target.value)}
+                                        type="text" // O "url"
+                                        isEditing={isEditing}
+                                        stateKey={`project-preview-${index}`}
+                                    />
+                                    <EditableField
+                                        label="Technologies (each separated by space)"
+                                        value={project.tecnologies}
+                                        onChange={(e) => handleProjectChange(index, 'tecnologies', e.target.value)}
+                                        isTextArea={true}
+                                        isEditing={isEditing}
+                                        stateKey={`project-tecnologies-${index}`}
+                                    />
+                                </div>
                             </div>
                         ))}
 
                         <button
                             type="button"
-                            className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                            className="text-white bg-gradient-to-br from-green-400 to-blue-600 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
                             onClick={handleAddProject}
                         >
                             + Add New Project
@@ -605,33 +488,77 @@ function ProfilePage() {
                     </div>
 
                 ) : (
-                     <div className=""> 
+                    <div className='mb-20'>
                         {projects.length === 0 ? (
-                            <p className="text-white-600">No projects added yet.</p>
+                            <p className="text-gray-400 text-medium mb-2 ml-10">No projects added yet.</p>
                         ) : (
-                             projects.map((project, index) => (
-                                 <div key={project.id || `view-${index}`} className="border-b pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0"> 
-                                     {project.project_image && (
-                                         <img src={project.project_image} alt={`${project.project_name} preview`} className="w-full h-64 object-contain rounded mb-2" />
-                                     )}
-                                     <h4 className="text-lg font-medium">{project.project_name || `Unnamed Project ${index + 1}`}</h4>
-                                     <p className="text-white-700 text-sm mb-2">{project.description}</p>
-                                     {project.tecnologies && (
-                                         <p className="text-white-600 text-xs mb-2">Tech: {project.tecnologies}</p>
-                                     )}
-                                     <div className="flex gap-4 text-sm">
-                                        {project.code_url && <a href={project.code_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Code</a>}
-                                        {project.preview_url && <a href={project.preview_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Preview</a>}
-                                     </div>
-                                 </div>
-                             ))
+                            projects.map((project, index) => (
+                                <div key={project.id || `view-${index}`} className="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
+                                    {project.project_image && (
+                                        <div className='ml-5 w-full md:w-1/2'>
+                                            <div className='relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50'>
+                                                <img src={project.project_image} alt={`${project.project_name} preview`} className="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className='w-full md:w-1/2 md:max-w-lg'>
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{project.project_name || `Unnamed Project ${index + 1}`}</h2>
+                                            {project.tecnologies && typeof project.tecnologies === 'string' && project.tecnologies.trim() !== '' && (
+                                                <div className="mt-2 mb-2">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {project.tecnologies.split(/\s+/).filter(tech => tech !== '').map((tech, index) => (
+                                                            <span key={index} className="bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-gray-600 dark:text-gray-200">
+                                                                {tech}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className='mt-2 text-gray-700 dark:text-gray-400'>
+                                                {project.description}
+                                            </div>
+                                        </div>
+                                        <footer className="flex items-end justify-start mt-4 gap-x-4">
+                                            {project.code_url && <a href={project.code_url} target="_blank" rel="noopener noreferrer" className="inline-flex bg-gray-100 text-gray-800 border-gray-300 items-center justify-center gap-2 px-3 py-2 space-x-2 text-base transition dark:text-white dark:bg-gray-800 border dark:border-gray-600 focus-visible:ring-yellow-500/80 text-md hover:bg-gray-800 hover:border-gray-900 group max-w-fit rounded-xl hover:text-white focus:outline-none focus-visible:outline-none focus-visible:ring focus-visible:ring-white focus-visible:ring-offset-2 active:bg-black"><svg className="size-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path></svg>Code</a>}
+                                            {project.preview_url && <a href={project.preview_url} target="_blank" rel="noopener noreferrer" className="inline-flex bg-gray-100 text-gray-800 border-gray-300 items-center justify-center gap-2 px-3 py-2 space-x-2 text-base transition dark:text-white dark:bg-gray-800 border dark:border-gray-600 focus-visible:ring-yellow-500/80 text-md hover:bg-gray-800 hover:border-gray-900 group max-w-fit rounded-xl hover:text-white focus:outline-none focus-visible:outline-none focus-visible:ring focus-visible:ring-white focus-visible:ring-offset-2 active:bg-black"><svg className="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>Preview</a>}
+                                        </footer>
+                                    </div>
+                                </div>
+                            ))
                         )}
-                     </div>
+                    </div>
                 )}
 
+                <h1 className='mt-5 text-3xl font-semibold flex item-center'><UserIcon className="h-8 w-8 inline-block mr-2 mt-1" />About me</h1>
+                <div className="mb-20 profile-content  font-mono text-pretty">
+                    {(aboutMe === "" && !isEditing) ? (<p className="text-gray-400 text-medium mb-2 ml-5 mt-3">No about me added yet.</p>) : 
+                    <EditableField
+                        label="About Me"
+                        value={aboutMe}
+                        onChange={(e) => setAboutMe(e.target.value)}
+                        isTextArea={true}
+                        isEditing={isEditing}
+                        stateKey="aboutMe"
+                    />}
+                    {(isEditing) ? (
+                        <div>
+                            <h1 className='text-3xl font-semibold flex item-center'>Ocupation</h1>
+                            <div className='mt-3'>
+                                <EditableField
+                                label="Ocupation"
+                                value={profesion}
+                                onChange={(e) => setprofesion(e.target.value)}
+                                isEditing={isEditing}
+                                stateKey="profesion"
+                                displayLabel={false}
+                                />
+                            </div>
+                        </div>) : ''}
+                </div>
             </div>
         </main>
-    );
+    )
 }
 
-export default ProfilePage;
+export default ProfilePage

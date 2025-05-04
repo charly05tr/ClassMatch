@@ -8,6 +8,7 @@ aside {
     background-color: #000;
     padding-top: 20px;
     border-right: rgba(240,240,240, 0.5) outset 1px;
+    z-index: 1;
     
     a {
         display: flex;
