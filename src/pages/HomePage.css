@@ -3,12 +3,13 @@
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 1rem;
-    padding: 1rem;
-    height: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    height: 90vh;
 }
 
 .arrow {
-    width: 40px;
+    width: 10px;
     height: 40px;
     cursor: pointer;
 }

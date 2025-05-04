@@ -553,13 +553,13 @@ function ProfilePage() {
                             projects.map((project, index) => (
                                 <div key={project.id || `view-${index}`} className="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
                                     {project.project_image && (
-                                        <div className='ml-5 w-full md:w-1/2'>
+                                        <div className='w-full md:w-1/2'>
                                             <div className='relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50'>
                                                 <img src={project.project_image} alt={`${project.project_name} preview`} className="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" />
                                             </div>
                                         </div>
                                     )}
-                                    <div className='w-full md:w-1/2 md:max-w-lg'>
+                                    <div className='md-project w-full md:w-1/2 md:max-w-lg'>
                                         <div>
                                             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{project.project_name || `Unnamed Project ${index + 1}`}</h2>
                                             {project.tecnologies && typeof project.tecnologies === 'string' && project.tecnologies.trim() !== '' && (

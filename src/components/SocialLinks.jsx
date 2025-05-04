@@ -95,9 +95,9 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                                 className="
                                 text-white-600 
                                 flex items-center gap-1 text-sm 
-                                bg-gray-100 text-white-100 text-normal me-2 px-3 py-1.5 rounded-sm 
+                                bg-gray-100 text-white-100 text-normal me-2 px-3 py-1.5 
                                 dark:bg-gray-700 hover:text-gray-900 
-                                border border-gray-500 rounded-xl
+                                border border-gray-500 rounded-2xl
                                 hover:bg-white"
                                 title={socialOptions.find(opt => opt.value === link.type)?.label || link.type}
                             >
