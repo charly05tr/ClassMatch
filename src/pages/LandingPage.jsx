@@ -1,4 +1,4 @@
-import React from 'react';
+import {React, useEffect} from 'react';
 // Importa iconos de Heroicons (ajusta la ruta si es necesario)
 // Usamos la variante 'outline' para un look más limpio en la landing
 import { UsersIcon, CodeBracketIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
@@ -9,6 +9,24 @@ function LandingPage() {
     const goToRegister = () => {
         navigate('/register')
     }
+     useEffect(() => {
+        const checkLoginStatus = async () => {
+          try {
+            const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" });
+            if (res.ok) {
+              const data = await res.json();
+              console.log(data.authenticated)
+    
+            } else {
+                console.log(res)
+            }
+          } catch (error) {
+            console.error("Error checking login status:", error);
+          }
+        };
+        checkLoginStatus();
+      }, []);
+    
     return (
         // Contenedor principal que ocupa al menos toda la altura de la pantalla
         // Usa un fondo oscuro y texto blanco por defecto
@@ -23,7 +41,7 @@ function LandingPage() {
                 <nav>
                     {/* Estos serían enlaces reales de tu router (ej. React Router Link) */}
                     <a href="/login" className="text-gray-300 hover:text-white mr-4">Login</a>
-                    <a href="/registrer" className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Regístrate</a>
+                    <button type='button'onClick={() => goToRegister()} className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Regístrate</button>
                 </nav>
             </header>
 
