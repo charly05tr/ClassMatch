@@ -1,4 +1,4 @@
-import {React, useEffect} from 'react';
+import {React} from 'react';
 // Importa iconos de Heroicons (ajusta la ruta si es necesario)
 // Usamos la variante 'outline' para un look más limpio en la landing
 import { UsersIcon, CodeBracketIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
@@ -12,6 +12,7 @@ function LandingPage() {
     const goToLogIn = () => {
         navigate('/login')
     }
+    
     
     return (
         // Contenedor principal que ocupa al menos toda la altura de la pantalla
