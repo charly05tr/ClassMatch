@@ -1,13 +1,16 @@
 import React from 'react'
 import './background.css'
 import './login.css'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
-function LoginPage() {
+function LoginPage({ onLoginSuccess }) {
 
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [message, setMessage] = React.useState('')
+    const [isLoading, setIsLoading] = useState(false)
+
+    const location = useLocation()
     const navigate = useNavigate()
 
     const goToRegister = () => {
@@ -30,11 +33,17 @@ function LoginPage() {
             })
             const data = await res.json()
             if (res.ok) {
+                setIsLoading(false)
+                onLoginSuccess(data.user_id)
+                const fromPath = location.state?.from?.pathname || '/'
+                navigate(fromPath, { replace: true })
                 setMessage("Inicio de sesión exitoso")
             } else {
+                setIsLoading(false)
                 setMessage(data.error || "Error de autenticación")
             }
         } catch (err) {
+            setIsLoading(false)
             setMessage("Error interno del servidor o de conexión")
         }
     }

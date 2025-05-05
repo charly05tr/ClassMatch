@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation} from 'react-router-dom';
 import Sidebar from './components/Sidebar'; 
 import './App.css';
 import HomePage from './pages/HomePage';
@@ -16,9 +16,14 @@ import LandingPage from './pages/LandingPage';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null)
+  const [isLoading, setIsLoading] = useState(true); 
+  
+  const location = useLocation(); 
+
 
   useEffect(() => {
     const checkLoginStatus = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" });
         if (res.ok) {
@@ -32,7 +37,9 @@ function App() {
       } catch (error) {
         console.error("Error checking login status:", error);
         setIsLoggedIn(false);
-      }
+      }  finally {
+        setIsLoading(false);
+    }
     };
     checkLoginStatus();
   }, []);
@@ -62,10 +69,17 @@ function App() {
   return (
     <Router>
       <div className='grid-container-app' > 
-        <Sidebar isLoggedIn={isLoggedIn} onLogout={handleLogout} userId={userId}/>
+      {!isLoading && <Sidebar isLoggedIn={isLoggedIn} onLogout={handleLogout} userId={userId} />}
+
 
         <main style={{ flexGrow: 1 }} className="  w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"> 
-          <Routes>
+        {isLoading ? (
+                       
+                        <div className="flex items-center justify-center min-h-screen">
+                            <p className="text-xl text-gray-600 dark:text-gray-300">Cargando...</p>
+                        </div>
+                      )
+          :<Routes>
             {isLoggedIn ? (
               <>
                 <Route path="/" element={<HomePage />} />
@@ -75,6 +89,7 @@ function App() {
                 <Route path="/search" element={<SearchPage />} />   
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/register" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} /> 
               </>
             ) : (
               <>
@@ -87,7 +102,7 @@ function App() {
                  <Route path="/search" element={<Navigate to="/login" replace />} />
               </>
             )}
-          </Routes>
+          </Routes>}
         </main>
       </div>
     </Router>
