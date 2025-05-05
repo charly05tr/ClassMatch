@@ -6,7 +6,7 @@ import EditableField from '/src/components/EditableField'
 import { BriefcaseIcon, UserIcon, CodeBracketIcon } from '@heroicons/react/20/solid';
 import { faTrashCan, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import './profilePage.css'
+import './ProfilePage.css'
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 function ProfilePage() {
