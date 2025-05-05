@@ -48,7 +48,7 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                 <div className="shadow rounded project-content">
                     <label className="block text-white-700 text-sm font-bold mb-2">{isEditing ? ('Social links') : ('')}</label>
                     {socialLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 mb-3 last:mb-0">
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                              <SocialLinkTypeCombobox
                                 socialOptions={socialOptions} // Pasa el array de opciones
                                 selectedValue={link.type} // Pasa el valor string seleccionado actualmente (link.type)
@@ -56,6 +56,7 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                                 onValueChange={(newValueString) => handleLinkTypeChange(index, newValueString)}
                                 className="social-link-select" // Pasa la clase de ancho al componente
                             />
+                            <div className='flex justify-between'>
                             <input
                                 type="text"
                                 value={link.url}
@@ -71,6 +72,7 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                             >
                                  <FontAwesomeIcon icon={faTrashCan} />
                             </button>
+                            </div>
                         </div>
                     ))}
                     <button
@@ -95,9 +97,9 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                                 className="
                                 text-white-600 
                                 flex items-center gap-1 text-sm 
-                                bg-gray-100 text-white-100 text-normal me-2 px-3 py-1.5 rounded-sm 
+                                bg-gray-100 text-white-100 text-normal me-2 px-3 py-1.5 
                                 dark:bg-gray-700 hover:text-gray-900 
-                                border border-gray-500 rounded-xl
+                                border border-gray-500 rounded-2xl
                                 hover:bg-white"
                                 title={socialOptions.find(opt => opt.value === link.type)?.label || link.type}
                             >

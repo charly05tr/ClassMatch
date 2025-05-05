@@ -1,10 +1,10 @@
 import React from 'react'
 
-const EditableField = ({ label, value, onChange, displayLabel, isTextArea = false, stateKey, isEditing }) => {
+const EditableField = ({ label, value, onChange, displayLabel, isTextArea = true, stateKey, isEditing }) => {
 
     const readOnlyInputStyle = "border-none outline-none bg-transparent cursor-text text-gray-800 py-2 px-3"
 
-    const editableInputStyle = "appearance-none  w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-text"
+    const editableInputStyle = "appearance-none  w-full py-2 px-3  text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-text"
 
     const cursorOnlyStyle = "border-none outline-none bg-transparent focus:ring-0 focus:outline-none"
 
@@ -21,11 +21,11 @@ const EditableField = ({ label, value, onChange, displayLabel, isTextArea = fals
                     onChange={isEditing ? onChange : undefined}
                     readOnly={!isEditing}
                     spellCheck={false}
-                    className={`w-ful text-gray-800 ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
+                    className={`text-gray-800  break-words ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
                     rows="4"
                     placeholder={`Enter ${label}`}
                     id={stateKey}
-                    style={{ color: 'rgba(255,255,255,0.9)', border: 'none', minHeight: '1.5em', overflow: 'hidden' }}
+                    style={{ color: 'rgba(255,255,255,0.9)', border: 'none', minHeight: '1.5em', overflow: 'hidden', resize: 'none' }}
                 ></textarea>
             ) : (
                 <input

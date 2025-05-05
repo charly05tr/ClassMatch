@@ -1,14 +1,38 @@
+.profile-container{
+    margin-left: 30px;
+    padding: 20px;
+}
+@media (max-width:1000px) {
+    .profile-container{
+        margin-left: 10px;
+        padding: 15px;
+    }
+    .profile-content{
+        padding: 10px;
+    }
+    .project-content{
+        padding: 10px;
+    }   
+    textarea {
+        min-width: 250px;
+    }
+    input {
+        min-width: 250px;
+    }
+}
+
 .header{
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
+    flex-wrap: wrap;
 
     h2 {
         font-size: 40px;
         font-weight: normal;
-        padding: 10px;
+        margin-bottom: 10px;
     }   
 }
 .profile-content{
@@ -19,17 +43,17 @@
     padding: 20px;
     gap: 20px;
     border-radius: 10px;;
-    max-width: 800px;
+    max-width: 80%;
 }
 
 textarea { 
     caret-color: yellow;
     resize: none;
-    min-width: 450px;
+    min-width: 60%;
     field-sizing: content;
 }
 input {
-    min-width: 450px;
+    min-width: 60%;
     background-color: transparent;
     caret-color: yellow;
 }
@@ -48,7 +72,7 @@ a:hover {
     padding: 20px;
     gap: 20px;
     border-radius: 10px;
-    max-width: 1000px;    
+    max-width: 100%;    
 }
 .work-experience-header{
     display: flex;
@@ -62,5 +86,12 @@ a:hover {
     color: yellow
 }
 .social-link-select{
-    min-width: 450px;
+    min-width: 100%;
+}
+
+@media (max-width:800px) {
+    .profile-container{
+        margin-left: 0px;
+        padding: 10px;
+    }   
 }

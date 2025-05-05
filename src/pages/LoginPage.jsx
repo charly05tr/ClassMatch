@@ -1,17 +1,23 @@
-import React from 'react';
-import './background.css';
-import './login.css';
+import React from 'react'
+import './background.css'
+import './login.css'
+import { useNavigate } from 'react-router-dom'
 
 function LoginPage() {
 
-    const [email, setEmail] = React.useState('');
-    const [password, setPassword] = React.useState('');
-    const [message, setMessage] = React.useState('');
+    const [email, setEmail] = React.useState('')
+    const [password, setPassword] = React.useState('')
+    const [message, setMessage] = React.useState('')
+    const navigate = useNavigate()
+
+    const goToRegister = () => {
+        navigate('/register')
+    }
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         try {
-            const res = await fetch("http://localhost:5000/login", {
+            const res = await fetch("https://classmatchapi-1.onrender.com/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -21,18 +27,19 @@ function LoginPage() {
                     'email': email,
                     'password': password
                 })
-            });
-            const data = await res.json();
+            })
+            const data = await res.json()
             if (res.ok) {
-                setMessage("Inicio de sesión exitoso");
-                window.location.href = "/";
+                setMessage("Inicio de sesión exitoso")
+                window.location.href = "/"
             } else {
-                setMessage(data.error || "Error de autenticación");
+                setMessage(data.error || "Error de autenticación")
             }
         } catch (err) {
-            setMessage("Error interno del servidor o de conexión");
+            setMessage("Error interno del servidor o de conexión")
         }
-    };
+    }
+
     return (
         <>
             <div className="background">
@@ -53,13 +60,13 @@ function LoginPage() {
                     <div className="container d-flex justify-content-center align-items-center min-vh-100">
                         <div className="card shadow p-4 log-card">
                             <div className="centrar">
-                                <div className="imapeque">
+                                <div className="imapeque flex justify-center mb-3">
                                     <img src="src/assets/logoph.png" />
                                 </div>
                             </div>
 
                             <div className="centrar mb-3">
-                                <a className='no-cuenta-a' href="/registro">¿No tienes cuenta?</a>
+                                <button className='no-cuenta-a' type='button' onClick={() => goToRegister()}>¿No tienes cuenta?</button>
                             </div>
 
                             <form onSubmit={handleSubmit}>
@@ -78,8 +85,8 @@ function LoginPage() {
 
                                 <button type="submit" className="btn btn-secondary w-100 mb-3">Iniciar sesión</button>
                                 <h4 className="centrar mb-3">o</h4>
-                                <button className="btn btn-secondary w-100 mb-2" type="button"><img src="src/assets/googlelogo.png" className="logosminis" />Continuar con Google</button>
-                                <button className="btn btn-secondary w-100 mb-2" type="button"><img src="src/assets/githublogo.png" className="logosminis" />Continuar con GitHub</button>
+                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" type="button"><img src="src/assets/googlelogo.png" className="logosminis" />Continuar con Google</button>
+                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" type="button"><img src="src/assets/githublogo.png" className="logosminis" />Continuar con GitHub</button>
                             </form>
                             {message && <p className="text-center mt-3">{message}</p>}
                         </div>
@@ -90,4 +97,4 @@ function LoginPage() {
     )
 }
 
-export default LoginPage;
+export default LoginPage

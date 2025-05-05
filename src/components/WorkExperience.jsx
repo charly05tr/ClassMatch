@@ -7,7 +7,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
     return (
         <div>
             {isEditing ? (
-                <div className="shadow mb-20 rounded">
+                <div className="shadow mb-20 rounded ">
                     {workExperience && Array.isArray(workExperience) && workExperience.map((entry, index) => (
                         <div key={index} className="project-content   rounded">
                             <div className="work-experience-header">                              
@@ -69,7 +69,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                         <button
                             type="button"
                             onClick={onAdd}
-                            className="mb-5 ml-5 mt-4 text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded dark:bg-blue-700 dark:hover:bg-blue-800"
+                            className="mb-2 text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded dark:bg-blue-700 dark:hover:bg-blue-800"
                         >
                             <FontAwesomeIcon icon={faPlus} className="mr-2" /> Add Work Experience
                         </button>
@@ -84,11 +84,11 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                         <div className='mb-20 section undefined scroll-m-20 w-full mx-auto container lg:max-w-4xl md:max-w-2xl'>
                         <ol className='relative mt-16'>
                         {workExperience && Array.isArray(workExperience) && workExperience.map((entry, index) => (
-                            <li>    
-                                <div key={index} className="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]">
+                            <li key={index}>    
+                                <div className="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]">
                                     <div className='relative pb-12 md:col-span-2'>
                                         <div className='sticky top-0'>
-                                            <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">•</span>
+                                            <span className="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">•</span>
                                             <h3 className="text-xl font-bold text-yellow-400" >
                                                 {entry.position} 
                                             </h3>
