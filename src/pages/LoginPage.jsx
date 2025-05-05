@@ -31,7 +31,6 @@ function LoginPage() {
             const data = await res.json()
             if (res.ok) {
                 setMessage("Inicio de sesión exitoso")
-                window.location.href = "/"
             } else {
                 setMessage(data.error || "Error de autenticación")
             }

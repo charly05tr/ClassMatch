@@ -23,7 +23,6 @@ function App() {
         const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
-          print(data.authenticated)
           setIsLoggedIn(data.authenticated);
           setUserId(data.user_id)
 
