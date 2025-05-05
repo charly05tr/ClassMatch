@@ -6,7 +6,7 @@ import EditableField from '/src/components/EditableField'
 import { BriefcaseIcon, UserIcon, CodeBracketIcon } from '@heroicons/react/20/solid';
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import './profilePage.css'
+import './ProfilePage.css'
 
 function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false)
