@@ -65,4 +65,48 @@ aside {
     }
     
 }
+
+@media (max-width: 800px) {
+    aside {
+        /* Posiciona el aside en la parte superior */
+        position: sticky; /* Se mantiene pegado arriba al hacer scroll */
+        top: 0; /* Pegado a la parte superior */
+        /* left: 0; /* Ya está 0 por defecto o por la media query anterior */
+        right: 0; /* Asegura que ocupe todo el ancho si left/right están 0 */
+        /* Cambia las dimensiones */
+        width: 100%; /* Ocupa todo el ancho de la ventana */
+        height: 60px; /* Establece una altura fija para la barra superior */
+        /* Cambia la dirección de los elementos internos a horizontal */
+        flex-direction: row;
+        /* Distribuye los elementos horizontalmente dentro de la barra */
+        justify-content: space-around; /* Distribuye espacio equitativamente */
+        padding-top: 0; /* Elimina el padding superior heredado */
+        padding: 0 10px; /* Añade un padding horizontal */
+        /* Ajusta el borde */
+        border-right: none; /* Elimina el borde derecho */
+        border-bottom: rgba(240,240,240, 0.5) outset 1px; /* Añade un borde inferior */
+        /* Asegura que esté por encima de otro contenido al scrollear */
+        z-index: 1000;
+    }
+
+    /* Ajusta los estilos de los enlaces para la barra horizontal */
+    aside a {
+        /* Ya son display: flex y centrado por la media query de 1000px */
+        /* Asegura que el padding y gap sean adecuados para la distribución horizontal */
+        padding: 0 5px; /* Ajusta padding horizontal */
+        gap: 5px; /* Ajusta el espacio entre ícono y texto (si se mostrara) */
+    }
+
+    /* El resto de estilos de la media query de 1000px (ocultar texto/botones) */
+    /* seguirán aplicándose a partir de 1000px hacia abajo, incluyendo 800px y menos. */
+    /* Si quisieras mostrar texto o botones en la barra horizontal, necesitarías sobreescribir */
+    /* 'display: none;' aquí, pero mantenerlos ocultos para una barra estrecha es típico. */
+
+    /* Ajusta el margen del contenido principal para dejar espacio a la barra superior */
+    main {
+         /* main {margin-left: 0;} ya está definido en la media query de 1000px */
+         /* Añade un margen superior igual a la altura de la barra del aside */
+        margin-top: 60px; /* Debe coincidir con la altura del aside en este breakpoint */
+    }
+}
   

@@ -20,7 +20,7 @@ function App() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/debug", { credentials: "include" });
+        const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setIsLoggedIn(data.authenticated);
@@ -44,7 +44,7 @@ function App() {
 
    const handleLogout = async () => {
      try {
-        const res = await fetch("http://localhost:5000/logout", { credentials: "include" });
+        const res = await fetch("https://classmatchapi-1.onrender.com/logout", { credentials: "include" });
         if (res.ok) {
           setIsLoggedIn(false);
 
@@ -81,7 +81,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                  <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
                  <Route path="/register" element={<RegisterPage />} />
-                 <Route path="/profile" element={<Navigate to="/login" replace />} />
+                 <Route path="/profile/:id" element={<Navigate to="/login" replace />} />
                  <Route path="/messages" element={<Navigate to="/login" replace />} />
                  <Route path="/matches" element={<Navigate to="/login" replace />} />
                  <Route path="/search" element={<Navigate to="/login" replace />} />

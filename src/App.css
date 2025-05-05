@@ -9,6 +9,15 @@ main {
     padding: 0px;
   }
 
+  @media (max-width: 800px) {
+    .grid-container-app {
+      grid-template-rows: auto 1fr;
+        grid-template-columns: 1fr;
+      margin: 0px;
+      padding: 0px;
+    }
+  }
+
   * {
     margin: 0;
     padding: 0;

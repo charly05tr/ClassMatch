@@ -22,7 +22,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch('http://localhost:5000/register', {
+            const res = await fetch('https://classmatchapi-1.onrender.com/register', {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 credentials: "include",
@@ -54,7 +54,7 @@ const RegisterPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Field>
-                            <Label className="text-sm font-medium text-white">Name</Label>
+                            <Label className="text-sm font-medium text-white">First Name</Label>
                             <Input
                                 type="text"
                                 value={name}
@@ -65,7 +65,7 @@ const RegisterPage = () => {
                         </Field>
 
                         <Field>
-                            <Label className="text-sm font-medium text-white">First Name</Label>
+                            <Label className="text-sm font-medium text-white">Last Name</Label>
                             <Input
                                 type="text"
                                 value={firstName}

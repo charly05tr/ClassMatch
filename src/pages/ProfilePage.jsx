@@ -37,7 +37,7 @@ function ProfilePage() {
     useEffect(() => {
         const checkLoginStatus = async () => {
           
-            const res = await fetch("http://localhost:5000/debug", { credentials: "include" })
+            const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" })
             if (res.ok) {
               const data = await res.json()
               if (String(data.user_id) === String(id)) {
@@ -52,7 +52,7 @@ function ProfilePage() {
         const fetchProfileData = async () => {
             setIsLoading(true) 
             try {
-                const res = await fetch(`http://localhost:5000/profile/${id}`, {
+                const res = await fetch(`https://classmatchapi-1.onrender.com/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -121,7 +121,7 @@ function ProfilePage() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/projects/${id}`, {
+                const res = await fetch(`https://classmatchapi-1.onrender.com/projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -192,7 +192,7 @@ function ProfilePage() {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`http://localhost:5000/profile/${id}`, {
+            const profileRes = await fetch(`https://classmatchapi-1.onrender.com/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -229,7 +229,7 @@ function ProfilePage() {
              // Guardar la experiencia original después de guardar
 
             // Guardar Proyectos (enviando el array completo)
-            const projectsRes = await fetch(`http://localhost:5000/projects/${id}`, {
+            const projectsRes = await fetch(`https://classmatchapi-1.onrender.com/projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -368,7 +368,7 @@ function ProfilePage() {
         <main className="profile-container">
             <div>
                 <div className="header">
-                    <h2>Profile</h2>
+                    <h2>Portfolio</h2>
                     {
                         (isOwner)
                        ?(!isEditing ? (
@@ -471,10 +471,10 @@ function ProfilePage() {
 
                 {isEditing ? (
 
-                    <div className='project-content mb-20 shadow rounded'>
+                    <div className='mb-20 shadow rounded'>
                         {projects.map((project, index) => (
-                            <div key={project.id || project.tempId} className="">
-                                <div className="flex justify-between items-center">
+                            <div key={project.id || project.tempId} className="project-content rounded">
+                                <div className="work-experience-header">
                                     <h4 className="text-lg font-medium mb-3">{`Project ${index + 1}`}</h4>
                                     <button
                                         type="button"
@@ -485,7 +485,7 @@ function ProfilePage() {
                                         <FontAwesomeIcon icon={faTrashCan} />
                                     </button>
                                 </div>
-                                <div className='grid grid-cols-2 gap-y-4 gap-x-20'>
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 md:gap-x-20'>
                                     <EditableField
                                         label="Project Name"
                                         value={project.project_name}
@@ -500,13 +500,6 @@ function ProfilePage() {
                                         isTextArea={true}
                                         isEditing={isEditing}
                                         stateKey={`project-description-${index}`}
-                                    />
-                                    <EditableField
-                                        label="Image URL"
-                                        value={project.project_image}
-                                        onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
-                                        isEditing={isEditing}
-                                        stateKey={`project-image-${index}`}
                                     />
                                     <EditableField
                                         label="Code URL"
@@ -531,6 +524,14 @@ function ProfilePage() {
                                         isTextArea={true}
                                         isEditing={isEditing}
                                         stateKey={`project-tecnologies-${index}`}
+                                    />
+                                     
+                                    <EditableField
+                                        label="Image URL"
+                                        value={project.project_image}
+                                        onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
+                                        isEditing={isEditing}
+                                        stateKey={`project-image-${index}`}
                                     />
                                 </div>
                             </div>

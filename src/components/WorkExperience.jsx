@@ -7,7 +7,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
     return (
         <div>
             {isEditing ? (
-                <div className="shadow mb-20 rounded">
+                <div className="shadow mb-20 rounded ">
                     {workExperience && Array.isArray(workExperience) && workExperience.map((entry, index) => (
                         <div key={index} className="project-content   rounded">
                             <div className="work-experience-header">                              
@@ -69,7 +69,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                         <button
                             type="button"
                             onClick={onAdd}
-                            className="mb-5 ml-5 mt-4 text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded dark:bg-blue-700 dark:hover:bg-blue-800"
+                            className="mb-2 text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded dark:bg-blue-700 dark:hover:bg-blue-800"
                         >
                             <FontAwesomeIcon icon={faPlus} className="mr-2" /> Add Work Experience
                         </button>
