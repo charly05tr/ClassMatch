@@ -12,23 +12,6 @@ function LandingPage() {
     const goToLogIn = () => {
         navigate('/login')
     }
-     useEffect(() => {
-        const checkLoginStatus = async () => {
-          try {
-            const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" });
-            if (res.ok) {
-              const data = await res.json();
-              console.log(data.authenticated)
-    
-            } else {
-                console.log(res)
-            }
-          } catch (error) {
-            console.error("Error checking login status:", error);
-          }
-        };
-        checkLoginStatus();
-      }, []);
     
     return (
         // Contenedor principal que ocupa al menos toda la altura de la pantalla
