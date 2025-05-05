@@ -91,10 +91,10 @@ function LoginPage({ onLoginSuccess }) {
                                     <a className='no-cuenta-a' href="#">Olvidé mi contraseña</a>
                                 </div>
 
-                                <button type="submit" className="btn btn-secondary w-100 mb-3">Iniciar sesión</button>
+                                <button type="submit" className="btn btn-secondary w-100 mb-3" disabled={isLoading}>Iniciar sesión</button>
                                 <h4 className="centrar mb-3">o</h4>
-                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" type="button"><img src="src/assets/googlelogo.png" className="logosminis" />Continuar con Google</button>
-                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" type="button"><img src="src/assets/githublogo.png" className="logosminis" />Continuar con GitHub</button>
+                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" disabled={isLoading} type="button"><img src="src/assets/googlelogo.png" className="logosminis" />Continuar con Google</button>
+                                <button className="btn btn-secondary w-100 mb-2 flex justify-center" disabled={isLoading} type="button"><img src="src/assets/githublogo.png" className="logosminis" />Continuar con GitHub</button>
                             </form>
                             {message && <p className="text-center mt-3">{message}</p>}
                         </div>
