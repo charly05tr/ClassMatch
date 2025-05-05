@@ -2,9 +2,9 @@ import React from 'react'
 
 const EditableField = ({ label, value, onChange, displayLabel, isTextArea = true, stateKey, isEditing }) => {
 
-    const readOnlyInputStyle = "border-none outline-none bg-transparent cursor-text text-gray-800 py-2 px-3"
+    const readOnlyInputStyle = "border-none outline-none bg-transparent cursor-text text-gray-800 py-2 px-3 h-full"
 
-    const editableInputStyle = "appearance-none  w-full py-2 px-3  text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-text"
+    const editableInputStyle = "max-h-[250px]  appearance-none py-2 px-3  text-gray-700 leading-tight focus:outline-none focus:shadow-outline cursor-text"
 
     const cursorOnlyStyle = "border-none outline-none bg-transparent focus:ring-0 focus:outline-none"
 
@@ -21,7 +21,7 @@ const EditableField = ({ label, value, onChange, displayLabel, isTextArea = true
                     onChange={isEditing ? onChange : undefined}
                     readOnly={!isEditing}
                     spellCheck={false}
-                    className={`text-gray-800  break-words ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
+                    className={`w-full text-gray-800  break-words ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
                     rows="4"
                     placeholder={`Enter ${label}`}
                     id={stateKey}
@@ -33,7 +33,7 @@ const EditableField = ({ label, value, onChange, displayLabel, isTextArea = true
                     onChange={isEditing ? onChange : undefined}
                     readOnly={!isEditing}
                     spellCheck={false}
-                    className={`w-full  ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
+                    className={`  ${!isEditing ? readOnlyInputStyle : editableInputStyle + ' ' + cursorOnlyStyle}`}
                     placeholder={`Enter ${label}`}
                     id={stateKey}
                     style={{ minHeight: '1.5em', color: 'rgba(255,255,255,0.9)' }}

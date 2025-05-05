@@ -37,7 +37,7 @@ function ProfilePage() {
     useEffect(() => {
         const checkLoginStatus = async () => {
           
-            const res = await fetch("https://classmatchapi-1.onrender.com/debug", { credentials: "include" })
+            const res = await fetch("http://localhost:5000/debug", { credentials: "include" })
             if (res.ok) {
               const data = await res.json()
               if (String(data.user_id) === String(id)) {
@@ -52,7 +52,7 @@ function ProfilePage() {
         const fetchProfileData = async () => {
             setIsLoading(true) 
             try {
-                const res = await fetch(`https://classmatchapi-1.onrender.com/profile/${id}`, {
+                const res = await fetch(`http://localhost:5000/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -121,7 +121,7 @@ function ProfilePage() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`https://classmatchapi-1.onrender.com/projects/${id}`, {
+                const res = await fetch(`http://localhost:5000/projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -192,7 +192,7 @@ function ProfilePage() {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`https://classmatchapi-1.onrender.com/profile/${id}`, {
+            const profileRes = await fetch(`http://localhost:5000/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -229,7 +229,7 @@ function ProfilePage() {
              // Guardar la experiencia original después de guardar
 
             // Guardar Proyectos (enviando el array completo)
-            const projectsRes = await fetch(`https://classmatchapi-1.onrender.com/projects/${id}`, {
+            const projectsRes = await fetch(`http://localhost:5000/projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -427,6 +427,7 @@ function ProfilePage() {
                             <EditableField
                                 label="Profile Picture URL"
                                 displayLabel={false}
+                                isTextArea={false}
                                 value={profilePicture}
                                 onChange={(e) => setProfilePicture(e.target.value)}
                                 isEditing={isEditing}
@@ -470,7 +471,7 @@ function ProfilePage() {
                 <h3 className="text-3xl font-semibold flex item-center"><CodeBracketIcon className="h-8 w-8 inline-block mr-2 mt-1 mb-5 ml-1" />Projects</h3>
 
                 {isEditing ? (
-
+                <div>
                     <div className='mb-20 shadow rounded'>
                         {projects.map((project, index) => (
                             <div key={project.id || project.tempId} className="project-content rounded">
@@ -485,7 +486,8 @@ function ProfilePage() {
                                         <FontAwesomeIcon icon={faTrashCan} />
                                     </button>
                                 </div>
-                                <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 md:gap-x-20'>
+                                <div className='grid grid-cols-1 md:grid grid-cols-[1fr_1fr] w-full  '>
+                                    <div className="justify-self-start">
                                     <EditableField
                                         label="Project Name"
                                         value={project.project_name}
@@ -493,6 +495,19 @@ function ProfilePage() {
                                         isEditing={isEditing}
                                         stateKey={`project-name-${index}`}
                                     />
+                                    </div>
+                                    <div className="justify-self-end">
+                                    <EditableField
+                                        label="Code URL"
+                                        value={project.code_url}
+                                        onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
+                                        type="url" // O "url"
+                                        isEditing={isEditing}
+                                        stateKey={`project-code-${index}`}
+                                        isTextArea={false}
+                                    />
+                                    </div>
+                                    <div className="justify-self-start">
                                     <EditableField
                                         label="Description"
                                         value={project.description}
@@ -501,14 +516,8 @@ function ProfilePage() {
                                         isEditing={isEditing}
                                         stateKey={`project-description-${index}`}
                                     />
-                                    <EditableField
-                                        label="Code URL"
-                                        value={project.code_url}
-                                        onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
-                                        type="url" // O "url"
-                                        isEditing={isEditing}
-                                        stateKey={`project-code-${index}`}
-                                    />
+                                    </div>
+                                    <div className="justify-self-end">
                                     <EditableField
                                         label="Preview URL"
                                         value={project.preview_url}
@@ -516,7 +525,10 @@ function ProfilePage() {
                                         type="text" // O "url"
                                         isEditing={isEditing}
                                         stateKey={`project-preview-${index}`}
+                                        isTextArea={false}
                                     />
+                                    </div>
+                                    <div className="justify-self-start">
                                     <EditableField
                                         label="Technologies (each separated by space)"
                                         value={project.tecnologies}
@@ -525,14 +537,17 @@ function ProfilePage() {
                                         isEditing={isEditing}
                                         stateKey={`project-tecnologies-${index}`}
                                     />
-                                     
+                                    </div>
+                                    <div className="justify-self-end">
                                     <EditableField
                                         label="Image URL"
                                         value={project.project_image}
                                         onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
                                         isEditing={isEditing}
                                         stateKey={`project-image-${index}`}
+                                        isTextArea={false}
                                     />
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -545,7 +560,7 @@ function ProfilePage() {
                             + Add New Project
                         </button>
                     </div>
-
+                </div>
                 ) : (
                     <div className='mb-20'>
                         {projects.length === 0 ? (

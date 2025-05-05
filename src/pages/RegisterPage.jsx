@@ -22,7 +22,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch('https://classmatchapi-1.onrender.com/register', {
+            const res = await fetch('http://localhost:5000/register', {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 credentials: "include",
@@ -47,8 +47,8 @@ const RegisterPage = () => {
     }
 
     return (
-        <main className="flex justify-center pt-10 px-4">
-            <form onSubmit={handleSubmit} className="w-full max-w-5xl">
+        <main className="flex justify-center pt-10 px-4 align-cente mt-20">
+            <form onSubmit={handleSubmit} className="w-full max-w-5xl mt-10">
                 <Fieldset className="space-y-6 rounded-xl bg-white/5 p-6 sm:p-10">
                     <Legend className="text-xl font-semibold text-white mb-4">Register</Legend>
 

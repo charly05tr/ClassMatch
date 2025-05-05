@@ -21,7 +21,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                                     <FontAwesomeIcon icon={faTrashCan} />
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 ">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 w-full">
                                 <EditableField
                                     label="Position"
                                     value={entry.position}
@@ -31,6 +31,7 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                                     placeholder="Job Title"
                                     spellCheck={false}
                                 />
+                                <div className="md:justify-self-end">
                                 <EditableField
                                     label="Company"
                                     value={entry.company}
@@ -39,7 +40,9 @@ const WorkExperienceEditor = ({ workExperience, onAdd, onRemove, onChange, isEdi
                                     stateKey={`work-${index}-company`}
                                     placeholder="Company Name"
                                     spellCheck={false}
+                                    isTextArea={false}
                                 />
+                                </div>
                                 <EditableField
                                     label="Dates"
                                     value={entry.dates}

@@ -5,9 +5,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 function LoginPage({ onLoginSuccess }) {
 
-    const [email, setEmail] = React.useState('')
-    const [password, setPassword] = React.useState('')
-    const [message, setMessage] = React.useState('')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [message, setMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
     const location = useLocation()
@@ -20,7 +20,7 @@ function LoginPage({ onLoginSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch("https://classmatchapi-1.onrender.com/login", {
+            const res = await fetch("http://localhost:5000/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -65,22 +65,22 @@ function LoginPage({ onLoginSuccess }) {
                 </ul>
 
                 <div>
-                    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-                        <div className="card shadow p-4 log-card">
+                    <div className="flex justify-content-center align-items-center min-vh-100 w-full">
+                        <div className="card shadow py-4 px-20 log-card">
                             <div className="centrar">
                                 <div className="imapeque flex justify-center mb-3">
                                     <img src="src/assets/logoph.png" />
                                 </div>
                             </div>
 
-                            <div className="centrar mb-3">
+                            <div className="centrar mb-3 w-ful">
                                 <button className='no-cuenta-a' type='button' onClick={() => goToRegister()}>¿No tienes cuenta?</button>
                             </div>
 
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
                                     <label htmlFor="email" className="form-label">Correo electrónico</label>
-                                    <input id="email" type="email" className="form-control" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                    <input id="email" type="email" className="form-control w-full" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                                 </div>
 
                                 <div className="mb-3">
