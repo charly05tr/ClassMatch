@@ -23,7 +23,7 @@ function LandingPage() {
             {/* En una aplicación real, esto sería un componente Navbar separado y más completo */}
             <header className="w-full p-6 flex justify-between items-center bg-gray-800">
                 {/* Logo o Nombre de la Aplicación */}
-                <div className="text-2xl font-bold text-purple-400">DevConnect</div>
+                <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
                 {/* Enlaces de Navegación (Placeholder) */}
                 <nav>
                     {/* Estos serían enlaces reales de tu router (ej. React Router Link) */}

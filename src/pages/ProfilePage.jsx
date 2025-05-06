@@ -7,17 +7,18 @@ import { BriefcaseIcon, UserIcon, CodeBracketIcon } from '@heroicons/react/20/so
 import { faTrashCan, faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import './ProfilePage.css'
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 
-function ProfilePage() {
-    const { id } = useParams();
-    const { state } = useLocation();
-    const navigate = useNavigate();
+function ProfilePage({onLogout}) {
+    
+    const { id } = useParams()
+    const { state } = useLocation()
+    const navigate = useNavigate()
     const index = state ? state.index : 0;
-
+    
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
-
+    
     const [userId, setUserId] = useState(null)
     const [name, setName] = useState("")
     const [firstName, setFirstName] = useState("")
@@ -27,22 +28,27 @@ function ProfilePage() {
     const [experience, setExperience] = useState("[]")
     const [profesion, setprofesion] = useState("")
     const [socialLinks, setSocialLinks] = useState("[]")
-
+    
     const [projects, setProjects] = useState([])
     const [originalProfileData, setOriginalProfileData] = useState(null)
     const [originalProjects, setOriginalProjects] = useState(null)
     const firstInputRef = useRef(null)
     const [isOwner, setIsOwner] = useState(false)
 
+    const handleLogoutClick = async () => {
+        await onLogout()
+        navigate('/')
+      }
+
     useEffect(() => {
         const checkLoginStatus = async () => {
-          
-            const res = await fetch("http://localhost:5000/debug", { credentials: "include" })
+
+            const res = await fetch("http://localhost:5000/users/debug", { credentials: "include" })
             if (res.ok) {
-              const data = await res.json()
-              if (String(data.user_id) === String(id)) {
-                setIsOwner(true)
-              }
+                const data = await res.json()
+                if (String(data.user_id) === String(id)) {
+                    setIsOwner(true)
+                }
             }
         }
         checkLoginStatus()
@@ -50,9 +56,9 @@ function ProfilePage() {
 
     useEffect(() => {
         const fetchProfileData = async () => {
-            setIsLoading(true) 
+            setIsLoading(true)
             try {
-                const res = await fetch(`http://localhost:5000/profile/${id}`, {
+                const res = await fetch(`http://localhost:5000/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -121,7 +127,7 @@ function ProfilePage() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/projects/${id}`, {
+                const res = await fetch(`http://localhost:5000/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -146,7 +152,7 @@ function ProfilePage() {
         }
         fetchProjects()
     }, [id])
-  
+
     const handleProjectChange = (index, field, value) => {
         if (!isOwner) {
             return
@@ -192,7 +198,7 @@ function ProfilePage() {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`http://localhost:5000/profile/${id}`, {
+            const profileRes = await fetch(`http://localhost:5000/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -226,10 +232,10 @@ function ProfilePage() {
             setprofesion(profileSavedData.profesion)
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
-             // Guardar la experiencia original después de guardar
+            // Guardar la experiencia original después de guardar
 
             // Guardar Proyectos (enviando el array completo)
-            const projectsRes = await fetch(`http://localhost:5000/projects/${id}`, {
+            const projectsRes = await fetch(`http://localhost:5000/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -367,72 +373,84 @@ function ProfilePage() {
     return (
         <main className="profile-container">
             <div>
-                <div className="header">
-                    <h2>Portfolio</h2>
+                <div className="w-full grid grid-cols-[auto_auto]">
+                    <h2 className='text-white-400 font-light text-4xl mb-4'>Portfolio</h2>
                     {
                         (isOwner)
-                       ?(!isEditing ? (
-                        <div className="flex items-center gap-4">
-                            <button
-                                className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                                onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
-                            >
-                                Edit Profile
-                            </button>
-                            {(state)?<button
+                            ? (!isEditing ? (
+                                <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
+                                    <button
+                                        className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
+                                    >
+                                        <i className="fas fa-pencil-alt"></i>
+                                        {' '}
+                                        Edit Profile
+                                    </button>
+                                    <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
+                                    {(state) ? <button
+                                        onClick={() => navigate('/', { state: { index } })}
+                                        className="col-span-1 text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                    >
+                                        <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+                                        {' '}Regresar
+                                    </button> : ''}
+                                    <button 
+                                        onClick={handleLogoutClick}
+                                        className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                    >
+                                        <i className="fas fa-right-from-bracket"></i>
+                                        {" "}
+                                        Log Out
+                                    </button>
+                                </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
+                                    <button
+                                        type="button"
+                                        className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        onClick={handleCancelEdit}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        onClick={handleSaveChanges}
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
+                            )) : (state) ? (<div className='flex flex-row justify-end'><button
                                 onClick={() => navigate('/', { state: { index } })}
-                                className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                className=" text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                 {' '}Regresar
-                            </button>:''}
-                        </div>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <button
-                                    type="button"
-                                    className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                                    onClick={handleCancelEdit}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                                    onClick={handleSaveChanges}
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        )):(state)?(<button
-                            onClick={() => navigate('/', { state: { index } })}
-                            className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                        >
-                            <FontAwesomeIcon icon={faArrowLeft} size="lg" />
-                            {' '}Regresar
-                        </button>):''
+                            </button></div>) : ''
                     }
                 </div>
                 <div className="profile-content">
                     {(isEditing) ?
                         (<div className='flex flex-row items-center gap-2'>
                             <div>
-                            {
-                                (profilePicture === "") ?
-                                    <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
-                                    : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
-                            }
+                                {
+                                    (profilePicture === "") ?
+                                        <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
+                                        : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
+                                }
                             </div>
                             <div className='mt-4'>
-                            <EditableField
-                                label="Profile Picture URL"
-                                displayLabel={false}
-                                isTextArea={false}
-                                value={profilePicture}
-                                onChange={(e) => setProfilePicture(e.target.value)}
-                                isEditing={isEditing}
-                                stateKey="profilePicture"
-                            />
+                                <EditableField
+                                    label="Profile Picture URL"
+                                    displayLabel={false}
+                                    isTextArea={false}
+                                    value={profilePicture}
+                                    onChange={(e) => setProfilePicture(e.target.value)}
+                                    isEditing={isEditing}
+                                    stateKey="profilePicture"
+                                />
                             </div>
                         </div>)
                         : (<div>
@@ -443,6 +461,7 @@ function ProfilePage() {
                             }
                         </div>)}
                     <h1 className='text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white'>{name} {firstName}</h1>
+                    <div className="mt-2 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300">
                     {(isEditing) ?
                         (<EditableField
                             label="Description"
@@ -451,13 +470,14 @@ function ProfilePage() {
                             isTextArea={true}
                             isEditing={isEditing}
                             stateKey="profileDescription"
-                        />) : (<div className="mt-2 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300">{profileDescription}</div>)}
+                        />) : (<p>{profileDescription}</p>)}
+                        </div>
                 </div>
-                    <SocialLinksEditor
-                        socialLinks={socialLinks}
-                        onChange={setSocialLinks}
-                        isEditing={isEditing}
-                    />
+                <SocialLinksEditor
+                    socialLinks={socialLinks}
+                    onChange={setSocialLinks}
+                    isEditing={isEditing}
+                />
                 <div>
                     <h1 className='text-3xl mb-4 font-semibold item-center'><BriefcaseIcon className="h-8 w-8 inline-block mr-2 mb-1" />Work experience</h1>
                     <WorkExperienceEditor
@@ -471,96 +491,96 @@ function ProfilePage() {
                 <h3 className="text-3xl font-semibold flex item-center"><CodeBracketIcon className="h-8 w-8 inline-block mr-2 mt-1 mb-5 ml-1" />Projects</h3>
 
                 {isEditing ? (
-                <div>
-                    <div className='mb-20 shadow rounded'>
-                        {projects.map((project, index) => (
-                            <div key={project.id || project.tempId} className="project-content rounded">
-                                <div className="work-experience-header">
-                                    <h4 className="text-lg font-medium mb-3">{`Project ${index + 1}`}</h4>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveProject(index)}
-                                        className="top-2 right-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600 text-lg"
-                                        title="Remove project"
-                                    >
-                                        <FontAwesomeIcon icon={faTrashCan} />
-                                    </button>
+                    <div>
+                        <div className='mb-20 shadow rounded'>
+                            {projects.map((project, index) => (
+                                <div key={project.id || project.tempId} className="project-content rounded">
+                                    <div className="work-experience-header">
+                                        <h4 className="text-lg font-medium mb-3">{`Project ${index + 1}`}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveProject(index)}
+                                            className="top-2 right-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600 text-lg"
+                                            title="Remove project"
+                                        >
+                                            <FontAwesomeIcon icon={faTrashCan} />
+                                        </button>
+                                    </div>
+                                    <div className='grid grid-cols-[1fr] md:grid md:grid-cols-[1fr_1fr] w-full  '>
+                                        <div className="justify-self-start">
+                                            <EditableField
+                                                label="Project Name"
+                                                value={project.project_name}
+                                                onChange={(e) => handleProjectChange(index, 'project_name', e.target.value)}
+                                                isEditing={isEditing}
+                                                stateKey={`project-name-${index}`}
+                                            />
+                                        </div>
+                                        <div className="md:justify-self-end">
+                                            <EditableField
+                                                label="Code URL"
+                                                value={project.code_url}
+                                                onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
+                                                type="url" // O "url"
+                                                isEditing={isEditing}
+                                                stateKey={`project-code-${index}`}
+                                                isTextArea={false}
+                                            />
+                                        </div>
+                                        <div className="justify-self-start">
+                                            <EditableField
+                                                label="Description"
+                                                value={project.description}
+                                                onChange={(e) => handleProjectChange(index, 'description', e.target.value)}
+                                                isTextArea={true}
+                                                isEditing={isEditing}
+                                                stateKey={`project-description-${index}`}
+                                            />
+                                        </div>
+                                        <div className="md:justify-self-end">
+                                            <EditableField
+                                                label="Preview URL"
+                                                value={project.preview_url}
+                                                onChange={(e) => handleProjectChange(index, 'preview_url', e.target.value)}
+                                                type="text" // O "url"
+                                                isEditing={isEditing}
+                                                stateKey={`project-preview-${index}`}
+                                                isTextArea={false}
+                                            />
+                                        </div>
+                                        <div className="justify-self-start">
+                                            <EditableField
+                                                label="Technologies (each separated by space)"
+                                                value={project.tecnologies}
+                                                onChange={(e) => handleProjectChange(index, 'tecnologies', e.target.value)}
+                                                isTextArea={true}
+                                                isEditing={isEditing}
+                                                stateKey={`project-tecnologies-${index}`}
+                                            />
+                                        </div>
+                                        <div className="md:justify-self-end">
+                                            <EditableField
+                                                label="Image URL"
+                                                value={project.project_image}
+                                                onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
+                                                isEditing={isEditing}
+                                                stateKey={`project-image-${index}`}
+                                                isTextArea={false}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className='grid grid-cols-1 md:grid grid-cols-[1fr_1fr] w-full  '>
-                                    <div className="justify-self-start">
-                                    <EditableField
-                                        label="Project Name"
-                                        value={project.project_name}
-                                        onChange={(e) => handleProjectChange(index, 'project_name', e.target.value)}
-                                        isEditing={isEditing}
-                                        stateKey={`project-name-${index}`}
-                                    />
-                                    </div>
-                                    <div className="justify-self-end">
-                                    <EditableField
-                                        label="Code URL"
-                                        value={project.code_url}
-                                        onChange={(e) => handleProjectChange(index, 'code_url', e.target.value)}
-                                        type="url" // O "url"
-                                        isEditing={isEditing}
-                                        stateKey={`project-code-${index}`}
-                                        isTextArea={false}
-                                    />
-                                    </div>
-                                    <div className="justify-self-start">
-                                    <EditableField
-                                        label="Description"
-                                        value={project.description}
-                                        onChange={(e) => handleProjectChange(index, 'description', e.target.value)}
-                                        isTextArea={true}
-                                        isEditing={isEditing}
-                                        stateKey={`project-description-${index}`}
-                                    />
-                                    </div>
-                                    <div className="justify-self-end">
-                                    <EditableField
-                                        label="Preview URL"
-                                        value={project.preview_url}
-                                        onChange={(e) => handleProjectChange(index, 'preview_url', e.target.value)}
-                                        type="text" // O "url"
-                                        isEditing={isEditing}
-                                        stateKey={`project-preview-${index}`}
-                                        isTextArea={false}
-                                    />
-                                    </div>
-                                    <div className="justify-self-start">
-                                    <EditableField
-                                        label="Technologies (each separated by space)"
-                                        value={project.tecnologies}
-                                        onChange={(e) => handleProjectChange(index, 'tecnologies', e.target.value)}
-                                        isTextArea={true}
-                                        isEditing={isEditing}
-                                        stateKey={`project-tecnologies-${index}`}
-                                    />
-                                    </div>
-                                    <div className="justify-self-end">
-                                    <EditableField
-                                        label="Image URL"
-                                        value={project.project_image}
-                                        onChange={(e) => handleProjectChange(index, 'project_image', e.target.value)}
-                                        isEditing={isEditing}
-                                        stateKey={`project-image-${index}`}
-                                        isTextArea={false}
-                                    />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
 
-                        <button
-                            type="button"
-                            className="text-white bg-gradient-to-br from-green-400 to-blue-600 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                            onClick={handleAddProject}
-                        >
-                            + Add New Project
-                        </button>
+                            <button
+                                type="button"
+                                className="text-white bg-gradient-to-br from-green-400 to-blue-600 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                onClick={handleAddProject}
+                            >
+                                + Add New Project
+                            </button>
+                        </div>
                     </div>
-                </div>
                 ) : (
                     <div className='mb-20'>
                         {projects.length === 0 ? (
@@ -606,26 +626,26 @@ function ProfilePage() {
 
                 <h1 className='mt-5 text-3xl font-semibold flex item-center'><UserIcon className="h-8 w-8 inline-block mr-2 mt-1" />About me</h1>
                 <div className="mb-20 profile-content  font-mono text-pretty text-white-900">
-                    {(aboutMe === "" && !isEditing) ? (<p className="text-gray-400 text-medium mb-2 ml-5 mt-3">No about me added yet.</p>) : 
-                    <EditableField
-                        label="About Me"
-                        value={aboutMe}
-                        onChange={(e) => setAboutMe(e.target.value)}
-                        isTextArea={true}
-                        isEditing={isEditing}
-                        stateKey="aboutMe"
-                    />}
+                    {(aboutMe === "" && !isEditing) ? (<p className="text-gray-400 text-medium mb-2 ml-5 mt-3">No about me added yet.</p>) :
+                        <EditableField
+                            label="About Me"
+                            value={aboutMe}
+                            onChange={(e) => setAboutMe(e.target.value)}
+                            isTextArea={true}
+                            isEditing={isEditing}
+                            stateKey="aboutMe"
+                        />}
                     {(isEditing) ? (
                         <div>
                             <h1 className='text-3xl font-semibold flex item-center'>Ocupation</h1>
                             <div className='mt-3'>
                                 <EditableField
-                                label="Ocupation"
-                                value={profesion}
-                                onChange={(e) => setprofesion(e.target.value)}
-                                isEditing={isEditing}
-                                stateKey="profesion"
-                                displayLabel={false}
+                                    label="Ocupation"
+                                    value={profesion}
+                                    onChange={(e) => setprofesion(e.target.value)}
+                                    isEditing={isEditing}
+                                    stateKey="profesion"
+                                    displayLabel={false}
                                 />
                             </div>
                         </div>) : ''}

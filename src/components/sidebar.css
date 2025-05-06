@@ -1,28 +1,31 @@
-
 aside {
+    position: absolute;
+    width: 100%;
+}
+.aside {
     position: sticky;
-    height: 100vh;
-    width: 250px;
     top: 0;
     left: 0;
-    background-color: #000;
+    height: 100vh;
+    width: 250px;
+    background-color: rgba(0,0,0, 0.5);
     padding-top: 20px;
-    border-right: rgba(240,240,240, 0.5) outset 1px;
-    
-    a {
-        display: flex;
-        gap: 10px;
-        max-height: 50px;
-        padding: 15px 20px;
-        text-decoration: none;
-        font-size: 16px;
-        color: rgba(255, 255, 255, 1);
-        align-items: center;
+    border-right: rgba(240,240,240, 0.2) outset 1px;
+    aside {
+        z-index: 999;
+        a {
+            display: flex;
+            gap: 10px;
+            max-height: 50px;
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 1);
+            align-items: center;
+        }
     }
-
-
     a:hover {
-        background-color: rgb(18,18,18);
+        background-color: rgba(10,10,25,0.7 );
     }
     
     h1 {
@@ -39,13 +42,16 @@ aside {
     
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
+    .aside {
+        width: 100px;
+    }
     aside {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 20px;
-        width: 100px;
+        width: 100%;
         justify-items: center;
         h1 {
             display: none;
@@ -55,58 +61,110 @@ aside {
         text-align: center;
         padding: 10px 0px;
         font-size: 18px;
+        p {
+            display: none;
+        }
+        
     }
-    main {margin-left: 0;}
-    aside a p{
-        display: none;
-    }
-    aside button  {
-        display: none;
-    }
-    
 }
 
 @media (max-width: 800px) {
+    .aside {      
+        position: sticky; 
+        top: 0;          
+        z-index: 999;
+        width: 100%; 
+        height: 60px;       
+        padding-top: 0; 
+        padding: 0 10px;         
+        border-right: none; 
+        border-bottom: rgba(240,240,240, 0.5) outset 1px;        
+        .background{
+            display: none;
+        }
+    }
     aside {
-        /* Posiciona el aside en la parte superior */
-        position: sticky; /* Se mantiene pegado arriba al hacer scroll */
-        top: 0; /* Pegado a la parte superior */
-        /* left: 0; /* Ya está 0 por defecto o por la media query anterior */
-        right: 0; /* Asegura que ocupe todo el ancho si left/right están 0 */
-        /* Cambia las dimensiones */
-        width: 100%; /* Ocupa todo el ancho de la ventana */
-        height: 60px; /* Establece una altura fija para la barra superior */
-        /* Cambia la dirección de los elementos internos a horizontal */
-        flex-direction: row;
-        /* Distribuye los elementos horizontalmente dentro de la barra */
-        justify-content: space-around; /* Distribuye espacio equitativamente */
-        padding-top: 0; /* Elimina el padding superior heredado */
-        padding: 0 10px; /* Añade un padding horizontal */
-        /* Ajusta el borde */
-        border-right: none; /* Elimina el borde derecho */
-        border-bottom: rgba(240,240,240, 0.5) outset 1px; /* Añade un borde inferior */
-        /* Asegura que esté por encima de otro contenido al scrollear */
-        z-index: 1000;
-    }
+        position: sticky; 
+        top: 0;         
+        flex-direction: row;      
+        justify-content: space-evenly; 
+        p {
+            display: none;
+        }
 
-    /* Ajusta los estilos de los enlaces para la barra horizontal */
+    }
     aside a {
-        /* Ya son display: flex y centrado por la media query de 1000px */
-        /* Asegura que el padding y gap sean adecuados para la distribución horizontal */
-        padding: 0 5px; /* Ajusta padding horizontal */
-        gap: 5px; /* Ajusta el espacio entre ícono y texto (si se mostrara) */
+        padding: 0 5px; 
+        gap: 5px; 
     }
-
-    /* El resto de estilos de la media query de 1000px (ocultar texto/botones) */
-    /* seguirán aplicándose a partir de 1000px hacia abajo, incluyendo 800px y menos. */
-    /* Si quisieras mostrar texto o botones en la barra horizontal, necesitarías sobreescribir */
-    /* 'display: none;' aquí, pero mantenerlos ocultos para una barra estrecha es típico. */
-
-    /* Ajusta el margen del contenido principal para dejar espacio a la barra superior */
-    main {
-         /* main {margin-left: 0;} ya está definido en la media query de 1000px */
-         /* Añade un margen superior igual a la altura de la barra del aside */
-        margin-top: 60px; /* Debe coincidir con la altura del aside en este breakpoint */
+   
+    main {     
+        margin-top: 60px;
     }
 }
+
+@keyframes animate {
+    0%{
+        transform: translateY(-1000px) rotate(0deg);
+        
+        border-radius: 25%;
+    }
+    100%{
+        transform: translateY(0) rotate(720deg);
+        
+        border-radius: 75%;
+    }
+  }
   
+    .background .animated-div {
+        background: linear-gradient(to bottom right, rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1));
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    animation: animate 15s linear infinite;
+  }
+  
+  .background .animated-div:nth-child(0) {
+    
+    left: 2%;
+    width: 123px;
+    height: 123px;
+    bottom: -200px; 
+    animation-delay: 0s;
+  }
+  
+  .background .animated-div:nth-child(1) {
+    
+    left: 0%;
+    width: 154px;
+    height: 154px;
+    bottom: -200px; 
+    animation-delay: 3s;
+  }
+  
+  .background .animated-div:nth-child(2) {
+    
+    left: 5%;
+    width: 105px;
+    height: 105px;
+    bottom: -200px; 
+    animation-delay: 6s;
+  }
+  
+  .background .animated-div:nth-child(3) {
+    
+    left: 0%;
+    width: 146px;
+    height: 146px;
+    bottom: -200px;
+    animation-delay: 9s;
+  }
+  
+  .background .animated-div:nth-child(4) {
+   
+    left: 3%;
+    width: 153px;
+    height: 153px;
+    bottom: -200px; 
+    animation-delay: 12s;
+  }

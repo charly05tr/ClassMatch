@@ -2,7 +2,7 @@ import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOption
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/20/solid'; // Asumiendo que ya tienes heroicons instaladas
 import clsx from 'clsx';
 import { useState, useEffect } from 'react'; // Necesitamos useEffect para sincronizar con el prop del padre
-
+import '/src/pages/ProfilePage.css'
 // Este componente reemplazará a tu <select> nativo
 // Recibirá el array de opciones, el valor string seleccionado actualmente,
 // y una función para llamar cuando la selección cambie (recibirá el valor string).
