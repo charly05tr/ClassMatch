@@ -54,7 +54,7 @@ function HomePage() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("http://192.168.0.6:5000", {
+                const response = await fetch("https://classmatchapi-1.onrender.com", {
                     credentials: "include",
                     method: "GET"
                 })

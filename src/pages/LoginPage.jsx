@@ -22,7 +22,7 @@ function LoginPage({ onLoginSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch("http://192.168.0.6:5000/users/login", {
+            const res = await fetch("https://classmatchapi-1.onrender.com/users/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

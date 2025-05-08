@@ -22,7 +22,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch('http://192.168.0.6:5000/users/register', {
+            const res = await fetch('https://classmatchapi-1.onrender.com/users/register', {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 credentials: "include",

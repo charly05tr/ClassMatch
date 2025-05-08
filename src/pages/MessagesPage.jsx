@@ -6,11 +6,11 @@ import { UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash';
-const API_BASE_URL = 'http://192.168.0.6:5000'
+const API_BASE_URL = 'https://classmatchapi-1.onrender.com'
 
 function MessagesPage({ currentUserId }) {
 
-    const WEBSOCKET_URL = `http://192.168.0.6:5000?userId=${currentUserId}`
+    const WEBSOCKET_URL = `https://classmatchapi-1.onrender.com?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([]);
     const [isSearchingUsers, setIsSearchingUsers] = useState(false);
     const [userSearchError, setUserSearchError] = useState(null);
