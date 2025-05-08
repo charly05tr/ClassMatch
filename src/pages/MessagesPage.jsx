@@ -3,6 +3,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ConversationListItem from '../components/ConversationListItem'
 import { UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { XMarkIcon, CheckIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash';
@@ -43,6 +44,14 @@ function MessagesPage({ currentUserId }) {
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [isFormVisible, setIsFormVisible] = useState(false)
     const textareaRef = useRef(null)
+    const searchResultsRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const [isCreatingGroup, setIsCreatingGroup] = useState(false); // True when user is in group creation mode
+    const [selectedParticipants, setSelectedParticipants] = useState([]); // Users selected for the group
+    const [newGroupName, setNewGroupName] = useState(''); // Name for the new group
+    const [isCreatingGroupConversation, setIsCreatingGroupConversation] = useState(false); // Loading state for backend API call
+    const [createGroupError, setCreateGroupError] = useState(null);
+    const [showParticipantsModal, setShowParticipantsModal] = useState(false);
     const PLACEHOLDER_PHOTO_URL = 'https://picsum.photos/200/300'
 
     const getUserPhotoUrl = (user) => {
@@ -166,25 +175,6 @@ function MessagesPage({ currentUserId }) {
     }, [socket, handlersRef])
 
 
-    const handleDmConversationCreated = useCallback((conversation) => {
-        console.log("DM Conversation created/obtained from DmSearchAndStart:", conversation)
-        setConversations(prevConversations => {
-            const existingIndex = prevConversations.findIndex(c => c.id === conversation.id)
-            const conversationDataForList = { ...conversation, last_message: conversation.last_message || null, }
-            if (existingIndex !== -1) {
-                const updatedConversations = [...prevConversations]
-                updatedConversations[existingIndex] = conversationDataForList
-                const [movedConv] = updatedConversations.splice(existingIndex, 1)
-                return [movedConv, ...updatedConversations]
-            } else {
-                return [conversationDataForList, ...prevConversations]
-            }
-        })
-
-        handleConversationSelect(conversation.id)
-    }, [handleConversationSelect])
-
-
     useEffect(() => {
         if (currentUserId !== null) {
             console.log(`Intentando conectar WebSocket para user ${currentUserId}...`)
@@ -270,17 +260,6 @@ function MessagesPage({ currentUserId }) {
         }
 
     }, [currentUserId])
-
-
-    const handleGroupConversationCreated = useCallback((conversation) => {
-        console.log("Group Conversation created from CreateGroupForm:", conversation)
-        setConversations(prevConversations => {
-
-            const conversationDataForList = { ...conversation, last_message: conversation.last_message || null }
-            return [conversationDataForList, ...prevConversations]
-        })
-        handleConversationSelect(conversation.id)
-    }, [handleConversationSelect])
 
 
     const handleLoadMoreMessages = useCallback(() => {
@@ -470,67 +449,6 @@ function MessagesPage({ currentUserId }) {
     }
 
 
-    const handleCreateGroup = async (e) => {
-        e.preventDefault()
-        const groupName = newGroupName.trim()
-        const participantIdsString = newGroupParticipantIdsInput.trim()
-
-        if (!participantIdsString && !groupName) {
-            setCreateGroupError("Ingresa un nombre para el grupo o IDs de participantes.")
-            return
-        }
-        const participantIds = participantIdsString
-            .split(',')
-            .map(id => parseInt(id.trim(), 10))
-            .filter(id => !isNaN(id) && id > 0)
-        if (participantIds.length < 2) {
-            setCreateGroupError("Un grupo debe tener al menos 2 participantes (tú y alguien más).")
-            return
-        }
-
-        if (participantIds.length === 1) {
-            setCreateGroupError("Para chats de 2 personas, usa la opción 'Iniciar nuevo DM'.")
-            return
-        }
-
-        setIsCreatingGroup(true)
-        setCreateGroupError(null)
-        try {
-            const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    name: groupName || null,
-                    participant_ids: participantIds,
-                }),
-            })
-            if (res.ok) {
-                const newConversation = await res.json()
-                console.log("Group conversation created:", newConversation)
-                const newConvData = {
-                    ...newConversation,
-                    last_message: newConversation.last_message || null,
-                }
-                setConversations(prevConversations => [newConvData, ...prevConversations])
-                handleConversationSelect(newConversation.id)
-                setNewGroupName('')
-                setNewGroupParticipantIdsInput('')
-                setCreateGroupError(null)
-            } else {
-                const errorData = await res.json()
-                setCreateGroupError(errorData.message || `Error creating group: ${res.status}`)
-                console.error("Error creating group:", res.status, errorData)
-            }
-        } catch (error) {
-            setCreateGroupError(`Network error creating group: ${error.message}`)
-            console.error("Network error creating group:", error)
-        } finally {
-            setIsCreatingGroup(false)
-        }
-    }
-
-
     const getConversationDisplayName = useCallback((conv) => {
         if (conv.name) {
             return conv.name
@@ -641,67 +559,248 @@ function MessagesPage({ currentUserId }) {
 
 
     // --- Handler to Select a User from Search Results and Start a DM ---
-    const handleSelectUserForDM = async (user) => {
-        console.log("Selected user for DM:", user);
-        // Optionally hide search results immediately
-        setShowSearchResults(false);
-        setConversationSearchTerm(''); // Clear the search term
 
-        // Indicate loading/creating DM (optional states if you want visual feedback)
-        // setIsCreatingDm(true);
-        // setCreateDmError(null);
+
+    const handleStartGroupCreation = () => {
+        console.log("Starting group creation mode.");
+        setIsCreatingGroup(true);
+        setSelectedParticipants([]); // Clear selected participants
+        setNewGroupName(''); // Clear group name
+        setConversationSearchTerm(''); // Clear search term
+        setUserSearchResults([]); // Clear search results
+        setUserSearchError(null); // Clear user search error
+        // Optional: Focus the search input field
+        // if (searchInputRef.current) {
+        //     searchInputRef.current.focus();
+        // }
+    };
+
+    // --- Handler to Select/Deselect User for Group ---
+    // This handler is called when clicking a user in the search results list
+    const handleSelectUserForGroup = (user) => {
+        console.log("Toggling user selection for group:", user);
+        const isSelected = selectedParticipants.some(p => String(p.id) === String(user.id));
+
+        if (isSelected) {
+            // Deselect: Remove from selectedParticipants
+            setSelectedParticipants(prev => prev.filter(p => String(p.id) !== String(user.id)));
+            // Add back to search results if they match the current search term (optional, but good UX)
+            if (user.username.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
+                (user.name && user.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) { // Basic check
+                setUserSearchResults(prev => [...prev, user].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name))); // Add back and sort
+            }
+
+        } else {
+            // Select: Add to selectedParticipants
+            setSelectedParticipants(prev => [...prev, user]);
+            // Optional: Remove from userSearchResults visually (handled by filter in searchUsers)
+            // setUserSearchResults(prev => prev.filter(p => String(p.id) !== String(user.id)));
+        }
+    };
+
+    // --- Handler to Remove Participant from Selected List ---
+    const handleRemoveParticipant = (participantToRemove) => {
+        console.log("Removing participant:", participantToRemove);
+        setSelectedParticipants(prev => prev.filter(p => String(p.id) !== String(participantToRemove.id)));
+        // Add back to search results if they match the current search term
+        if (participantToRemove.username.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
+            (participantToRemove.name && participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) { // Basic check
+            setUserSearchResults(prev => [...prev, participantToRemove].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name))); // Add back and sort
+        }
+    };
+
+
+    // --- Handler to Create Group Conversation (Backend API Call) ---
+    const handleCreateGroup = async () => {
+        console.log("Attempting to create group conversation.");
+        if (selectedParticipants.length === 0) {
+            alert("Por favor, selecciona al menos un participante.");
+            return;
+        }
+        if (!newGroupName.trim()) {
+            alert("Por favor, ingresa un nombre para el grupo.");
+            return;
+        }
+
+        setIsCreatingGroupConversation(true);
+        setCreateGroupError(null);
+
+        // Get IDs of selected participants + current user ID
+        const participantIds = selectedParticipants.map(p => p.id);
+        participantIds.push(currentUserId); // Add the current user's ID
 
         try {
-            // Call backend API to create or get DM conversation with this user
             const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    // Backend should handle finding existing DM or creating a new one
-                    participant_ids: [user.id], // Send only the other user's ID
-                    is_group: false // Explicitly mark as not a group if your backend needs it
+                    participant_ids: participantIds,
+                    name: newGroupName.trim(),
+                    is_group: true, // Explicitly mark as a group
                 }),
             });
 
             if (res.ok) {
-                const conversation = await res.json(); // Backend should return the conversation object
-                console.log("DM conversation created/obtained:", conversation);
+                const conversation = await res.json(); // Backend should return the new group conversation object
+                console.log("Group conversation created:", conversation);
 
-                // Add or move the new/existing conversation to the top of the conversations list
+                // Add the new conversation to the top of the conversations list
                 setConversations(prevConversations => {
-                    const existingIndex = prevConversations.findIndex(c => c.id === conversation.id);
                     const conversationDataForList = { ...conversation, last_message: conversation.last_message || null, };
-
-                    if (existingIndex !== -1) {
-                        // Conversation exists, move to top
-                        const updatedConversations = [...prevConversations];
-                        const [movedConv] = updatedConversations.splice(existingIndex, 1);
-                        return [movedConv, ...updatedConversations];
-                    } else {
-                        // New conversation, add to top
+                    // Add to top, ensuring no duplicates if WS event arrives first (less likely here)
+                    if (!prevConversations.some(c => c.id === conversation.id)) {
                         return [conversationDataForList, ...prevConversations];
                     }
+                    return prevConversations;
                 });
 
 
-                // Select the newly created/obtained conversation
+                // Reset group creation state
+                setIsCreatingGroup(false);
+                setSelectedParticipants([]);
+                setNewGroupName('');
+                // Clear search results if still visible
+                setConversationSearchTerm('');
+                setUserSearchResults([]);
+
+
+                // Select the newly created conversation
                 handleConversationSelect(conversation.id);
 
             } else {
                 const errorData = await res.json();
-                // setCreateDmError(errorData.message || `Error starting DM: ${res.status}`);
-                console.error("Error starting DM:", res.status, errorData);
-                alert(`Error starting DM: ${errorData.message || res.status}`); // Basic error feedback
+                setCreateGroupError(errorData.message || `Error creating group: ${res.status}`);
+                console.error("Error creating group:", res.status, errorData);
+                alert(`Error creating group: ${errorData.message || res.status}`); // Basic error feedback
             }
         } catch (error) {
-            // setCreateDmError(`Network error starting DM: ${error.message}`);
-            console.error("Network error starting DM:", error);
-            alert(`Network error starting DM: ${error.message}`); // Basic error feedback
+            setCreateGroupError(`Network error creating group: ${error.message}`);
+            console.error("Network error creating group:", error);
+            alert(`Network error creating group: ${error.message}`); // Basic error feedback
         } finally {
-            // setIsCreatingDm(false);
+            setIsCreatingGroupConversation(false);
         }
     };
+
+    // --- Handler to Cancel Group Creation Mode ---
+    const handleCancelGroupCreation = () => {
+        console.log("Cancelling group creation mode.");
+        setIsCreatingGroup(false);
+        setSelectedParticipants([]);
+        setNewGroupName('');
+        setConversationSearchTerm(''); // Clear search term
+        setUserSearchResults([]); // Clear search results
+        setUserSearchError(null); // Clear user search error
+    };
+
+
+    // --- Handler to Select a User from Search Results and Start a DM (Keep this for DM mode) ---
+    // This handler is called when clicking a user in the search results list WHEN NOT in group mode
+    const handleSelectUserForDM = async (user) => {
+        console.log("Selected user for DM:", user);
+        // Hide search results immediately
+        // setShowSearchResults(false); // Handled by clearing search term
+        setConversationSearchTerm(''); // Clear the search term
+
+        // ... (same handleSelectUserForDM logic as before: API call to create/get DM, add/move to conversations, select conversation) ...
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/messages/conversations`, { /* ... POST to create/get DM with participant_ids: [user.id] ... */ });
+            if (res.ok) {
+                const conversation = await res.json();
+                console.log("DM conversation created/obtained:", conversation);
+                setConversations(prevConversations => { /* ... add/move conversation to top ... */ });
+                handleConversationSelect(conversation.id); // Select the DM
+            } else { /* ... error handling ... */ alert(`Error starting DM: ...`); }
+        } catch (error) { /* ... network error handling ... */ alert(`Network error starting DM: ...`); }
+
+        const handleLeaveConversation = useCallback(async (conversationId) => {
+            console.log("Attempting to leave conversation:", conversationId);
+            if (!window.confirm("¿Estás seguro de que quieres salir de este chat?")) {
+                return; // Cancel if user does not confirm
+            }
+
+            // Optional: Set a loading state for leaving conversation
+            // setIsLeavingConversation(true);
+            // setLeaveConversationError(null);
+
+            try {
+                // Call backend API to leave the conversation
+                const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                });
+
+                if (res.ok) {
+                    console.log("Successfully left conversation:", conversationId);
+                    // Remove the conversation from the conversations list
+                    setConversations(prevConversations => prevConversations.filter(conv => conv.id !== conversationId));
+
+                    // If the user left the currently selected conversation, deselect it
+                    if (selectedConversationId === conversationId) {
+                        setSelectedConversationId(null); // Deselect the chat
+                        setMessages([]); // Clear messages
+                        setMessagePagination({ // Reset pagination
+                            total_items: 0, total_pages: 0, current_page: 0, items_per_page: 20,
+                            has_next: false, has_prev: false, next_page: null, prev_page: null,
+                        });
+                        // Hide the participants modal if it was open
+                        setShowParticipantsModal(false);
+                    } else {
+                        // If user left a conversation that wasn't selected, maybe just show a notification
+                        alert(`Has salido del chat.`); // Simple notification
+                    }
+
+                } else {
+                    const errorData = await res.json();
+                    // setLeaveConversationError(errorData.message || `Error leaving conversation: ${res.status}`);
+                    console.error("Error leaving conversation:", res.status, errorData);
+                    alert(`Error al salir del chat: ${errorData.message || res.status}`); // Basic error feedback
+                }
+            } catch (error) {
+                // setLeaveConversationError(`Network error leaving conversation: ${error.message}`);
+                console.error("Network error leaving conversation:", error);
+                alert(`Error de red al salir del chat: ${error.message}`); // Basic error feedback
+            } finally {
+                // setIsLeavingConversation(false);
+            }
+        }, [selectedConversationId, setConversations, setSelectedConversationId, setMessages, setMessagePagination]);
+    };
+
+    const handleToggleParticipantsModal = () => {
+        // Only toggle if a conversation is selected
+        if (selectedConversationId !== null) {
+            setShowParticipantsModal(prev => !prev);
+            console.log("Toggling participants modal, new state:", !showParticipantsModal);
+        }
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Check if the click is outside the modal content itself
+            // You'll need to add a ref to the modal content div
+            // For simplicity now, let's just check if it's the document body
+            // A more robust solution needs a ref to the modal content.
+            // Example (requires modalContentRef):
+            // if (modalContentRef.current && !modalContentRef.current.contains(event.target)) {
+            //    setShowParticipantsModal(false);
+            // }
+        };
+        // Add listener if modal is open
+        if (showParticipantsModal) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        // Cleanup
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showParticipantsModal]);
+
+    const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+    const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined; // Check if it's a group
+
 
     return (
         <div className="shadow grid grid-cols-[1fr_2fr] grid-template-rows h-100 pl-4 min-h-screen text-gray-900 gap-3 dark:text-gray-100">
@@ -715,67 +814,146 @@ function MessagesPage({ currentUserId }) {
                             <h1 className="text-2xl p-4 font-bold">New chat</h1>
                         </header>
                         <div className="relative w-full ">
-                            <div className=" relative"> {/* Added relative for positioning dropdown */}
-
-                                {/* Input de Búsqueda */}
-                                <div className="relative">
+                            <div className=" relative">
+                                <div>
+                                    {/* Conditional rendering of buttons */}
+                                    {!isCreatingGroup ? (
+                                        // "New Group" button (shown when NOT creating group)
+                                        <button
+                                            onClick={handleStartGroupCreation} // New handler
+                                            className='flex p-4 gap-2 items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
+                                        >
+                                            <UserGroupIcon className="-ml-0.5 size-5" aria-hidden="true" />
+                                            New project group
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2 items-center max-h-[45px]">
+                                            {/* Create Group Button */}
+                                            <button
+                                                onClick={handleCreateGroup} // New handler
+                                                disabled={selectedParticipants.length === 0 || !newGroupName.trim() || isCreatingGroupConversation} // Disable if no participants or no name
+                                                className={`text-white bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2" ${selectedParticipants.length === 0 || !newGroupName.trim() || isCreatingGroupConversation ? 'cursor-not-allowed' : 'bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600'}`}
+                                            >
+                                                {isCreatingGroupConversation ? 'Creating project...' : 'Create project group'}
+                                            </button>
+                                            {/* Cancel Button */}
+                                            <button
+                                                onClick={handleCancelGroupCreation} // New handler
+                                                className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    )}
+                                    {isCreatingGroup && (
+                                        <div className="mt-3 mb-3">
+                                            <label htmlFor="group-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project group name:</label>
+                                            <input
+                                                type="text"
+                                                id="group-name"
+                                                className="block w-full p-2 text-sm text-gray-900 outline-none bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                placeholder="E.g: Alpha Team project"
+                                                value={newGroupName}
+                                                onChange={(e) => setNewGroupName(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="relative mb-3">
                                     <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                         <MagnifyingGlassIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                                     </div>
                                     <input
                                         type="text"
                                         id="conversation-search"
+                                        ref={searchInputRef}
                                         className="block w-full p-2 ps-10 outline-none text-sm text-gray-900  bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                        placeholder="Buscar chat o iniciar uno nuevo"
+                                        placeholder={isCreatingGroup ? 'Search users to add' : 'Search chat'}
                                         value={conversationSearchTerm}
                                         onChange={(e) => setConversationSearchTerm(e.target.value)}
                                     // Optional: onFocus={() => setShowSearchResults(true)} // Show results when input is focused
                                     // Optional: onBlur={() => setTimeout(() => setShowSearchResults(false), 100)} // Hide with delay on blur
                                     />
                                 </div>
-
+                                {isCreatingGroup && selectedParticipants.length > 0 && (
+                                    <div className="mt-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                        <h3 className="text-sm font-medium mb-2">Participantes Seleccionados:</h3>
+                                        <ul className="flex flex-wrap gap-2">
+                                            {selectedParticipants.map(participant => (
+                                                <li key={`selected-participant-${participant.id}`} className="flex items-center bg-blue-200 dark:bg-blue-600 text-blue-900 dark:text-blue-100 text-xs font-medium px-2.5 py-1 rounded-full">
+                                                    {/* Optional: participant.username or participant.name */}
+                                                    {participant.username || participant.name || `Usuario ${participant.id}`}
+                                                    {/* Button to remove participant */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveParticipant(participant)}
+                                                        className="ml-1 -mr-0.5 size-3 text-blue-800 dark:text-blue-200 hover:text-blue-900 dark:hover:text-blue-50 rounded-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                        aria-label={`Remover a ${participant.username || participant.name}`}
+                                                    >
+                                                        <XMarkIcon aria-hidden="true" />
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                                 {/* Search Results Dropdown/Section (NEW) */}
                                 {/* Conditional rendering based on showSearchResults and search state */}
-                                {showSearchResults && (conversationSearchTerm.trim().length > 0) && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-lg shadow max-h-60 overflow-y-auto">
+                                {(conversationSearchTerm.trim().length > 0 || isCreatingGroup) && ( // Show if searching or in group mode
+                                    <div ref={searchResultsRef} className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800  border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                         {isSearchingUsers ? (
                                             <div className="p-4 text-center text-gray-500 dark:text-gray-400">Buscando usuarios...</div>
                                         ) : userSearchError ? (
                                             <div className="p-4 text-center text-red-500">{userSearchError}</div>
                                         ) : userSearchResults.length > 0 ? (
-                                            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                                            <ul className="divide-y divide-gray-200 dark:divide-gray-700 ">
                                                 {/* Render User Search Results */}
-                                                {userSearchResults.map(user => (
-                                                    <li
-                                                        key={`user-search-${user.id}`} // Unique key for user results
-                                                        className="flex items-center gap-x-4 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                        onClick={() => handleSelectUserForDM(user)} // Handle click to start DM
-                                                    >
-                                                        <img
-                                                            className="size-8 flex-none rounded-full bg-gray-50"
-                                                            src={getUserPhotoUrl(user, 'small')} // Use small photo URL
-                                                            alt={`Foto de perfil de ${user.username || user.name}`}
-                                                        />
-                                                        <div className="min-w-0 flex-auto">
-                                                            <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">
-                                                                {user.username || user.name || `Usuario ${user.id}`}
-                                                            </p>
-                                                        </div>
-                                                    </li>
-                                                ))}
+                                                {userSearchResults.map(user => {
+                                                    // Check if the user is already selected
+                                                    const isSelected = selectedParticipants.some(p => String(p.id) === String(user.id));
+                                                    return (
+                                                        <li
+                                                            key={`user-search-${user.id}`} // Unique key for user results
+                                                            className="flex items-center gap-x-4 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                            // Different click handler based on mode
+                                                            onClick={() => isCreatingGroup ? handleSelectUserForGroup(user) : handleSelectUserForDM(user)}
+                                                        >
+                                                            {/* User Photo */}
+                                                            <img
+                                                                className="size-8 flex-none rounded-full bg-gray-50"
+                                                                src={getUserPhotoUrl(user, 'small')}
+                                                                alt={`Foto de perfil de ${user.username || user.name}`}
+                                                            />
+                                                            <div className="min-w-0 flex-auto">
+                                                                <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">
+                                                                    {user.username || user.name || `Usuario ${user.id}`}
+                                                                </p>
+                                                            </div>
+                                                            {/* Checkbox or Indicator (NEW) */}
+                                                            {isCreatingGroup && (
+                                                                <div className="ml-auto"> {/* Use ml-auto to push to the right */}
+                                                                    {isSelected ? (
+                                                                        // Checkbox visual when selected in group mode
+                                                                        <CheckIcon className="size-5 text-green-500 dark:text-green-400" aria-hidden="true" />
+                                                                    ) : (
+                                                                        // Empty space or unchecked visual when not selected
+                                                                        <div className="size-5  border dark:border-gray-400 rounded-sm"></div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </li>
+                                                    );
+                                                })}
                                             </ul>
-                                        ) : (
-                                            // Message when search term is not empty but no users found
-                                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">No se encontraron usuarios.</div>
-                                        )}
+                                        ) :
+                                            // Message when search term is present but no users found
+                                            (conversationSearchTerm.trim().length > 0) && !isSearchingUsers && (
+                                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">No se encontraron usuarios.</div>
+                                            )}
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <button className='flex p-4 gap-2 items-center'>
-                            <UserGroupIcon className="-ml-0.5 size-5" aria-hidden="true" />
-                            New group
-                        </button>
                     </div>
                     :
                     <div>
@@ -798,7 +976,7 @@ function MessagesPage({ currentUserId }) {
                                 type="text"
                                 id="conversation-search"
                                 className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 bg-gray-50 focus:ring-none focus:border-none dark:bg-gray-700 outline-none dark:border-none dark:placeholder-gray-400 dark:text-white dark:focus:ring-none dark:focus:border-none"
-                                placeholder="Buscar chat"
+                                placeholder="Search chat"
                                 value={conversationSearchTerm}
                                 onChange={(e) => setConversationSearchTerm(e.target.value)}
                             />
@@ -843,26 +1021,90 @@ function MessagesPage({ currentUserId }) {
                         ref={messagesContainerRef}
                         className="flex flex-col msg-container overflow-y-auto h-screen shadow custom-scrollbar"
                     >
-                        <h1 className="text-xl font-bold fixed py-2 px-3 msg-container-header">
+                        <button
+                            className="text-xl font-bold fixed py-2 px-3 msg-container-header"
+                            onClick={handleToggleParticipantsModal}
+                            disabled={selectedConversation === undefined}
+                        >
                             {selectedConversationId === null
                                 ? ''
                                 : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-2">
                                     {getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}
-                                    <img src={getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                    <img src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() : (selectedConversation.participants && selectedConversation.participants.length === 2 ? getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') : getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                    {/* <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedConversationId(null) }} />; */}
                                 </div>)
                             }
-                        </h1>
+                        </button>
+                        {showParticipantsModal && selectedConversation && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm relative">
+                                    {/* Close Button */}
+                                    <button
+                                        onClick={handleToggleParticipantsModal}
+                                        className="absolute top-3 right-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                                        aria-label="Cerrar"
+                                    >
+                                        <XMarkIcon className="size-6" aria-hidden="true" />
+                                    </button>
+
+                                    {/* Modal Title */}
+                                    <h3 className="text-lg font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">
+                                        {isGroupConversation ? 'Miembros del Grupo' : 'Participantes del Chat'}
+                                    </h3>
+
+                                    {/* Participants List */}
+                                    {selectedConversation.participants && selectedConversation.participants.length > 0 ? (
+                                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2"> {/* Add padding-right for scrollbar */}
+                                            {selectedConversation.participants.map(participant => (
+                                                <li key={participant.id} className="flex items-center gap-3">
+                                                    <img
+                                                        className="size-8 flex-none rounded-full bg-gray-50"
+                                                        src={getUserPhotoUrl(participant, 'small')} // Use small photo
+                                                        alt={`Foto de perfil de ${participant.username || participant.name}`}
+                                                    />
+                                                    <div className="min-w-0 flex-auto">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                            {participant.username || participant.name || `Usuario ${participant.id}`}
+                                                            {/* Optional: Indicate if it's the current user */}
+                                                            {String(participant.id) === String(currentUserId) && (
+                                                                <span className="ml-1 text-xs bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded-full">Tú</span>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-center text-gray-500 dark:text-gray-400">No se encontraron participantes.</p>
+                                    )}
+
+                                    {/* Leave Group Button (Show only for Group Conversations) */}
+                                    {isGroupConversation && (
+                                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <button
+                                                onClick={() => handleLeaveConversation(selectedConversation.id)} // Call handler
+                                                className="w-full px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                            >
+                                                Salir del Grupo
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {isLoadingMore && <p className="text-center text-sm text-gray-600 dark:text-gray-400"></p>}
                         {messages.map(message => (
                             <div
-                                key={message.id}
-                                className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
+                            key={message.id}
+                            className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
+                                {console.log(`Remitente del mensaje ${message.id}:`, message.sender.name)}
                                 <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${String(message.sender_id) === String(currentUserId) ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
                                     <div>
-                                        <p className={`text-xs text-left font-semibold mb-1 ${String(message.sender_id) === String(currentUserId) ? 'text-right' : 'text-left'}`}>
-                                            {(message.sender && String(message.sender_id) !== String(currentUserId)) ?? message.sender.name}
-                                        </p>
+                                        {String(message.sender.id) !== String(currentUserId) ?
+                                        <p className="text-xs text-left font-semibold mb-1">
+                                            {String(message.sender.name)}
+                                        </p>:<p></p>}
                                         <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
                                             {message.content}
                                         </p>
@@ -872,7 +1114,7 @@ function MessagesPage({ currentUserId }) {
                             </div>
                         ))}
                         {!isLoadingMessages && !isLoadingMore && messages.length === 0 && !messagesError && (
-                            <p className="text-center text-gray-600 dark:text-gray-400 mb-auto">Esta conversación no tiene mensajes aún.</p>
+                            <p className="text-center text-gray-600 dark:text-gray-400 mb-auto">This chat don't have messages yet.</p>
                         )}
 
                         {selectedConversationId !== null && (
