@@ -67,7 +67,7 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                             <button
                                 type="button"
                                 onClick={() => handleRemoveLink(index)}
-                                className="text-red-600 hover:text-red-800 text-lg p-1"
+                                className="text-red-600 hover:text-red-800 text-lg "
                                 title="Remove Link"
                             >
                                  <FontAwesomeIcon icon={faTrashCan} />
@@ -100,7 +100,7 @@ const SocialLinksEditor = ({ socialLinks, onChange, isEditing }) => {
                                 bg-gray-100 text-white-100 text-normal me-2 px-3 py-1.5 
                                 dark:bg-gray-700 hover:text-gray-900 
                                 border border-gray-500 rounded-2xl
-                                hover:bg-white"
+                                hover:bg-white mt-2"
                                 title={socialOptions.find(opt => opt.value === link.type)?.label || link.type}
                             >
                                 <FontAwesomeIcon icon={getSocialIcon(link.type)} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import './HomePage.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
@@ -54,7 +54,7 @@ function HomePage() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("https://classmatchapi-1.onrender.com", {
+                const response = await fetch("http://192.168.0.6:5000", {
                     credentials: "include",
                     method: "GET"
                 })
