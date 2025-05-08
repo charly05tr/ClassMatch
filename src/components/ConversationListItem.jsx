@@ -43,7 +43,7 @@ function ConversationListItem({
     const lastMessagePreview = conv.last_message ? (
         conv.name ? ( // Si es un Grupo
             // Mostrar nombre del remitente del último mensaje + contenido
-            `${conv.last_message.sender ? conv.last_message.sender.username : `Usuario ${conv.last_message.sender_id}`}: ${conv.last_message.content}`
+            `${conv.last_message.sender ? conv.last_message.sender.name : `Usuario ${conv.last_message.sender_id}`}: ${conv.last_message.content}`
         ) : ( // Si es un DM
             // Mostrar solo el contenido del último mensaje
             conv.last_message.content
