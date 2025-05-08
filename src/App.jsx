@@ -25,7 +25,7 @@ function App() {
     const checkLoginStatus = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch("http://192.168.0.6:5000/users/debug", { credentials: "include" })
+        const res = await fetch("https://classmatchapi-1.onrender.com/users/debug", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           // console.log("Data recibida de /debug:", data)
@@ -63,7 +63,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://0.0.0.0:5000/users/logout", { credentials: "include" })
+      const res = await fetch("https://classmatchapi-1.onrender.com/users/logout", { credentials: "include" })
       if (res.ok) {
         window.location.href = '/'
         setIsLoggedIn(false)
