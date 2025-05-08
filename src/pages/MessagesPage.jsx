@@ -768,8 +768,6 @@ function MessagesPage({ currentUserId }) {
                                             // Message when search term is not empty but no users found
                                             <div className="p-4 text-center text-gray-500 dark:text-gray-400">No se encontraron usuarios.</div>
                                         )}
-                                        {/* Optional: Message if no search term, but results section is shown (e.g., via onFocus) */}
-                                        {/* {!conversationSearchTerm.trim() && <div className="p-4 text-center text-gray-500 dark:text-gray-400">Empieza a escribir para buscar usuarios.</div>} */}
                                     </div>
                                 )}
                             </div>
