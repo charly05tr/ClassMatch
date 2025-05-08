@@ -1,0 +1,44 @@
+.msg-timestamp{
+    font-size: 10px;
+    align-self: end;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgb(0, 38, 84); 
+  border-radius: 6px;
+}
+
+.send-message{
+  position: sticky;
+  bottom: 2%;
+  right: 0;
+}
+
+.msg-container-header{
+  top: 0;
+  position: sticky;
+  z-index: 100;
+  width: 100%;
+}
+
+.msg-container > :nth-child(2) {
+  margin-top: auto;
+}
+
+.item-bg-color-selected {
+  background-color: rgb(0, 38, 84);
+}
+
+.item-bg-color {
+  background-color: rgba(0, 38, 84, 0.5);
+}
+
+.item-bg-color:hover{
+  background-color: rgba(0, 38, 84, 0.7);
+}

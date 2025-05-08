@@ -1,403 +1,449 @@
-// src/pages/MessagesPage.jsx
-import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-// Asumo que puedes necesitar useNavigate si quieres navegar a la conversación después de crear un DM
-// import { useNavigate } from 'react-router-dom';
-
-// URL base de tu backend (ajusta si tu backend no corre en 5000 o si está desplegado)
-const API_BASE_URL = 'http://localhost:5000';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import ConversationListItem from '../components/ConversationListItem'
+import { UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { io } from 'socket.io-client'
+import './MessagePage.css'
+import { debounce } from 'lodash';
+const API_BASE_URL = 'http://192.168.0.6:5000'
 
 function MessagesPage({ currentUserId }) {
-    // const navigate = useNavigate(); // Si decides navegar después de crear un DM
 
-    // --- Estados para las conversaciones ---
-    const [conversations, setConversations] = useState([]);
-    const [isLoadingConversations, setIsLoadingConversations] = useState(true);
-    const [conversationsError, setConversationsError] = useState(null);
-
-    // --- Estados para los mensajes de la conversación seleccionada ---
-    const [selectedConversationId, setSelectedConversationId] = useState(null);
-    const [messages, setMessages] = useState([]);
-    const [isLoadingMessages, setIsLoadingMessages] = useState(false); // Inicia falso, solo carga al seleccionar una conversación
-    const [messagesError, setMessagesError] = useState(null);
-    const [messagePagination, setMessagePagination] = useState({ // Estado para la paginación de mensajes
+    const WEBSOCKET_URL = `http://192.168.0.6:5000?userId=${currentUserId}`
+    const [userSearchResults, setUserSearchResults] = useState([]);
+    const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+    const [userSearchError, setUserSearchError] = useState(null);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [conversations, setConversations] = useState([])
+    const [isLoadingConversations, setIsLoadingConversations] = useState(true)
+    const [conversationsError, setConversationsError] = useState(null)
+    const [socket, setSocket] = useState(null)
+    const [selectedConversationId, setSelectedConversationId] = useState(null)
+    const [messages, setMessages] = useState([])
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+    const [messagesError, setMessagesError] = useState(null)
+    const [messagePagination, setMessagePagination] = useState({
         total_items: 0,
         total_pages: 0,
         current_page: 0,
-        items_per_page: 20, // Asumir el default del backend
+        items_per_page: 100,
         has_next: false,
         has_prev: false,
         next_page: null,
         prev_page: null,
-    });
+    })
 
-    // --- Estados para formularios ---
-    const [newMessageContent, setNewMessageContent] = useState('');
-    const [isSendingMessage, setIsSendingMessage] = useState(false);
-    const [sendMessageError, setSendMessageError] = useState(null);
+    const [newMessageContent, setNewMessageContent] = useState('')
+    const [isSendingMessage, setIsSendingMessage] = useState(false)
+    const [sendMessageError, setSendMessageError] = useState(null)
+    const oldScrollHeightRef = useRef(0)
+    const [conversationSearchTerm, setConversationSearchTerm] = useState('')
+    const messagesContainerRef = useRef(null)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [isFormVisible, setIsFormVisible] = useState(false)
+    const textareaRef = useRef(null)
+    const PLACEHOLDER_PHOTO_URL = 'https://picsum.photos/200/300'
 
-    const [dmUserIdInput, setDmUserIdInput] = useState('');
-    const [isCreatingDm, setIsCreatingDm] = useState(false);
-    const [createDmError, setCreateDmError] = useState(null);
-    const oldScrollHeightRef = useRef(0); // Ref para guardar la altura vieja
+    const getUserPhotoUrl = (user) => {
+        return (user && user.profile_picture) ? user.profile_picture : PLACEHOLDER_PHOTO_URL
+    }
 
-    const [newGroupName, setNewGroupName] = useState('');
-    const [newGroupParticipantIdsInput, setNewGroupParticipantIdsInput] = useState('');
-    const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-    const [createGroupError, setCreateGroupError] = useState(null);
-
-    const messagesContainerRef = useRef(null);
-
-    // --- Estado para controlar si se está cargando más mensajes antiguos (para UI) ---
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-    // --- useEffect para obtener la lista de conversaciones del usuario ---
-    // Se ejecuta solo una vez al montar el componente
-    useEffect(() => {
-        const fetchConversations = async () => {
-            setIsLoadingConversations(true);
-            setConversationsError(null);
-            try {
-                // Usa la URL de la ruta que NO tiene paginación en el backend (según tu última instrucción)
-                const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
-                    credentials: 'include', // Importante para enviar la cookie de sesión
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log("Conversations fetched:", data);
-                    setConversations(data);
-                } else {
-                    // Manejar errores como 401 (no autorizado) o otros errores HTTP
-                    const errorData = await res.json(); // Intentar leer el cuerpo del error
-                    setConversationsError(errorData.message || `Error fetching conversations: ${res.status}`);
-                    console.error("Error fetching conversations:", res.status, errorData);
-                    setConversations([]); // Limpiar lista en caso de error
-                }
-            } catch (error) {
-                // Manejar errores de red
-                setConversationsError(`Network error fetching conversations: ${error.message}`);
-                console.error("Network error fetching conversations:", error);
-                setConversations([]); // Limpiar lista en caso de error
-            } finally {
-                setIsLoadingConversations(false);
-            }
-        };
-
-        if (currentUserId) { // Solo fetchear si el currentUserId está disponible
-            fetchConversations();
-        }
-    }, []); // Array de dependencias vacío: se ejecuta solo una vez al montar
+    const formatTime = (timestamp) => {
+        if (!timestamp) return ''
+        const date = new Date(timestamp)
+        return new Intl.DateTimeFormat('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }).format(date)
+    }
 
 
-    // --- useEffect para obtener los mensajes de una conversación seleccionada ---
-    // Se ejecuta cada vez que selectedConversationId cambia (y no es null)
-
-
-    const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 20) => { // <-- Removed 'append'
-
-        if (!conversationId) {
-            setMessages([]);
-            setMessagePagination({
-                total_items: 0, total_pages: 0, current_page: 0, items_per_page: perPage,
-                has_next: false, has_prev: false, next_page: null, prev_page: null,
-            });
-            // Limpiar ref al limpiar mensajes
-            oldScrollHeightRef.current = 0;
-            return;
-        }
-
-        // Ajustar indicadores de carga
-        if (page === 1) {
-            setIsLoadingMessages(true); // Carga inicial
-            oldScrollHeightRef.current = 0; // Asegurarse que sea 0 en carga inicial
-        } else {
-            setIsLoadingMore(true); // Cargando página adicional
-            // --- Capturar la altura del scroll ANTES de setear los mensajes ---
-            // Esto se usa en useLayoutEffect para mantener la posición
-            if (messagesContainerRef.current) {
-                oldScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
-                console.log("Capturing old scrollHeight for page", page, ":", oldScrollHeightRef.current);
+    const fetchConversations = async () => {
+        setIsLoadingConversations(true)
+        setConversationsError(null)
+        try {
+            const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
+                credentials: 'include',
+            })
+            if (res.ok) {
+                const data = await res.json()
+                console.log("Conversations fetched:", data)
+                setConversations(data)
             } else {
-                oldScrollHeightRef.current = 0;
+                const errorData = await res.json()
+                setConversationsError(errorData.message || `Error fetching conversations: ${res.status}`)
+                console.error("Error fetching conversations:", res.status, errorData)
+                setConversations([])
             }
+        } catch (error) {
+            setConversationsError(`Network error fetching conversations: ${error.message}`)
+            console.error("Network error fetching conversations:", error)
+            setConversations([])
+        } finally {
+            setIsLoadingConversations(false)
         }
-        setMessagesError(null);
+    }
+    useEffect(() => {
+
+        if (currentUserId) {
+            fetchConversations()
+        }
+    }, [])
 
 
+    const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 100) => {
+        console.log(`Workspaceing messages for conv ${conversationId}, page ${page}...`)
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
                 credentials: 'include',
-            });
-
+            })
             if (res.ok) {
-                const data = await res.json();
-                console.log(`Messages for conv ${conversationId}, page ${page}:`, data);
-
-                // --- SIEMPRE añadir mensajes al FINAL si usamos column-reverse ---
+                const data = await res.json()
+                console.log(`Received messages for conv ${conversationId}, page ${page}:`, data)
                 setMessages(prevMessages => {
-                    if (page === 1) {
-                        // Primera página: simplemente reemplazamos con los mensajes de la página 1
-                        return data.messages;
-                    } else {
-                        // Páginas subsiguientes: añadir los mensajes (más viejos) al FINAL
-                        // porque column-reverse los mostrará arriba
-                        return [...prevMessages, ...data.messages];
+
+                    if (page < messagePagination.current_page) {
+                        console.log(`Prepending messages for older page ${page}.`)
+                        return [...data.messages, ...prevMessages]
+                    } else if (page === 1 && prevMessages.length === 0) {
+                        console.log("Replacing messages with page 1 (initial).")
+                        return data.messages
                     }
-                });
+                    else {
+                        console.log(`Replacing messages with page ${page} (assuming last page initial load).`)
+                        return data.messages
+                    }
+                })
 
-
-                setMessagePagination(data.pagination); // Actualizar estado de paginación
-
+                setMessagePagination(data.pagination)
             } else {
-                const errorData = await res.json();
-                setMessagesError(errorData.message || `Error fetching messages: ${res.status}`);
-                console.error("Error fetching messages:", res.status, errorData);
-                setMessages(prevMessages => page === 1 ? [] : prevMessages); // Limpiar solo si es la primera página
-                setMessagePagination({
-                    total_items: 0, total_pages: 0, current_page: page, items_per_page: perPage,
-                    has_next: false, has_prev: false, next_page: null, prev_page: null,
-                });
-                oldScrollHeightRef.current = 0; // Reset on error
+                setMessages(prevMessages => page < messagePagination.current_page ? prevMessages : [])
             }
         } catch (error) {
-            setMessagesError(`Network error fetching messages: ${error.message}`);
-            console.error("Network error fetching messages:", error);
-            setMessages(prevMessages => page === 1 ? [] : prevMessages); // Limpiar solo si es la primera página
-            setMessagePagination({
-                total_items: 0, total_pages: 0, current_page: page, items_per_page: perPage,
-                has_next: false, has_prev: false, next_page: null, prev_page: null,
-            });
-            oldScrollHeightRef.current = 0; // Reset on error
-        } finally {
-            if (page === 1) {
-                setIsLoadingMessages(false); // Termina carga inicial
-            } else {
-                setIsLoadingMore(false); // Termina carga adicional
-            }
+            setMessages(prevMessages => page < messagePagination.current_page ? prevMessages : [])
         }
-    }, [selectedConversationId, messagePagination.items_per_page]); // Dependencies adjusted: Removed 'messages'
+    }, [selectedConversationId, messagePagination.items_per_page, messagePagination.current_page])
 
 
     useEffect(() => {
         if (selectedConversationId !== null) {
-            // Al seleccionar, siempre cargar la primera página (más vieja)
-            // Removido el argumento 'append'
-            fetchMessages(selectedConversationId, 1, messagePagination.items_per_page);
+            fetchMessages(selectedConversationId, 1, messagePagination.items_per_page)
         } else {
-            // Limpiar si no hay conversación seleccionada
-            setMessages([]);
+            setMessages([])
             setMessagePagination({
                 total_items: 0, total_pages: 0, current_page: 0, items_per_page: messagePagination.items_per_page,
                 has_next: false, has_prev: false, next_page: null, prev_page: null,
-            });
-            oldScrollHeightRef.current = 0; // Limpiar ref
+            })
+            oldScrollHeightRef.current = 0
         }
-    }, [selectedConversationId, fetchMessages, messagePagination.items_per_page]); // Dependencias ajustadas
+    }, [selectedConversationId, fetchMessages, messagePagination.items_per_page])
 
 
-    useLayoutEffect(() => {
-        const messagesContainer = messagesContainerRef.current;
-
-        // Solo ajustar si hay un contenedor, si selectedConversationId está activo (no es la limpieza inicial)
-        // y si messages *cambió* (indicando que se cargaron nuevos mensajes)
-        // También si no estamos en la primera carga (page === 1)
-        if (messagesContainer && selectedConversationId !== null && messages.length > 0 && messagePagination.current_page > 1) {
-            // La altura del scroll *antes* de añadir los mensajes fue guardada en fetchMessages (oldScrollHeight)
-            // La altura del scroll *ahora* (después de añadir) es messagesContainer.scrollHeight
-
-            // Calcular la diferencia de altura introducida por los nuevos mensajes
-            // Necesitamos acceso a oldScrollHeight capturado en fetchMessages
-            // Esto es tricky sin Redux/Context o pasar oldScrollHeight.
-            // Una alternativa más simple es guardar solo la altura ANTES y calcular la diferencia AHORA.
-
-            // Vamos a re-capturar la altura del scroll justo antes de la actualización en fetchMessages
-            // y pasarla como argumento a fetchMessages.
-
-            // --- Revisar fetchMessages y pasar oldScrollHeight ---
-            // Ya modifiqué fetchMessages para capturar oldScrollHeight
-            // Necesitamos que fetchMessages retorne oldScrollHeight o que lo guarde en un ref temporal.
-            // Guardarlo en un ref temporal es más limpio.
-
-            // --- Ref temporal para oldScrollHeight ---
-
-            // --- Modificar fetchMessages para usar oldScrollHeightRef ---
-            // (Ya lo hicimos arriba en la definición de fetchMessages)
-
-            // --- Lógica de ajuste en useLayoutEffect ---
-            const newScrollHeight = messagesContainer.scrollHeight;
-            const heightDifference = newScrollHeight - oldScrollHeightRef.current;
-
-            console.log("Adjusting scroll...", { oldScrollHeight: oldScrollHeightRef.current, newScrollHeight, heightDifference }); // Log
-
-            // Ajustar el scrollTop
-            messagesContainer.scrollTop += heightDifference;
-            console.log("Scroll adjusted to:", messagesContainer.scrollTop); // Log
-
-            // Limpiar el ref después de usarlo si es necesario, o dejarlo para la siguiente carga
-            // oldScrollHeightRef.current = 0; // Limpiar
-        }
-
-    }, [messages, selectedConversationId, messagePagination.current_page]);
-
-    // --- Handler para seleccionar una conversación de la lista ---
-    const handleConversationSelect = useCallback((conversationId) => {
-        console.log("Conversation selected:", conversationId);
-        setSelectedConversationId(conversationId); // Esto disparará el useEffect para cargar mensajes
-        setNewMessageContent(''); // Limpiar el input de nuevo mensaje al cambiar de conversación
-        setSendMessageError(null); // Limpiar errores de envío
-    }, []); // No depende de nada, puede usar useCallback
-
-
-
-    // --- Handler para cargar la siguiente/anterior página de mensajes ---
-    const handleLoadMoreMessages = useCallback(() => {
-        if (messagePagination.has_next && messagePagination.next_page !== null) {
-            console.log("Loading next page of messages:", messagePagination.next_page);
-            // Llama a fetchMessages con la siguiente página.
-            // fetchMessages ahora maneja internamente añadir al final si page > 1
-            fetchMessages(selectedConversationId, messagePagination.next_page, messagePagination.items_per_page); // <-- Removed 'append'
-        }
-    }, [messagePagination, selectedConversationId, fetchMessages]); // Dependencias
-
-    const handleScroll = () => {
-        // --- Detectar scroll hacia arriba en un contenedor con column-reverse ---
-        // Con column-reverse, scrollTop es 0 cuando estás ABAJO.
-        // Necesitas detectar cuando scrollTop es igual a (scrollHeight - clientHeight)
-        // cuando scrolleas hacia arriba (hacia el inicio visual / el final del array).
-        // O más simplemente, detectar cuando estás cerca del final visual del scroll.
-
-        const scrollThreshold = 50; // Cargar cuando queden 50px o menos para llegar arriba (fin visual)
-        const isNearTopVisual = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - scrollThreshold;
-
-        // console.log("Scrolling...", { scrollTop: messagesContainer.scrollTop, clientHeight: messagesContainer.clientHeight, scrollHeight: messagesContainer.scrollHeight, isNearTopVisual }); // Log detallado de scroll
-
-        // Cargar si estás cerca del inicio VISUAL (fin del array con column-reverse), no está cargando, y hay siguiente página.
-        if (isNearTopVisual && !isLoadingMessages && !isLoadingMore && messagePagination.has_next) {
-            console.log("Scrolled near visual top, attempting to load more..."); // Log
-            // Llama a la función para cargar la siguiente página (la más antigua)
-            handleLoadMoreMessages();
-        }
-    };
-
-    // --- useEffect y Handler para detectar scroll y cargar más mensajes ---
+    const handlersRef = useRef({})
     useEffect(() => {
-        const messagesContainer = messagesContainerRef.current;
+        handlersRef.current = {
+            setMessages,
+            setConversations,
+            selectedConversationId,
+            currentUserId,
+            messagesContainerRef,
+        }
+    }, [setMessages, setConversations, selectedConversationId, currentUserId, messagesContainerRef])
 
-        // Attach listener only if container exists, conv selected, not loading, and there are more pages
-        if (!messagesContainer || selectedConversationId === null || isLoadingMessages || isLoadingMore || !messagePagination.has_next) {
-            // ... (cleanup logic - same) ...
-            if (messagesContainer) { // Ensure cleanup runs if listener was attached
-                messagesContainer.removeEventListener('scroll', handleScroll);
-                console.log("Scroll listener cleanup."); // Log
+    const handleConversationSelect = useCallback((conversationId) => {
+        console.log("Conversation selected:", conversationId)
+        if (socket && socket.connected) {
+            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`)
+            socket.emit('join_conversation', { conversation_id: conversationId })
+        } else {
+            console.warn("Socket no conectado, no se pudo emitir join_conversation")
+        }
+        setSelectedConversationId(conversationId)
+        setNewMessageContent('')
+        setSendMessageError(null)
+    }, [socket, handlersRef])
+
+
+    const handleDmConversationCreated = useCallback((conversation) => {
+        console.log("DM Conversation created/obtained from DmSearchAndStart:", conversation)
+        setConversations(prevConversations => {
+            const existingIndex = prevConversations.findIndex(c => c.id === conversation.id)
+            const conversationDataForList = { ...conversation, last_message: conversation.last_message || null, }
+            if (existingIndex !== -1) {
+                const updatedConversations = [...prevConversations]
+                updatedConversations[existingIndex] = conversationDataForList
+                const [movedConv] = updatedConversations.splice(existingIndex, 1)
+                return [movedConv, ...updatedConversations]
+            } else {
+                return [conversationDataForList, ...prevConversations]
             }
-            return;
+        })
+
+        handleConversationSelect(conversation.id)
+    }, [handleConversationSelect])
+
+
+    useEffect(() => {
+        if (currentUserId !== null) {
+            console.log(`Intentando conectar WebSocket para user ${currentUserId}...`)
+            const newSocket = io(`${WEBSOCKET_URL}`, {
+                cors: {
+                    origin: "http://192.168.0.6:5173",
+                    credentials: true
+                }
+            })
+
+            setSocket(newSocket)
+            newSocket.on('connect', () => {
+                console.log('WebSocket conectado!', newSocket.id)
+            })
+
+            newSocket.on('disconnect', (reason) => {
+                console.log('WebSocket desconectado:', reason)
+            })
+
+            newSocket.on('connect_error', (error) => {
+                console.error('WebSocket Connection Error:', error)
+            })
+
+            newSocket.on('new_message', (message) => {
+                console.log('--- Nuevo mensaje WS recibido ---')
+                console.log('Mensaje completo recibido:', message)
+                const current = handlersRef.current
+                console.log('ID de conversación del mensaje (message.conversation_id):', message.conversation_id)
+                console.log('ID de conversación seleccionada (current.selectedConversationId):', current.selectedConversationId)
+                console.log('¿Son iguales (comparando como string)?', String(message.conversation_id) === String(current.selectedConversationId))
+                if (current.selectedConversationId !== null && String(message.conversation_id) === String(current.selectedConversationId)) {
+                    console.log(`¡CONDICIÓN CUMPLIDA! Mensaje para la conversación activa (${current.selectedConversationId}). Añadiendo a la vista.`)
+                    current.setMessages(prevMessages => [...prevMessages, message])
+                    setTimeout(() => {
+                        const container = current.messagesContainerRef.current
+                        if (container) {
+                            requestAnimationFrame(() => {
+                                if (container.scrollHeight > container.clientHeight) {
+                                    container.scrollTop = container.scrollHeight - container.clientHeight
+                                } else {
+                                    container.scrollTop = 0
+                                }
+                                console.log("Scroll al fondo después de añadir nuevo mensaje (via setTimeout + rAF).")
+                            })
+                        } else {
+                            console.warn("messagesContainerRef.current es null al intentar scrollear en listener WS.")
+                        }
+                    }, 0)
+
+                } else {
+                    console.log(`CONDICIÓN NO CUMPLIDA. Mensaje es para conv ${message.conversation_id}, seleccionada es ${current.selectedConversationId}. Actualizando lista de conversaciones.`) // Log si la condición NO se cumple
+                    current.setConversations(prevConversations => {
+                        const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(message.conversation_id))
+                        if (conversationIndex !== -1) {
+                            const updatedConversations = [...prevConversations]
+                            updatedConversations[conversationIndex] = {
+                                ...updatedConversations[conversationIndex],
+                                last_message: message,
+                            }
+                            const [movedConv] = updatedConversations.splice(conversationIndex, 1)
+                            return [movedConv, ...updatedConversations]
+                        }
+                        return prevConversations
+                    })
+                }
+                console.log('--- Fin del handler WS ---')
+            })
+            return () => {
+                console.log('Desconectando WebSocket...')
+                newSocket.off('connect')
+                newSocket.off('disconnect')
+                newSocket.off('connect_error')
+                newSocket.off('new_message')
+                newSocket.disconnect()
+                setSocket(null)
+            }
+        } else {
+            if (socket) {
+                console.log('Desconectando WebSocket debido a logout...')
+                socket.disconnect()
+                setSocket(null)
+            }
         }
 
+    }, [currentUserId])
 
-        // Adjuntar el event listener
-        messagesContainer.addEventListener('scroll', handleScroll);
-        console.log("Scroll listener attached for conv:", selectedConversationId); // Log
 
-        // Limpieza: remover el event listener
-        return () => {
-            messagesContainer.removeEventListener('scroll', handleScroll);
-            console.log("Scroll listener removed for conv:", selectedConversationId); // Log
-        };
+    const handleGroupConversationCreated = useCallback((conversation) => {
+        console.log("Group Conversation created from CreateGroupForm:", conversation)
+        setConversations(prevConversations => {
 
-    }, [selectedConversationId, isLoadingMessages, isLoadingMore, messagePagination.has_next, handleLoadMoreMessages]); // Dependencias del listener
+            const conversationDataForList = { ...conversation, last_message: conversation.last_message || null }
+            return [conversationDataForList, ...prevConversations]
+        })
+        handleConversationSelect(conversation.id)
+    }, [handleConversationSelect])
+
+
+    const handleLoadMoreMessages = useCallback(() => {
+        console.log("handleLoadMoreMessages called for older messages.")
+        if (messagePagination.has_prev && messagePagination.prev_page !== null && messagePagination.prev_page > 0) {
+            console.log("Loading previous page of messages:", messagePagination.prev_page)
+            fetchMessages(selectedConversationId, messagePagination.prev_page, messagePagination.items_per_page)
+        } else {
+            console.log("Cannot load more OLDER messages. has_prev:", messagePagination.has_prev, "prev_page:", messagePagination.prev_page)
+        }
+    }, [messagePagination.has_prev, messagePagination.prev_page, selectedConversationId, fetchMessages, messagePagination.items_per_page])
+
+
+    useEffect(() => {
+        const loadInitialMessages = async () => {
+            if (selectedConversationId !== null) {
+                setMessages([])
+                setMessagePagination({
+                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                    has_next: false, has_prev: false, next_page: null, prev_page: null,
+                })
+                oldScrollHeightRef.current = 0
+                setIsLoadingMessages(true)
+                setMessagesError(null)
+
+                try {
+                    const resPage1 = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=1&per_page=100`, {
+                        credentials: 'include',
+                    })
+                    if (resPage1.ok) {
+                        const dataPage1 = await resPage1.json()
+                        console.log(`Initial fetch (Page 1) for pagination info, conv ${selectedConversationId}:`, dataPage1)
+
+                        const totalPages = dataPage1.pagination.total_pages
+
+                        if (totalPages > 0) {
+                            const pageToFetch = totalPages
+
+                            console.log(`Workspaceing page ${pageToFetch} (last page) for conv ${selectedConversationId}...`)
+                            const resLastPage = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=${pageToFetch}&per_page=100`, {
+                                credentials: 'include',
+                            })
+
+                            if (resLastPage.ok) {
+                                const dataLastPage = await resLastPage.json()
+                                console.log(`Workspaceed last page (${pageToFetch}) messages:`, dataLastPage)
+                                setMessages(dataLastPage.messages)
+                                setMessagePagination(dataLastPage.pagination)
+                            } else {
+                                const errorData = await resLastPage.json()
+                                setMessagesError(errorData.message || `Error fetching last page of messages: ${resLastPage.status}`)
+                                console.error("Error fetching last page of messages:", resLastPage.status, errorData)
+                                setMessages([])
+                                setMessagePagination({
+                                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                                    has_next: false, has_prev: false, next_page: null, prev_page: null,
+                                })
+                            }
+                        } else {
+                            console.log("No messages found in conversation.")
+                            setMessages([])
+                            setMessagePagination(dataPage1.pagination)
+                        }
+
+
+                    } else {
+                        const errorData = await resPage1.json()
+                        setMessagesError(errorData.message || `Error fetching initial pagination info: ${resPage1.status}`)
+                        console.error("Error fetching initial pagination info:", resPage1.status, errorData)
+                        setMessages([])
+                        setMessagePagination({
+                            total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                            has_next: false, has_prev: false, next_page: null, prev_page: null,
+                        })
+                    }
+
+                } catch (error) {
+                    setMessagesError(`Network error fetching messages: ${error.message}`)
+                    console.error("Network error fetching messages:", error)
+                    setMessages([])
+                    setMessagePagination({
+                        total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                        has_next: false, has_prev: false, next_page: null, prev_page: null,
+                    })
+                } finally {
+                    setIsLoadingMessages(false)
+                }
+            } else {
+                setMessages([])
+                setMessagePagination({
+                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                    has_next: false, has_prev: false, next_page: null, prev_page: null,
+                })
+                oldScrollHeightRef.current = 0
+            }
+        }
+        loadInitialMessages()
+    }, [selectedConversationId])
+
 
     useLayoutEffect(() => {
-        const messagesContainer = messagesContainerRef.current;
+        const messagesContainer = messagesContainerRef.current
 
-        // Ajustar solo si hay contenedor, si selectedConversationId está activo (no es la limpieza inicial)
-        // y si messages *cambió* debido a una carga *adicional* (page > 1).
-        // current_page se actualiza DESPUES de que el fetch termina.
-        // Si current_page > 1, significa que la carga anterior fue una página > 1
-        // y messages fue añadido al final.
         if (messagesContainer && selectedConversationId !== null && messagePagination.current_page > 1 && !isLoadingMessages && !isLoadingMore) {
-
-            // oldScrollHeight fue capturado y guardado en oldScrollHeightRef.current justo antes de setMessages
-            const newScrollHeight = messagesContainer.scrollHeight;
-            const heightDifference = newScrollHeight - oldScrollHeightRef.current;
-
-            console.log("Adjusting scroll...", { oldScrollHeight: oldScrollHeightRef.current, newScrollHeight, heightDifference });
-
-            // Ajustar el scrollTop. Sumamos la diferencia.
-            messagesContainer.scrollTop += heightDifference; // Ajusta el scroll para compensar la nueva altura añadida
-            console.log("Scroll adjusted to:", messagesContainer.scrollTop);
-
-            // El ref se resetea en fetchMessages para la primera página,
-            // y se actualiza para páginas > 1 antes de setMessages.
-            // No necesitas resetearlo aquí explícitamente a 0 a menos que quieras.
-
+            const newScrollHeight = messagesContainer.scrollHeight
+            const heightDifference = newScrollHeight - oldScrollHeightRef.current
+            console.log("Adjusting scroll...", { oldScrollHeight: oldScrollHeightRef.current, newScrollHeight, heightDifference })
+            messagesContainer.scrollTop += heightDifference
+            console.log("Scroll adjusted to:", messagesContainer.scrollTop)
         } else if (messagesContainer && selectedConversationId !== null && messagePagination.current_page === 1 && messages.length > 0 && !isLoadingMessages) {
-            // Caso especial: Carga inicial (página 1). Scrollear al fondo VISUAL.
-            // Con column-reverse, el fondo visual es scrollHeight - clientHeight.
-            messagesContainer.scrollTop = messagesContainer.scrollHeight - messagesContainer.clientHeight;
-            console.log("Initial load (page 1), scrolling to visual bottom."); // Log
+            messagesContainer.scrollTop = messagesContainer.scrollHeight - messagesContainer.clientHeight
+            console.log("Initial load (page 1), scrolling to visual bottom.")
         }
 
+    }, [messages, selectedConversationId, messagePagination.current_page, isLoadingMessages, isLoadingMore])
 
-    }, [messages, selectedConversationId, messagePagination.current_page, isLoadingMessages, isLoadingMore]); // Dependencias
 
-
+    const messagesContainer = messagesContainerRef.current
     useEffect(() => {
         const handleScroll = () => {
-            // --- Detectar scroll hacia arriba en un contenedor con column-reverse ---
-            // Con column-reverse, scrollTop es 0 cuando estás ABAJO.
-            // Necesitas detectar cuando scrollTop es igual a (scrollHeight - clientHeight)
-            // cuando scrolleas hacia arriba (hacia el inicio visual / el final del array).
-            // O más simplemente, detectar cuando estás cerca del final visual del scroll.
+            const scrollThreshold = 50
+            const isNearTopVisual = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - scrollThreshold
+            if (!messagesContainer || selectedConversationId === null || isLoadingMessages || isLoadingMore || !messagePagination.has_next) {
+                if (messagesContainer) {
+                    messagesContainer.removeEventListener('scroll', handleScroll)
+                    console.log("Scroll listener cleanup.")
+                }
+                return
+            }
+            messagesContainer.addEventListener('scroll', handleScroll)
+            console.log("Scroll listener attached for conv:", selectedConversationId)
 
-            const scrollThreshold = 50; // Cargar cuando queden 50px o menos para llegar arriba (fin visual)
-            const isNearTopVisual = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - scrollThreshold;
-
-            // console.log("Scrolling...", { scrollTop: messagesContainer.scrollTop, clientHeight: messagesContainer.clientHeight, scrollHeight: messagesContainer.scrollHeight, isNearTopVisual }); // Log detallado de scroll
-
-            // Cargar si estás cerca del inicio VISUAL (fin del array con column-reverse), no está cargando, y hay siguiente página.
             if (isNearTopVisual && !isLoadingMessages && !isLoadingMore && messagePagination.has_next) {
-                console.log("Scrolled near visual top, attempting to load more..."); // Log
-                // Llama a la función para cargar la siguiente página (la más antigua)
-                handleLoadMoreMessages();
+                console.log("Scrolled near visual top, attempting to load more...")
+                handleLoadMoreMessages()
             }
-        };
-
-        const messagesContainer = messagesContainerRef.current;
-
-        // Attach listener only if container exists, conv selected, not loading, and there are more pages
+        }
         if (!messagesContainer || selectedConversationId === null || isLoadingMessages || isLoadingMore || !messagePagination.has_next) {
-            // ... (cleanup logic - same) ...
-            if (messagesContainer) { // Ensure cleanup runs if listener was attached
-                messagesContainer.removeEventListener('scroll', handleScroll);
-                console.log("Scroll listener cleanup."); // Log
+            if (messagesContainer) {
+                messagesContainer.removeEventListener('scroll', handleScroll)
+                console.log("Scroll listener cleanup.")
             }
-            return;
+            return
         }
+        messagesContainer.addEventListener('scroll', handleScroll)
+        console.log("Scroll listener attached for conv:", selectedConversationId)
 
-
-        // Adjuntar el event listener
-        messagesContainer.addEventListener('scroll', handleScroll);
-        console.log("Scroll listener attached for conv:", selectedConversationId); // Log
-
-        // Limpieza: remover el event listener
         return () => {
-            messagesContainer.removeEventListener('scroll', handleScroll);
-            console.log("Scroll listener removed for conv:", selectedConversationId); // Log
-        };
-
-    }, [selectedConversationId, isLoadingMessages, isLoadingMore, messagePagination.has_next, handleLoadMoreMessages]); // Dependencias del listener
-
-
-    // --- Handler para enviar un nuevo mensaje ---
-    const handleSendMessage = async (e) => {
-        e.preventDefault(); // Prevenir recarga de página por el formulario
-        if (!selectedConversationId || !newMessageContent.trim()) {
-            // No enviar si no hay conversación seleccionada o el mensaje está vacío
-            console.log("Cannot send empty message or no conversation selected.");
-            return;
+            messagesContainer.removeEventListener('scroll', handleScroll)
+            console.log("Scroll listener removed for conv:", selectedConversationId)
         }
 
-        setIsSendingMessage(true);
-        setSendMessageError(null);
+    }, [selectedConversationId, isLoadingMessages, isLoadingMore, messagePagination.has_next, handleLoadMoreMessages])
+
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault()
+        if (!selectedConversationId || !newMessageContent.trim()) {
+            console.log("Cannot send empty message or no conversation selected.")
+            return
+        }
+        setIsSendingMessage(true)
+        setSendMessageError(null)
 
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages`, {
@@ -405,428 +451,473 @@ function MessagesPage({ currentUserId }) {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ content: newMessageContent }),
-            });
-
+            })
             if (res.ok) {
-                const newMessage = await res.json();
-                console.log("Message sent:", newMessage);
-                setMessages(prevMessages => [...prevMessages, newMessage]); // Add to the end for column-reverse
-                setNewMessageContent(''); setSendMessageError(null);
-                setTimeout(() => { // Scroll to bottom
-                    if (messagesContainerRef.current) {
-                        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight - messagesContainerRef.current.clientHeight;
-                    }
-                }, 0);
-                // Nota: En una aplicación real, es posible que necesites manejar la sincronización
-                // con otros usuarios (WebSockets) para ver los mensajes enviados/recibidos en tiempo real.
-
+                const newMessage = await res.json()
+                console.log("Message sent:", newMessage)
             } else {
-                const errorData = await res.json();
-                setSendMessageError(errorData.message || `Error sending message: ${res.status}`);
-                console.error("Error sending message:", res.status, errorData);
+                const errorData = await res.json()
+                setSendMessageError(errorData.message || `Error sending message: ${res.status}`)
+                console.error("Error sending message:", res.status, errorData)
             }
         } catch (error) {
-            setSendMessageError(`Network error sending message: ${error.message}`);
-            console.error("Network error sending message:", error);
+            setSendMessageError(`Network error sending message: ${error.message}`)
+            console.error("Network error sending message:", error)
         } finally {
-            setIsSendingMessage(false);
+            setIsSendingMessage(false)
+            setNewMessageContent('')
         }
-    };
+    }
 
-    // --- Handler para iniciar un nuevo DM ---
-    const handleStartNewDM = async (e) => {
-        e.preventDefault();
-        const otherUserId = parseInt(dmUserIdInput, 10);
-        if (isNaN(otherUserId) || otherUserId <= 0) { setCreateDmError("Por favor, ingresa un ID de usuario válido."); return; }
-        if (otherUserId === currentUserId) { setCreateDmError("No puedes enviarte un DM a ti mismo."); return; }
-        // ... resto de la lógica handleStartNewDM ...
-        setIsCreatingDm(true); setCreateDmError(null);
-        try {
-            const res = await fetch(`${API_BASE_URL}/messages/users/${otherUserId}/conversation`, { method: 'POST', credentials: 'include', });
-            if (res.ok) {
-                const conversation = await res.json(); console.log("DM conversation obtained/created:", conversation);
-                if (!conversations.some(c => c.id === conversation.id)) {
-                    const newConvData = { ...conversation, last_message: null }; // last_message might be populated by backend now
-                    // Better: Refetch the conversations list after creating/getting a DM
-                    // This ensures the list is up-to-date and includes the new/reactivated conv with last_message
-                    fetchConversations(); // <-- Call the fetch function
-                } else {
-                    // If the conversation was already in the list (but perhaps soft-deleted and now reactivated)
-                    // You might need to update its state in the list if fetchConversations doesn't run immediately
-                    // Or rely on the fetchConversations call above to update the list.
-                    // For now, relying on fetchConversations. If it doesn't work, you'd need to manually update the state.
-                }
-                handleConversationSelect(conversation.id); setDmUserIdInput(''); setCreateDmError(null);
-            } else { const errorData = await res.json(); setCreateDmError(errorData.message || `Error starting DM: ${res.status}`); }
-        } catch (error) { setCreateDmError(`Network error starting DM: ${error.message}`); }
-        finally { setIsCreatingDm(false); }
-    };
 
     const handleCreateGroup = async (e) => {
-        e.preventDefault();
-        // Validar inputs
-        const groupName = newGroupName.trim();
-        const participantIdsString = newGroupParticipantIdsInput.trim();
+        e.preventDefault()
+        const groupName = newGroupName.trim()
+        const participantIdsString = newGroupParticipantIdsInput.trim()
 
-        if (!participantIdsString) {
-            setCreateGroupError("La lista de IDs de participantes es obligatoria.");
-            return;
+        if (!participantIdsString && !groupName) {
+            setCreateGroupError("Ingresa un nombre para el grupo o IDs de participantes.")
+            return
         }
-
-        // Parsear IDs de participantes (separados por coma, por ejemplo)
         const participantIds = participantIdsString
             .split(',')
             .map(id => parseInt(id.trim(), 10))
-            .filter(id => !isNaN(id) && id > 0); // Filtrar IDs válidos y positivos
-
-        if (participantIds.length === 0) {
-            setCreateGroupError("Ingresa al menos un ID de participante válido.");
-            return;
+            .filter(id => !isNaN(id) && id > 0)
+        if (participantIds.length < 2) {
+            setCreateGroupError("Un grupo debe tener al menos 2 participantes (tú y alguien más).")
+            return
         }
 
-        // Asegurarse de que el usuario actual está en la lista de participantes
-        if (!participantIds.includes(currentUserId)) {
-            participantIds.push(currentUserId);
+        if (participantIds.length === 1) {
+            setCreateGroupError("Para chats de 2 personas, usa la opción 'Iniciar nuevo DM'.")
+            return
         }
 
-        // Opcional: Validar si solo hay 2 participantes para sugerir usar la función de DM
-        if (participantIds.length === 2) {
-            // Podrías dar un aviso o redirigir al handler de DM
-            console.warn("Only 2 participants, consider using 'Start New DM' instead.");
-            // setCreateGroupError("Para chats de 2 personas, usa la opción 'Iniciar nuevo DM'.");
-            // return; // Bloquear la creación de grupo para 2
-        }
-
-        setIsCreatingGroup(true);
-        setCreateGroupError(null);
-
+        setIsCreatingGroup(true)
+        setCreateGroupError(null)
         try {
-            // Llama a la ruta POST /messages/conversations para crear grupo
             const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    name: groupName || null, // Enviar nombre o null si está vacío
+                    name: groupName || null,
                     participant_ids: participantIds,
+                }),
+            })
+            if (res.ok) {
+                const newConversation = await res.json()
+                console.log("Group conversation created:", newConversation)
+                const newConvData = {
+                    ...newConversation,
+                    last_message: newConversation.last_message || null,
+                }
+                setConversations(prevConversations => [newConvData, ...prevConversations])
+                handleConversationSelect(newConversation.id)
+                setNewGroupName('')
+                setNewGroupParticipantIdsInput('')
+                setCreateGroupError(null)
+            } else {
+                const errorData = await res.json()
+                setCreateGroupError(errorData.message || `Error creating group: ${res.status}`)
+                console.error("Error creating group:", res.status, errorData)
+            }
+        } catch (error) {
+            setCreateGroupError(`Network error creating group: ${error.message}`)
+            console.error("Network error creating group:", error)
+        } finally {
+            setIsCreatingGroup(false)
+        }
+    }
+
+
+    const getConversationDisplayName = useCallback((conv) => {
+        if (conv.name) {
+            return conv.name
+        } else {
+            if (conv.participants && conv.participants.length > 0) {
+                const otherParticipants = conv.participants.filter(p => String(p.id) !== String(currentUserId))
+                if (otherParticipants.length > 0) {
+                    return otherParticipants.map(p => p.name || `Usuario ${p.id}`).join(', ')
+                } else {
+                    return `Yo`
+                }
+            } else {
+                console.warn("Conversation participants not loaded for display name:", conv)
+                return `Conversación (ID: ${conv.id})`
+            }
+        }
+    }, [currentUserId])
+
+
+    const handleLeaveConversation = async (conversationId) => {
+        if (!window.confirm(`¿Estás seguro de que quieres salir de esta conversación (ID: ${conversationId})?`)) {
+            return
+        }
+        setIsLoadingConversations(true)
+        setConversationsError(null)
+        try {
+            const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/participants/me`, {
+                method: 'DELETE',
+                credentials: 'include',
+            })
+
+            if (res.ok) {
+                console.log(`Left conversation ${conversationId}`)
+                setConversations(conversations.filter(conv => conv.id !== conversationId))
+                if (selectedConversationId === conversationId) {
+                    setSelectedConversationId(null)
+                    setMessages([])
+                    setMessagePagination({
+                        total_items: 0, total_pages: 0, current_page: 0, items_per_page: messagePagination.items_per_page,
+                        has_next: false, has_prev: false, next_page: null, prev_page: null,
+                    })
+                }
+            } else {
+                const errorData = await res.json()
+                setConversationsError(errorData.message || `Error leaving conversation ${conversationId}: ${res.status}`)
+                console.error(`Error leaving conversation ${conversationId}:`, res.status, errorData)
+            }
+        } catch (error) {
+            setConversationsError(`Network error leaving conversation ${conversationId}: ${error.message}`)
+            console.error(`Network error leaving conversation ${conversationId}:`, error)
+        }
+    }
+
+    const searchUsers = useCallback(async (query) => {
+        if (!query || query.trim().length === 0) {
+            setUserSearchResults([]);
+            return;
+        }
+        setIsSearchingUsers(true);
+        setUserSearchError(null);
+        try {
+            const res = await fetch(`${API_BASE_URL}/users/search?term=${encodeURIComponent(query)}`, {
+                credentials: 'include',
+            });
+            if (res.ok) {
+                const data = await res.json();
+                console.log("User search results:", data);
+                // Filter out the current user from results
+                setUserSearchResults(data.filter(user => String(user.id) !== String(currentUserId)));
+            } else {
+                const errorData = await res.json();
+                setUserSearchError(errorData.message || `Error searching users: ${res.status}`);
+                console.error("Error searching users:", res.status, errorData);
+                setUserSearchResults([]);
+            }
+        } catch (error) {
+            setUserSearchError(`Network error searching users: ${error.message}`);
+            console.error("Network error searching users:", error);
+            setUserSearchResults([]);
+        } finally {
+            setIsSearchingUsers(false);
+        }
+    }, [currentUserId]); // Dependency on currentUserId to filter self
+
+    // Create a debounced version of the searchUsers function
+    // Adjust debounce delay (e.g., 300ms) as needed
+    const debouncedSearchUsers = useCallback(debounce(searchUsers, 300), [searchUsers]);
+
+    // --- Effect to Trigger User Search ---
+    // This effect runs when the conversationSearchTerm changes
+    useEffect(() => {
+        if (conversationSearchTerm.trim()) {
+            // Show search results section when there's a search term
+            setShowSearchResults(true);
+            // Trigger the debounced user search
+            debouncedSearchUsers(conversationSearchTerm);
+        } else {
+            // Hide search results and clear them when the search term is empty
+            setShowSearchResults(false);
+            setUserSearchResults([]);
+            setUserSearchError(null); // Clear any previous error
+        }
+        // Cleanup the debounced search on effect cleanup
+        return () => {
+            debouncedSearchUsers.cancel(); // Cancel any pending debounced calls
+        };
+    }, [conversationSearchTerm, debouncedSearchUsers]); // Dependencies: search term and the debounced function
+
+
+    // --- Handler to Select a User from Search Results and Start a DM ---
+    const handleSelectUserForDM = async (user) => {
+        console.log("Selected user for DM:", user);
+        // Optionally hide search results immediately
+        setShowSearchResults(false);
+        setConversationSearchTerm(''); // Clear the search term
+
+        // Indicate loading/creating DM (optional states if you want visual feedback)
+        // setIsCreatingDm(true);
+        // setCreateDmError(null);
+
+        try {
+            // Call backend API to create or get DM conversation with this user
+            const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    // Backend should handle finding existing DM or creating a new one
+                    participant_ids: [user.id], // Send only the other user's ID
+                    is_group: false // Explicitly mark as not a group if your backend needs it
                 }),
             });
 
             if (res.ok) {
-                const newConversation = await res.json();
-                console.log("Group conversation created:", newConversation);
+                const conversation = await res.json(); // Backend should return the conversation object
+                console.log("DM conversation created/obtained:", conversation);
 
-                // Opcional: Añadir la nueva conversación a la lista y seleccionarla
-                // La respuesta del backend ya debería incluir participantes y creador
-                setConversations(prevConversations => [newConversation, ...prevConversations]); // Añadir al inicio
-                handleConversationSelect(newConversation.id); // Seleccionar la nueva conversación
+                // Add or move the new/existing conversation to the top of the conversations list
+                setConversations(prevConversations => {
+                    const existingIndex = prevConversations.findIndex(c => c.id === conversation.id);
+                    const conversationDataForList = { ...conversation, last_message: conversation.last_message || null, };
 
-                // Limpiar formulario después de crear
-                setNewGroupName('');
-                setNewGroupParticipantIdsInput('');
-                setCreateGroupError(null);
+                    if (existingIndex !== -1) {
+                        // Conversation exists, move to top
+                        const updatedConversations = [...prevConversations];
+                        const [movedConv] = updatedConversations.splice(existingIndex, 1);
+                        return [movedConv, ...updatedConversations];
+                    } else {
+                        // New conversation, add to top
+                        return [conversationDataForList, ...prevConversations];
+                    }
+                });
 
-                // Opcional: Mostrar mensaje de éxito
-                // alert(`Grupo "${newConversation.name || 'Sin Nombre'}" creado.`);
 
-            } else {
-                const errorData = await res.json();
-                setCreateGroupError(errorData.message || `Error creating group: ${res.status}`);
-                console.error("Error creating group:", res.status, errorData);
-            }
-
-        } catch (error) {
-            setCreateGroupError(`Network error creating group: ${error.message}`);
-            console.error("Network error creating group:", error);
-        } finally {
-            setIsCreatingGroup(false);
-        }
-    };
-
-    const getConversationDisplayName = useCallback((conv) => {
-        if (conv.name) {
-            return conv.name; // Si tiene nombre, es un grupo (o un DM con nombre)
-        } else {
-            // Es un DM (nombre es null). Mostrar los nombres de los otros participantes.
-            // conv.participants debe estar cargado y contener objetos User serializados
-            if (conv.participants && conv.participants.length > 0) {
-                 const otherParticipants = conv.participants.filter(p => p.id !== currentUserId);
-                 if (otherParticipants.length > 0) {
-                      return otherParticipants.map(p => p.username || `Usuario ${p.id}`).join(', '); // Unir nombres de otros participantes
-                 } else {
-                      return `Chat contigo mismo (ID: ${conv.id})`; // Caso raro si solo hay 1 participante (tú)
-                 }
-            } else {
-                 return `Conversación (ID: ${conv.id})`; // Fallback si no hay participantes cargados
-            }
-        }
-    }, [currentUserId]);
-    // --- Handler para salirse de una conversación ---
-    const handleLeaveConversation = async (conversationId) => {
-        if (!window.confirm(`¿Estás seguro de que quieres salir de esta conversación (ID: ${conversationId})?`)) {
-            return; // Cancelar si el usuario no confirma
-        }
-
-        setIsLoadingConversations(true); // Podría mostrar un indicador global o específico
-        setConversationsError(null);
-
-        try {
-            // Llama a la ruta DELETE para salirse
-            const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/participants/me`, {
-                method: 'DELETE',
-                credentials: 'include',
-            });
-
-            if (res.ok) {
-                console.log(`Left conversation ${conversationId}`);
-
-                // Eliminar la conversación de la lista local
-                setConversations(conversations.filter(conv => conv.id !== conversationId));
-
-                // Si la conversación eliminada era la seleccionada, limpiar la vista de mensajes
-                if (selectedConversationId === conversationId) {
-                    setSelectedConversationId(null);
-                    setMessages([]);
-                    setMessagePagination({ // Resetear paginación
-                        total_items: 0, total_pages: 0, current_page: 0, items_per_page: messagePagination.items_per_page,
-                        has_next: false, has_prev: false, next_page: null, prev_page: null,
-                    });
-                }
-                // Opcional: Mostrar un mensaje de éxito al usuario
-                // alert(`Saliste de la conversación ${conversationId}.`);
+                // Select the newly created/obtained conversation
+                handleConversationSelect(conversation.id);
 
             } else {
                 const errorData = await res.json();
-                setConversationsError(errorData.message || `Error leaving conversation ${conversationId}: ${res.status}`);
-                console.error(`Error leaving conversation ${conversationId}:`, res.status, errorData);
+                // setCreateDmError(errorData.message || `Error starting DM: ${res.status}`);
+                console.error("Error starting DM:", res.status, errorData);
+                alert(`Error starting DM: ${errorData.message || res.status}`); // Basic error feedback
             }
-
         } catch (error) {
-            setConversationsError(`Network error leaving conversation ${conversationId}: ${error.message}`);
-            console.error(`Network error leaving conversation ${conversationId}:`, error);
+            // setCreateDmError(`Network error starting DM: ${error.message}`);
+            console.error("Network error starting DM:", error);
+            alert(`Network error starting DM: ${error.message}`); // Basic error feedback
         } finally {
-            // Puede que no necesites setear isLoadingConversations a false aquí si la lista
-            // de conversaciones se vuelve a cargar después de salir, pero si no, sí.
-            // set...(false);
-            // Alternativa: Refetch la lista completa después de salir
-            // fetchConversations(); // Necesitarías mover fetchConversations fuera del useEffect para llamarla aquí
+            // setIsCreatingDm(false);
         }
     };
 
-
-    // --- Renderizado Básico (Sin Estilos) ---
     return (
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100"> {/* Añadir padding, fondo y colores de texto */}
+        <div className="shadow grid grid-cols-[1fr_2fr] grid-template-rows h-100 pl-4 min-h-screen text-gray-900 gap-3 dark:text-gray-100">
+            <div className='justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden'>
+                {(isFormVisible) ?
+                    <div>
+                        <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
+                            <button type="button" onClick={() => setIsFormVisible(false)}>
+                                <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+                            </button>
+                            <h1 className="text-2xl p-4 font-bold">New chat</h1>
+                        </header>
+                        <div className="relative w-full ">
+                            <div className=" relative"> {/* Added relative for positioning dropdown */}
 
-            <h1 className="text-2xl font-bold mb-4">Mensajes</h1> {/* Estilo para el título principal */}
-
-            {/* --- Sección para iniciar un nuevo DM --- */}
-            <div className="mb-6 p-4 border border-gray-300 dark:border-gray-700 rounded-lg"> {/* Margen abajo, padding, borde, esquinas redondeadas */}
-                <h2 className="text-xl font-semibold mb-3">Iniciar nuevo DM</h2> {/* Estilo para subtítulo */}
-                <form onSubmit={handleStartNewDM} className="flex gap-4"> {/* Usar flexbox para los elementos del formulario */}
-                    <input
-                        type="number"
-                        placeholder="ID de usuario para DM"
-                        value={dmUserIdInput}
-                        onChange={(e) => setDmUserIdInput(e.target.value)}
-                        disabled={isCreatingDm}
-                        className="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50" // Estilo de input con dark mode y focus
-                    />
-                    <button
-                        type="submit"
-                        disabled={isCreatingDm}
-                        className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed" // Estilo de botón con dark mode y disabled
-                    >
-                        {isCreatingDm ? 'Iniciando DM...' : 'Iniciar DM'}
-                    </button>
-                </form>
-                {createDmError && <p className="text-red-500 text-sm mt-2">{createDmError}</p>} {/* Estilo de error */}
-            </div>
-
-
-            {/* --- NUEVA Sección para Crear Grupo --- */}
-            <div className="mb-6 p-4 border border-gray-300 dark:border-gray-700 rounded-lg">
-                 <h2 className="text-xl font-semibold mb-3">Crear nuevo Grupo</h2>
-                 <form onSubmit={handleCreateGroup} className="flex flex-col gap-4"> {/* Formulario en columna */}
-                     <div>
-                         <label htmlFor="groupName" className="block text-sm font-medium mb-1">Nombre del Grupo (Opcional):</label>
-                         <input
-                             type="text" id="groupName" placeholder="Nombre del Grupo"
-                             value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
-                             disabled={isCreatingGroup}
-                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                         />
-                     </div>
-                     <div>
-                         <label htmlFor="participantIds" className="block text-sm font-medium mb-1">IDs de Participantes (separados por coma):</label>
-                         <input
-                             type="text" id="participantIds" placeholder="Ej: 3, 5, 8"
-                             value={newGroupParticipantIdsInput} onChange={(e) => setNewGroupParticipantIdsInput(e.target.value)}
-                             disabled={isCreatingGroup}
-                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                         />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tu ID ({currentUserId}) será añadido automáticamente.</p> {/* Ayuda al usuario */}
-                     </div>
-                     <button
-                         type="submit" disabled={isCreatingGroup}
-                         className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed self-start" // Alinear botón a la izquierda
-                     >
-                         {isCreatingGroup ? 'Creando Grupo...' : 'Crear Grupo'}
-                     </button>
-                 </form>
-                 {createGroupError && <p className="text-red-500 text-sm mt-2">{createGroupError}</p>}
-             </div>
-
-
-            <hr className="my-6 border-gray-300 dark:border-gray-700" /> {/* Estilo para el separador */}
-
-            {/* --- Sección de Lista de Conversaciones --- */}
-            <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-3">Tus Conversaciones Activas</h2> {/* Título ajustado */}
-                {isLoadingConversations && <p>Cargando conversaciones...</p>}
-                {conversationsError && <p className="text-red-500">{conversationsError}</p>}
-                {!isLoadingConversations && conversations.length === 0 && !conversationsError && (
-                    <p>No tienes conversaciones activas aún.</p> 
-                )}
-                {!isLoadingConversations && conversations.length > 0 && (
-                    <ul className="space-y-3">
-                        {conversations.map(conv => (
-                             // Filtramos por conv.deleted_at === null en el fetch,
-                             // así que la lista 'conversations' ya solo debería tener activos.
-                             // No necesitamos un filtro aquí a menos que el fetch traiga todos.
-                             // Si el fetch trae todos, agregar: {conversations.filter(conv => conv.deleted_at === null).map(conv => (...))}
-
-                            <li
-                                key={conv.id}
-                                onClick={() => handleConversationSelect(conv.id)}
-                                className={`p-4 border border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer transition duration-200 ${selectedConversationId === conv.id ? 'bg-blue-100 dark:bg-blue-800 border-blue-500' : 'bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'} flex justify-between items-center`} // Flex y alineación para contenido y botón Salir
-                            >
-                                <div className="flex-grow mr-4"> {/* Contenido de la conversación */}
-                                     {/* Mostrar nombre del grupo O nombres de participantes para DM */}
-                                    <p className="font-medium">{getConversationDisplayName(conv)}</p>
-                                     {/* Mostrar creador (opcional) */}
-                                     {conv.creator ? (
-                                         <p className="text-xs text-gray-500 dark:text-gray-400">Creador: {conv.creator.username}</p>
-                                     ) : (
-                                         conv.creator_id && <p className="text-xs text-gray-500 dark:text-gray-400">Creador ID: {conv.creator_id}</p>
-                                     )}
-
-                                    {conv.last_message ? (
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">
-                                             {/* Mostrar remitente del último mensaje si está disponible */}
-                                             {conv.last_message.sender ? conv.last_message.sender.username : `Usuario ${conv.last_message.sender_id}`}: {conv.last_message.content} ({new Date(conv.last_message.timestamp).toLocaleString()})
-                                        </p>
-                                    ) : (
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Sin mensajes aún.</p>
-                                    )}
+                                {/* Input de Búsqueda */}
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                        <MagnifyingGlassIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        id="conversation-search"
+                                        className="block w-full p-2 ps-10 outline-none text-sm text-gray-900  bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        placeholder="Buscar chat o iniciar uno nuevo"
+                                        value={conversationSearchTerm}
+                                        onChange={(e) => setConversationSearchTerm(e.target.value)}
+                                    // Optional: onFocus={() => setShowSearchResults(true)} // Show results when input is focused
+                                    // Optional: onBlur={() => setTimeout(() => setShowSearchResults(false), 100)} // Hide with delay on blur
+                                    />
                                 </div>
-                                 {/* Botón para salirse del grupo */}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleLeaveConversation(conv.id);
-                                    }}
-                                     className="flex-shrink-0 px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900" // Flex-shrink-0 para que no se encoja
-                                >
-                                    Salir
-                                </button>
-                            </li>
-                        ))}
+
+                                {/* Search Results Dropdown/Section (NEW) */}
+                                {/* Conditional rendering based on showSearchResults and search state */}
+                                {showSearchResults && (conversationSearchTerm.trim().length > 0) && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-lg shadow max-h-60 overflow-y-auto">
+                                        {isSearchingUsers ? (
+                                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">Buscando usuarios...</div>
+                                        ) : userSearchError ? (
+                                            <div className="p-4 text-center text-red-500">{userSearchError}</div>
+                                        ) : userSearchResults.length > 0 ? (
+                                            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                                                {/* Render User Search Results */}
+                                                {userSearchResults.map(user => (
+                                                    <li
+                                                        key={`user-search-${user.id}`} // Unique key for user results
+                                                        className="flex items-center gap-x-4 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                        onClick={() => handleSelectUserForDM(user)} // Handle click to start DM
+                                                    >
+                                                        <img
+                                                            className="size-8 flex-none rounded-full bg-gray-50"
+                                                            src={getUserPhotoUrl(user, 'small')} // Use small photo URL
+                                                            alt={`Foto de perfil de ${user.username || user.name}`}
+                                                        />
+                                                        <div className="min-w-0 flex-auto">
+                                                            <p className="text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">
+                                                                {user.username || user.name || `Usuario ${user.id}`}
+                                                            </p>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            // Message when search term is not empty but no users found
+                                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">No se encontraron usuarios.</div>
+                                        )}
+                                        {/* Optional: Message if no search term, but results section is shown (e.g., via onFocus) */}
+                                        {/* {!conversationSearchTerm.trim() && <div className="p-4 text-center text-gray-500 dark:text-gray-400">Empieza a escribir para buscar usuarios.</div>} */}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <button className='flex p-4 gap-2 items-center'>
+                            <UserGroupIcon className="-ml-0.5 size-5" aria-hidden="true" />
+                            New group
+                        </button>
+                    </div>
+                    :
+                    <div>
+                        <header className='grid grid-cols-[auto_auto] justify-start'>
+                            <h1 className="text-2xl p-4 font-bold">Chats</h1>
+                            <button
+                                onClick={() => setIsFormVisible(true)}
+                                className="px-4 py-2 focus:outline-none inline-flex items-center justify-center gap-x-2"
+                            >
+                                <UserGroupIcon className="-ml-0.5 size-8" aria-hidden="true" />
+                            </button>
+                        </header>
+                        <div className="relative mb-4">
+                            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                </svg>
+                            </div>
+                            <input
+                                type="text"
+                                id="conversation-search"
+                                className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 bg-gray-50 focus:ring-none focus:border-none dark:bg-gray-700 outline-none dark:border-none dark:placeholder-gray-400 dark:text-white dark:focus:ring-none dark:focus:border-none"
+                                placeholder="Buscar chat"
+                                value={conversationSearchTerm}
+                                onChange={(e) => setConversationSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>}
+                {isLoadingConversations && <p>...</p>}
+                {conversationsError && <p className="text-red-500">{conversationsError}</p>}
+                {!isLoadingConversations && conversations.filter(conv => conv.deleted_at === null).filter(conv =>
+                    getConversationDisplayName(conv).toLowerCase().includes(conversationSearchTerm.toLowerCase())
+                ).length === 0 && !conversationsError && (
+                        <p></p>
+                    )}
+                {!isLoadingConversations && conversations.length > 0 && (
+                    <ul role="list">
+                        {conversations
+                            .filter(conv => conv.deleted_at === null)
+                            .filter(conv =>
+                                getConversationDisplayName(conv).toLowerCase()
+                                    .includes(conversationSearchTerm.toLowerCase())
+                            )
+                            .map(conv => (
+                                <ConversationListItem
+                                    key={conv.id}
+                                    conv={conv}
+                                    currentUserId={currentUserId}
+                                    selectedConversationId={selectedConversationId}
+                                    onSelectConversation={handleConversationSelect}
+                                    onLeaveConversation={handleLeaveConversation}
+                                    getConversationDisplayName={getConversationDisplayName}
+                                    formatTime={formatTime}
+                                />
+                            ))}
                     </ul>
                 )}
             </div>
-
-            <hr className="my-6 border-gray-300 dark:border-gray-700" /> {/* Estilo para el separador */}
-
-            {/* --- Sección de Mensajes de la Conversación Seleccionada --- */}
             <div className="flex flex-col h-full">
-                 <h2 className="text-xl font-semibold mb-3">
-                    {selectedConversationId === null
-                        ? 'Selecciona una conversación'
-                         // Usar el nombre de display para el título si hay una conversación seleccionada
-                        : `Mensajes de: ${getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}` // Buscar la conversación seleccionada para obtener su nombre de display
-                    }
-                 </h2>
-
-                 {/* Indicadores de carga y errores */}
-                 {isLoadingMessages && selectedConversationId !== null && <p className="text-center">Cargando mensajes...</p>}
-                 {isLoadingMore && selectedConversationId !== null && <p className="text-center">Cargando más mensajes antiguos...</p>}
-                 {messagesError && <p className="text-red-500">{messagesError}</p>}
-
-                 {/* Contenedor de Mensajes Scrollable */}
+                {isLoadingMessages && selectedConversationId !== null && <p className="text-end absolute"></p>}
+                {isLoadingMore && selectedConversationId !== null && <p className="text-end absolute"></p>}
+                {messagesError && <p className="text-red-500">{messagesError}</p>}
                 {selectedConversationId !== null && (
                     <div
                         ref={messagesContainerRef}
-                         className="flex flex-col-reverse overflow-y-auto h-96 border border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-4 bg-gray-100 dark:bg-gray-800 space-y-4"
+                        className="flex flex-col msg-container overflow-y-auto h-screen shadow custom-scrollbar"
                     >
-                    {/* Nota: space-y-4 aplicado aquí con column-reverse crea espacio en la parte inferior */}
+                        <h1 className="text-xl font-bold fixed py-2 px-3 msg-container-header">
+                            {selectedConversationId === null
+                                ? ''
+                                : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-2">
+                                    {getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}
+                                    <img src={getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                </div>)
+                            }
+                        </h1>
+                        {isLoadingMore && <p className="text-center text-sm text-gray-600 dark:text-gray-400"></p>}
+                        {messages.map(message => (
+                            <div
+                                key={message.id}
+                                className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${String(message.sender_id) === String(currentUserId) ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+                                    <div>
+                                        <p className={`text-xs text-left font-semibold mb-1 ${String(message.sender_id) === String(currentUserId) ? 'text-right' : 'text-left'}`}>
+                                            {(message.sender && String(message.sender_id) !== String(currentUserId)) ?? message.sender.name}
+                                        </p>
+                                        <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
+                                            {message.content}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs msg-timestamp text-right opacity-80">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {!isLoadingMessages && !isLoadingMore && messages.length === 0 && !messagesError && (
+                            <p className="text-center text-gray-600 dark:text-gray-400 mb-auto">Esta conversación no tiene mensajes aún.</p>
+                        )}
 
+                        {selectedConversationId !== null && (
 
-                     {/* Indicador de carga para mensajes *antiguos* (scroll up) */}
-                    {/* Mostrarlo dentro del contenedor de scroll si es posible, arriba del todo visualmente */}
-                     {isLoadingMore && <p className="text-center text-sm text-gray-600 dark:text-gray-400">Cargando más...</p>}
-
-
-                     {/* Si hay mensajes, mostrarlos */}
-                    {messages.length > 0 && (
-                        <ul className="space-y-4 pt-2"> {/* Añadir pt-2 para espacio arriba */}
-                            {messages.map(message => (
-                                     // Estilo para cada mensaje LI
-                                    <li
-                                        key={message.id}
-                                         // Usar flexbox para alinear a la izquierda o derecha
-                                        className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+                            <form onSubmit={handleSendMessage} className="w-full flex gap-4 mt-4 send-message">
+                                <label htmlFor="chat" className="sr-only">Your message</label>
+                                <div className="flex items-center px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 w-full">
+                                    <button type="button" className="inline-flex justify-center p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600">
+                                        <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 18">
+                                            <path fill="currentColor" d="M13 5.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0ZM7.565 7.423 4.5 14h11.518l-2.516-3.71L11 13 7.565 7.423Z" />
+                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 1H2a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1Z" />
+                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0ZM7.565 7.423 4.5 14h11.518l-2.516-3.71L11 13 7.565 7.423Z" />
+                                        </svg>
+                                        <span className="sr-only">Upload image</span>
+                                    </button>
+                                    <button type="button" className="p-2 text-gray-500 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600">
+                                        <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.408 7.5h.01m-6.876 0h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM4.6 11a5.5 5.5 0 0 0 10.81 0H4.6Z" />
+                                        </svg>
+                                        <span className="sr-only">Add emoji</span>
+                                    </button>
+                                    <textarea
+                                        id="chat" rows="1" className="w-full block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        placeholder="Your message..."
+                                        value={newMessageContent}
+                                        onChange={(e) => setNewMessageContent(e.target.value)}
+                                        disabled={isSendingMessage}
+                                        ref={textareaRef}
                                     >
-                                         {/* Contenedor del Contenido del Mensaje (la "burbuja") */}
-                                        <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${message.sender_id === currentUserId ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
-                                            {/* Mostrar nombre del remitente si está cargado */}
-                                            <p className="text-sm font-semibold mb-1">
-                                                 {message.sender ? message.sender.username : `Usuario ${message.sender_id}`}
-                                            </p>
-                                            <p className="text-base whitespace-pre-wrap break-words">{/* whitespace-pre-wrap para saltos de línea, break-words para evitar desbordamiento */}
-                                                {message.content}
-                                            </p>
-                                            <p className="text-xs text-right mt-1 opacity-80">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                                    </textarea>
+                                    <button type="submit" className=" inline-flex justify-center p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600">
+                                        <svg className="w-5 h-5 rotate-90 rtl:-rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+                                            <path d="m17.914 18.594-8-18a1 1 0 0 0-1.828 0l-8 18a1 1 0 0 0 1.157 1.376L8 18.281V9a1 1 0 0 1 2 0v9.281l6.758 1.689a1 1 0 0 0 1.156-1.376Z" />
+                                        </svg>
+                                        <span className="sr-only">Send message</span>
+                                    </button>
+                                </div>
+                            </form>
                         )}
-
-                         {/* Mensaje si no hay mensajes en la conversación seleccionada (y no está cargando) */}
-                        { !isLoadingMessages && !isLoadingMore && messages.length === 0 && !messagesError && (
-                            <p className="text-center text-gray-600 dark:text-gray-400">Esta conversación no tiene mensajes aún.</p>
-                        )}
-
                     </div>
                 )}
-
-                {/* Sección para enviar un nuevo mensaje */}
-                {selectedConversationId !== null && (
-                    // Formulario para enviar
-                    <form onSubmit={handleSendMessage} className="flex gap-4 mt-2"> {/* Flex para el formulario, espacio entre elementos, margen arriba */}
-                        <textarea
-                            placeholder="Escribe tu mensaje..."
-                            value={newMessageContent}
-                            onChange={(e) => setNewMessageContent(e.target.value)}
-                            rows="3" // Altura inicial
-                            disabled={isSendingMessage}
-                            className="flex-grow px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 resize-none" // Estilo de textarea, sin redimensionar
-                        />
-                        <button
-                            type="submit"
-                            disabled={isSendingMessage || !newMessageContent.trim()} // Deshabilitar si está enviando o el mensaje está vacío
-                            className="px-6 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed" // Estilo de botón "Enviar"
-                        >
-                            {isSendingMessage ? 'Enviando...' : 'Enviar'}
-                        </button>
-                    </form>
-                )}
-
-            </div> {/* Cierre del contenedor flex principal del área de mensajes */}
-
-        </div> // Cierre del contenedor principal de la página
-    );
+            </div>
+        </div >
+    )
 }
-
-export default MessagesPage;
+export default MessagesPage
