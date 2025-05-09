@@ -31,7 +31,7 @@ function ProfilePage({onLogout}) {
     
     const [projects, setProjects] = useState([])
     const [originalProfileData, setOriginalProfileData] = useState(null)
-    const [originalProjects, setOriginalProjects] = useState(null)
+    const [originalProjects, setOriginalProjects] = useState([])
     const firstInputRef = useRef(null)
     const [isOwner, setIsOwner] = useState(false)
 
@@ -170,12 +170,12 @@ function ProfilePage({onLogout}) {
             return
         }
         const newProject = {
-            tempId: Date.now(),
-            name: "",
+            id: Date.now(),
+            project_name: "",
             description: "",
-            image: "",
-            url_code: "",
-            url_preview: "",
+            project_image: "",
+            code_url: "",
+            preview_url: "",
             tecnologies: "",
         }
         setProjects([...projects, newProject])
@@ -249,6 +249,7 @@ function ProfilePage({onLogout}) {
 
                 return
             }
+            console.log(projects)
             const projectsSavedData = await projectsRes.json()
             console.log("Projects saved successfully", projectsSavedData)
             let updatedProjectList = []
@@ -371,16 +372,16 @@ function ProfilePage({onLogout}) {
     }
 
     return (
-        <main className="profile-container">
+        <main className="profile-container shadow">
             <div>
-                <div className="w-full grid grid-cols-[auto_auto]">
-                    <h2 className='text-white-400 font-light text-4xl mb-4'>Portfolio</h2>
+                <div className="w-full grid grid-cols-[auto_1fr]">
+                    <h2 className='text-white-400 font-light text-4xl'>Portfolio</h2>
                     {
                         (isOwner)
                             ? (!isEditing ? (
-                                <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
+                                <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center md:gap-2 justify-end w-full">
                                     <button
-                                        className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center  mb-2"
                                         onClick={() => setIsEditing(true)}{...() => handleSaveChanges()}
                                     >
                                         <i className="fas fa-pencil-alt"></i>
@@ -390,14 +391,14 @@ function ProfilePage({onLogout}) {
                                     <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
                                     {(state) ? <button
                                         onClick={() => navigate('/', { state: { index } })}
-                                        className="col-span-1 text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        className="col-span-1 text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                                     >
                                         <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                         {' '}Regresar
                                     </button> : ''}
                                     <button 
                                         onClick={handleLogoutClick}
-                                        className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                                     >
                                         <i className="fas fa-right-from-bracket"></i>
                                         {" "}
@@ -409,14 +410,14 @@ function ProfilePage({onLogout}) {
                                 <div className="grid grid-cols-[auto] md:grid-cols-[auto_auto] items-center gap-2 justify-end">
                                     <button
                                         type="button"
-                                        className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                                         onClick={handleCancelEdit}
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="button"
-                                        className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                        className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                                         onClick={handleSaveChanges}
                                     >
                                         Save Changes
@@ -424,7 +425,7 @@ function ProfilePage({onLogout}) {
                                 </div>
                             )) : (state) ? (<div className='flex flex-row justify-end'><button
                                 onClick={() => navigate('/', { state: { index } })}
-                                className=" text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                                className=" text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center  mb-2"
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                 {' '}Regresar
@@ -582,16 +583,16 @@ function ProfilePage({onLogout}) {
                         </div>
                     </div>
                 ) : (
-                    <div className='mb-20'>
+                    <div className='mb-20 '>
                         {projects.length === 0 ? (
                             <p className="text-gray-400 text-medium mb-2 ml-10">No projects added yet.</p>
                         ) : (
                             projects.map((project, index) => (
-                                <div key={project.id || `view-${index}`} className="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
+                                <div key={project.id || `view-${index}`} className="flex flex-col space-x-0  group md:flex-row md:space-x-8 md:space-y-0 mb-2 ml-0">
                                     {project.project_image && (
                                         <div className='w-full md:w-1/2'>
-                                            <div className='relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50'>
-                                                <img src={project.project_image} alt={`${project.project_name} preview`} className="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" />
+                                            <div className='img-profile-container relative flex flex-col  items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50'>
+                                                <img src={project.project_image} alt={`${project.project_name} preview`} className="object-cover object-top w-full md-h-56 h-auto transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" />
                                             </div>
                                         </div>
                                     )}

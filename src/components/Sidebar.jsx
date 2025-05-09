@@ -2,14 +2,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './sidebar.css';
-function Sidebar({ isLoggedIn, userId }) {
+function Sidebar({ isLoggedIn, userId, ref }) {
+
 
   return (
     <>
     {(!isLoggedIn) ? (
       <Link to="/">
       </Link>) :
-      <div className='aside'>
+      <div className='aside' ref={ref}>
       <aside>
           <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</h1>
 

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import './App.css'
@@ -20,6 +20,7 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [redirectTo, setRedirectTo] = useState(null);
+  const asideContainerRef = useRef()
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -81,7 +82,7 @@ function App() {
   return (
     <div className=' w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]'>
       <div className='grid-container-app' >
-        {!isLoading && <Sidebar isLoggedIn={isLoggedIn} userId={userId} />}
+        {!isLoading && <Sidebar isLoggedIn={isLoggedIn} userId={userId} ref={asideContainerRef}/>}
         <div>
           <main style={{ flexGrow: 1 }} className="relative  w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
             {isLoading ? (
@@ -94,7 +95,7 @@ function App() {
                   <>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/profile/:id" element={<ProfilePage onLogout={handleLogout} />} />
-                    <Route path="/messages" element={<MessagesPage currentUserId={userId} />} />
+                    <Route path="/messages" element={<MessagesPage currentUserId={userId} ref={asideContainerRef}/>} />
                     <Route path="/matches" element={<MatchesPage />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/login" element={<Navigate to="/" replace />} />

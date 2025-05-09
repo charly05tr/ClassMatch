@@ -9,7 +9,22 @@ import './MessagePage.css'
 import { debounce } from 'lodash';
 const API_BASE_URL = 'http://192.168.0.6:5000'
 
-function MessagesPage({ currentUserId }) {
+function useViewportWidth() {
+    const [width, setWidth] = useState(window.innerWidth);
+  
+    useEffect(() => {
+      const handleResize = () => setWidth(window.innerWidth);
+  
+      window.addEventListener("resize", handleResize);
+  
+      // Limpieza
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+  
+    return width;
+  }
+
+function MessagesPage({ currentUserId, ref }) {
 
     const WEBSOCKET_URL = `http://192.168.0.6:5000?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([]);
@@ -700,75 +715,62 @@ function MessagesPage({ currentUserId }) {
     const handleSelectUserForDM = async (user) => {
         console.log("Selected user for DM:", user);
         // Hide search results immediately
-        // setShowSearchResults(false); // Handled by clearing search term
         setConversationSearchTerm(''); // Clear the search term
-
-        // ... (same handleSelectUserForDM logic as before: API call to create/get DM, add/move to conversations, select conversation) ...
-
+        // You might want to add a loading state here
+    
         try {
-            const res = await fetch(`${API_BASE_URL}/messages/conversations`, { /* ... POST to create/get DM with participant_ids: [user.id] ... */ });
+            // *** CORRECTED FETCH URL AND OPTIONS ***
+            // Use the actual user.id in the URL path
+            // Add credentials: 'include' for authentication
+            const res = await fetch(`${API_BASE_URL}/messages/users/${user.id}/conversation`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add other headers if needed
+                },
+                credentials: 'include', // <--- CRUCIAL for sending cookies
+                // No body needed for this specific backend route as user ID is in URL
+                // body: JSON.stringify({})
+            });
+    
             if (res.ok) {
                 const conversation = await res.json();
                 console.log("DM conversation created/obtained:", conversation);
-                setConversations(prevConversations => { /* ... add/move conversation to top ... */ });
-                handleConversationSelect(conversation.id); // Select the DM
-            } else { /* ... error handling ... */ alert(`Error starting DM: ...`); }
-        } catch (error) { /* ... network error handling ... */ alert(`Network error starting DM: ...`); }
-
-        const handleLeaveConversation = useCallback(async (conversationId) => {
-            console.log("Attempting to leave conversation:", conversationId);
-            if (!window.confirm("¿Estás seguro de que quieres salir de este chat?")) {
-                return; // Cancel if user does not confirm
-            }
-
-            // Optional: Set a loading state for leaving conversation
-            // setIsLeavingConversation(true);
-            // setLeaveConversationError(null);
-
-            try {
-                // Call backend API to leave the conversation
-                const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                });
-
-                if (res.ok) {
-                    console.log("Successfully left conversation:", conversationId);
-                    // Remove the conversation from the conversations list
-                    setConversations(prevConversations => prevConversations.filter(conv => conv.id !== conversationId));
-
-                    // If the user left the currently selected conversation, deselect it
-                    if (selectedConversationId === conversationId) {
-                        setSelectedConversationId(null); // Deselect the chat
-                        setMessages([]); // Clear messages
-                        setMessagePagination({ // Reset pagination
-                            total_items: 0, total_pages: 0, current_page: 0, items_per_page: 20,
-                            has_next: false, has_prev: false, next_page: null, prev_page: null,
-                        });
-                        // Hide the participants modal if it was open
-                        setShowParticipantsModal(false);
+    
+                // Add or move the conversation to the top of the conversations list
+                setConversations(prevConversations => {
+                    const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id));
+                    if (existingIndex !== -1) {
+                        // Conversation already in list, remove and add to top
+                        const updatedConversations = [...prevConversations];
+                        const [movedConv] = updatedConversations.splice(existingIndex, 1);
+                        // Ensure the conversation data is updated if it came from the backend
+                        const updatedMovedConv = { ...movedConv, ...conversation }; // Merge data
+                        return [updatedMovedConv, ...updatedConversations];
                     } else {
-                        // If user left a conversation that wasn't selected, maybe just show a notification
-                        alert(`Has salido del chat.`); // Simple notification
+                        // New conversation, add to top
+                        return [conversation, ...prevConversations];
                     }
-
-                } else {
-                    const errorData = await res.json();
-                    // setLeaveConversationError(errorData.message || `Error leaving conversation: ${res.status}`);
-                    console.error("Error leaving conversation:", res.status, errorData);
-                    alert(`Error al salir del chat: ${errorData.message || res.status}`); // Basic error feedback
-                }
-            } catch (error) {
-                // setLeaveConversationError(`Network error leaving conversation: ${error.message}`);
-                console.error("Network error leaving conversation:", error);
-                alert(`Error de red al salir del chat: ${error.message}`); // Basic error feedback
-            } finally {
-                // setIsLeavingConversation(false);
+                });
+    
+                // Select the newly created/obtained DM conversation
+                handleConversationSelect(conversation.id);
+    
+            } else {
+                // Handle API error (e.g., 400, 404, 500 from backend)
+                const errorData = await res.json();
+                console.error("Error starting DM:", res.status, errorData);
+                alert(`Error starting DM: ${errorData.message || res.status}`); // Basic error feedback
             }
-        }, [selectedConversationId, setConversations, setSelectedConversationId, setMessages, setMessagePagination]);
+        } catch (error) {
+            // Handle network error
+            console.error("Network error starting DM:", error);
+            alert(`Network error starting DM: ${error.message}`); // Basic error feedback
+        } finally {
+            // Optional: Hide loading state
+            // setIsStartingDM(false);
+        }
     };
-
     const handleToggleParticipantsModal = () => {
         // Only toggle if a conversation is selected
         if (selectedConversationId !== null) {
@@ -799,12 +801,18 @@ function MessagesPage({ currentUserId }) {
     }, [showParticipantsModal]);
 
     const selectedConversation = conversations.find(c => c.id === selectedConversationId);
-    const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined; // Check if it's a group
-
+    const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined; 
+    const handleChangeDisplay = () => {
+        ref.current.style.display = (useViewportWidth() < 800 && selectedConversationId) ? "none" : "block"
+    }
+    useEffect(() =>{
+        handleChangeDisplay
+    }, [ref, selectedConversationId, useViewportWidth])
+    
 
     return (
-        <div className="shadow grid grid-cols-[1fr_2fr] grid-template-rows h-100 pl-4 min-h-screen text-gray-900 gap-3 dark:text-gray-100">
-            <div className='justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden'>
+        <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]":"grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId)?'chat-converation-hide':''} justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden`}>
                 {(isFormVisible) ?
                     <div>
                         <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
@@ -1012,7 +1020,7 @@ function MessagesPage({ currentUserId }) {
                     </ul>
                 )}
             </div>
-            <div className="flex flex-col h-full">
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId)?'chat-messages':''}flex flex-col h-full`}>
                 {isLoadingMessages && selectedConversationId !== null && <p className="text-end absolute"></p>}
                 {isLoadingMore && selectedConversationId !== null && <p className="text-end absolute"></p>}
                 {messagesError && <p className="text-red-500">{messagesError}</p>}
@@ -1031,7 +1039,7 @@ function MessagesPage({ currentUserId }) {
                                 : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-2">
                                     {getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}
                                     <img src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() : (selectedConversation.participants && selectedConversation.participants.length === 2 ? getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') : getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
-                                    {/* <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 cursor-pointer" onClick={(e) => { e.stopPropagation(); setSelectedConversationId(null) }} />; */}
+                                    <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 cursor-pointer" onClick={(e) => {  setSelectedConversationId(null)  }}/>
                                 </div>)
                             }
                         </button>
@@ -1098,7 +1106,6 @@ function MessagesPage({ currentUserId }) {
                             key={message.id}
                             className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
-                                {console.log(`Remitente del mensaje ${message.id}:`, message.sender.name)}
                                 <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${String(message.sender_id) === String(currentUserId) ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
                                     <div>
                                         {String(message.sender.id) !== String(currentUserId) ?
@@ -1114,7 +1121,7 @@ function MessagesPage({ currentUserId }) {
                             </div>
                         ))}
                         {!isLoadingMessages && !isLoadingMore && messages.length === 0 && !messagesError && (
-                            <p className="text-center text-gray-600 dark:text-gray-400 mb-auto">This chat don't have messages yet.</p>
+                            <p className="text-center text-gray-600 dark:text-gray-400 mb-auto">This chat doesn't have messages yet.</p>
                         )}
 
                         {selectedConversationId !== null && (

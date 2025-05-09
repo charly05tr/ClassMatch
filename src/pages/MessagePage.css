@@ -42,3 +42,10 @@
 .item-bg-color:hover{
   background-color: rgba(0, 38, 84, 0.7);
 }
+
+.chat-converation-hide {
+  display: none;
+}
+.chat-messages {
+  width: 90vw;
+}

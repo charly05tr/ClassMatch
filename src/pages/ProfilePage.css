@@ -103,7 +103,7 @@ a:hover {
 
 @media (max-width:500px) {
     .profile-content{
-        min-width: 100vw;
+        min-width: 94vw;
         padding: 0px;
         margin: 0px;
         h1 {
@@ -114,4 +114,5 @@ a:hover {
             margin-top: 5px;
         }
     }
+    
 }

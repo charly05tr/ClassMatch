@@ -79,9 +79,9 @@ function HomePage() {
       }, [state]);
 
     return (
-        <main className="flex flex-col px-4">
+        <main className="flex flex-col">
             <div className='grid-container'>
-                <div className='arrow mr-4'>
+                <div className='arrow arrow-left md:mr-4 mr-2'>
                     {(!currentIndex<1)?
                     <button type='button' title='backward' onClick={() => setCurrentIndex(currentIndex-1)}>
                         <FontAwesomeIcon icon={faArrowLeft} size="lg" />
@@ -104,7 +104,7 @@ function HomePage() {
                     </AnimatePresence>
                 </div>
 
-                <div className='arrow ml-4'>
+                <div className='arrow arrow-right md:ml-4 ml-2'>
                     {(currentIndex<users.length-1)?
                     <button type='button' title='foward' onClick={() => setCurrentIndex(currentIndex+1)}>
                         <FontAwesomeIcon icon={faArrowRight} size="lg" />
