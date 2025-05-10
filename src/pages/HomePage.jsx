@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const UserCard = ({ index, users, goToProfile }) => {
     
     return (
-        <div className='flex justify-center  px-4'>
+        <div className='grid justify-center items-center px-4 h-full'>
             <div className="bg-black-100 shadow-xl rounded-xl max-w-lg w-full min-w-[400px]">
                 <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-28 rounded-t-xl relative">
                     <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
@@ -54,7 +54,7 @@ function HomePage() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("http://192.168.0.6:5000", {
+                const response = await fetch("http://192.168.0.4:5000", {
                     credentials: "include",
                     method: "GET"
                 })

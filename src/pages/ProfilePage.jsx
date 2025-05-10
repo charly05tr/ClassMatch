@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 import SocialLinksEditor from '/src/components/SocialLinks'
 import WorkExperienceEditor from '/src/components/WorkExperience'
@@ -34,6 +34,20 @@ function ProfilePage({onLogout}) {
     const [originalProjects, setOriginalProjects] = useState([])
     const firstInputRef = useRef(null)
     const [isOwner, setIsOwner] = useState(false)
+    const [currentUserId, setCurrentUserId] = useState("")
+
+    const handleSendMessage = useCallback(async () => {
+        console.log(currentUserId)
+        console.log(userId)
+        console.log(isOwner)
+        if (!currentUserId || !userId || isOwner) {
+            console.log("No se puede enviar mensaje: usuario actual no loggeado, perfil no cargado, o es tu propio perfil.");
+            return;
+        }
+
+        console.log(`Intentando iniciar DM con usuario ${userId}...`);
+        navigate('/messages', { state: { conversationIdToOpen: conversation.id } });
+    }, [currentUserId, userId, isOwner, navigate]);
 
     const handleLogoutClick = async () => {
         await onLogout()
@@ -43,22 +57,23 @@ function ProfilePage({onLogout}) {
     useEffect(() => {
         const checkLoginStatus = async () => {
 
-            const res = await fetch("http://192.168.0.6:5000/users/debug", { credentials: "include" })
+            const res = await fetch("http://192.168.0.4:5000/users/debug", { credentials: "include" })
             if (res.ok) {
                 const data = await res.json()
                 if (String(data.user_id) === String(id)) {
                     setIsOwner(true)
                 }
+                setCurrentUserId(data.user_id)
             }
         }
         checkLoginStatus()
-    }, [id])
+    }, [id, isOwner, userId])
 
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true)
             try {
-                const res = await fetch(`http://192.168.0.6:5000/users/profile/${id}`, {
+                const res = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -123,11 +138,10 @@ function ProfilePage({onLogout}) {
         fetchProfileData()
     }, [id])
 
-    // Efecto 2: Cargar datos de proyectos cuando userId esté disponible o cambie
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`http://192.168.0.6:5000/projects/user_projects/${id}`, {
+                const res = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -164,7 +178,6 @@ function ProfilePage({onLogout}) {
         }
     }
 
-    // Manejar la adición de un nuevo proyecto
     const handleAddProject = () => {
         if (!isOwner) {
             return
@@ -181,7 +194,6 @@ function ProfilePage({onLogout}) {
         setProjects([...projects, newProject])
     }
 
-    // Manejar la eliminación de un proyecto por índice
     const handleRemoveProject = (indexToRemove) => {
         if (!isOwner) {
             return
@@ -190,7 +202,6 @@ function ProfilePage({onLogout}) {
         setProjects(projectsAfterRemoval)
     }
 
-    // Manejador para guardar TODOS los cambios (perfil y proyectos)
     const handleSaveChanges = async () => {
         if (!isOwner) {
             return
@@ -198,7 +209,7 @@ function ProfilePage({onLogout}) {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`http://192.168.0.6:5000/users/profile/${id}`, {
+            const profileRes = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -232,10 +243,8 @@ function ProfilePage({onLogout}) {
             setprofesion(profileSavedData.profesion)
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
-            // Guardar la experiencia original después de guardar
 
-            // Guardar Proyectos (enviando el array completo)
-            const projectsRes = await fetch(`http://192.168.0.6:5000/projects/user_projects/${id}`, {
+            const projectsRes = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -283,7 +292,6 @@ function ProfilePage({onLogout}) {
         }
     }
 
-    //handlers para work experience
     const handleAddWorkExperience = () => {
         if (!isOwner) {
             return
@@ -322,7 +330,7 @@ function ProfilePage({onLogout}) {
         setExperience(updatedWorkExperience);
     }
 
-    // Manejador para cancelar la edición
+
     const handleCancelEdit = () => {
         if (!isOwner) {
             return
@@ -396,6 +404,7 @@ function ProfilePage({onLogout}) {
                                         <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                         {' '}Regresar
                                     </button> : ''}
+
                                     <button 
                                         onClick={handleLogoutClick}
                                         className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
@@ -423,13 +432,17 @@ function ProfilePage({onLogout}) {
                                         Save Changes
                                     </button>
                                 </div>
-                            )) : (state) ? (<div className='flex flex-row justify-end'><button
+                            )) : (state) ? (<div className='flex flex-row justify-end gap-2'><button
                                 onClick={() => navigate('/', { state: { index } })}
                                 className=" text-gray-900 bg-gradient-to-r from-teal-200 to-lime-200 hover:bg-gradient-to-l hover:from-teal-200 hover:to-lime-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center  mb-2"
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                 {' '}Regresar
-                            </button></div>) : ''
+                            </button>
+                            <button type='buton' onClick={handleSendMessage} className='text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2'>
+                                Open DM
+                            </button>
+                            </div>) : ''
                     }
                 </div>
                 <div className="profile-content">

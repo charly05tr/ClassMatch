@@ -22,7 +22,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch('http://192.168.0.6:5000/users/register', {
+            const res = await fetch('http://192.168.0.4:5000/users/register', {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 credentials: "include",
@@ -46,6 +46,7 @@ const RegisterPage = () => {
     }
 
     return (
+        <>
         <div className='background'>
             <ul>
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500'></li>
@@ -59,7 +60,8 @@ const RegisterPage = () => {
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500'></li>
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500'></li>
             </ul>
-            <main className="grid justify-center px-4 items-center h-full">
+        </div>
+            <main className="grid justify-center px-4 items-center h-full register-container">
                 <form onSubmit={handleSubmit} className="w-full max-w-5xl">
                 <div className="text-2xl text-center mb-2 font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
                     <Fieldset className="space-y-6 rounded-xl bg-white/5 p-6 sm:p-10">
@@ -145,7 +147,7 @@ const RegisterPage = () => {
                     </Fieldset>
                 </form>
             </main>
-        </div>
+        </>
     )
 }
 

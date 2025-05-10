@@ -1,16 +1,15 @@
-// src/components/Sidebar.jsx
-import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAside } from '/src/context/AsideContext';
 import './sidebar.css';
-function Sidebar({ isLoggedIn, userId, ref }) {
+function Sidebar({ isLoggedIn, userId }) {
 
-
+  const { isOpen } = useAside();
   return (
     <>
     {(!isLoggedIn) ? (
       <Link to="/">
       </Link>) :
-      <div className='aside' ref={ref}>
+      <div className={`aside ${isOpen?"open":"closed"}`}>
       <aside>
           <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</h1>
 

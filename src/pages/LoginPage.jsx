@@ -22,7 +22,7 @@ function LoginPage({ onLoginSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch("http://192.168.0.6:5000/users/login", {
+            const res = await fetch("http://192.168.0.4:5000/users/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -52,6 +52,7 @@ function LoginPage({ onLoginSuccess }) {
     }
 
     return (
+        <>
         <div className="background">
             <ul>
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></li >
@@ -65,11 +66,12 @@ function LoginPage({ onLoginSuccess }) {
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></li >
                 <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></li >
             </ul>
-            <main className="flex justify-center flex-column px-4 items-center h-full">
-                <form onSubmit={handleSubmit} className="w-1/2 min-w-[400px] max-w-5xl">
-                <div className="text-2xl text-center mb-2 font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
+        </div>
+            <main className="grid justify-center px-4 items-center h-full register-container">
+                <form onSubmit={handleSubmit} className="w-full  max-w-2xl">
+                <div className="text-2xl text-center mb-2  font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
                     <Fieldset className="space-y-6 rounded-xl bg-white/5 p-6 sm:p-10">
-                        <Legend className="text-xl font-semibold text-white mb-4">Sign in to your account</Legend>
+                        <Legend className="text-xl font-semibold text-white mb-4 ">Sign in to your account</Legend>
                         <p className='mb-3 text-gray-500 dark:text-gray-400'>Join our community of developers to get access of hunderds of projects and share your portfolio to the world.</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -116,7 +118,7 @@ function LoginPage({ onLoginSuccess }) {
                     </Fieldset>
                 </form>
             </main>
-        </div>
+        </>
     )
 }
 
