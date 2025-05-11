@@ -35,7 +35,9 @@ function ProfilePage({onLogout}) {
     const firstInputRef = useRef(null)
     const [isOwner, setIsOwner] = useState(false)
     const [currentUserId, setCurrentUserId] = useState("")
+    const [user, setUser] = useState("")
 
+    
     const handleSendMessage = useCallback(async () => {
         console.log(currentUserId)
         console.log(userId)
@@ -46,8 +48,8 @@ function ProfilePage({onLogout}) {
         }
 
         console.log(`Intentando iniciar DM con usuario ${userId}...`);
-        navigate('/messages', { state: { conversationIdToOpen: conversation.id } });
-    }, [currentUserId, userId, isOwner, navigate]);
+        navigate('/messages', { state: { user: user } });
+    }, [currentUserId, userId, isOwner, navigate, user]);
 
     const handleLogoutClick = async () => {
         await onLogout()
@@ -92,6 +94,7 @@ function ProfilePage({onLogout}) {
                         socialLinks: data.social_links || "[]",
                         experience: loadedWorkExperience,
                     }
+                    setUser(loadedData)
                     setUserId(loadedData.userId)
                     setExperience(loadedWorkExperience)
                     setName(loadedData.name)

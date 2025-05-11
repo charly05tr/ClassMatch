@@ -23,12 +23,12 @@ function LandingPage() {
             {/* En una aplicación real, esto sería un componente Navbar separado y más completo */}
             <header className="w-full p-6 flex justify-between items-center bg-gray-800">
                 {/* Logo o Nombre de la Aplicación */}
-                <div className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
+                <div className="md:text-3xl text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
                 {/* Enlaces de Navegación (Placeholder) */}
-                <nav>
+                <nav className='flex items-center'>
                     {/* Estos serían enlaces reales de tu router (ej. React Router Link) */}
                     <button type="button" onClick={() => goToLogIn()} className="text-gray-300 hover:text-white mr-4">Login</button>
-                    <button type='button'onClick={() => goToRegister()} className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Regístrate</button>
+                    <button type='button'onClick={() => goToRegister()} className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Regístrate</button>
                 </nav>
             </header>
 

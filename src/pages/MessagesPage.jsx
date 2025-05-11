@@ -14,16 +14,16 @@ const API_BASE_URL = 'http://192.168.0.4:5000'
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
     useEffect(() => {
-      const handleResize = () => setWidth(window.innerWidth) 
-      window.addEventListener("resize", handleResize)
-      return () => window.removeEventListener("resize", handleResize)
+        const handleResize = () => setWidth(window.innerWidth)
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
     }, [])
     return width
-  }
+}
 
 
 function MessagesPage({ currentUserId }) {
-
+    const navigate = useNavigate()
     const WEBSOCKET_URL = `http://192.168.0.4:5000?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
@@ -47,6 +47,11 @@ function MessagesPage({ currentUserId }) {
         next_page: null,
         prev_page: null,
     })
+    const [inviteSearchTerm, setInviteSearchTerm] = useState('');
+    const [inviteSearchResults, setInviteSearchResults] = useState([]);
+    const [isLoadingInviteSearch, setIsLoadingInviteSearch] = useState(false);
+    const [inviteSearchError, setInviteSearchError] = useState(null);
+    const [isInvitingUser, setIsInvitingUser] = useState(false);
 
     const [newMessageContent, setNewMessageContent] = useState('')
     const [isSendingMessage, setIsSendingMessage] = useState(false)
@@ -60,12 +65,15 @@ function MessagesPage({ currentUserId }) {
     const searchResultsRef = useRef(null)
     const searchInputRef = useRef(null)
     const [isCreatingGroup, setIsCreatingGroup] = useState(false)
-    const [selectedParticipants, setSelectedParticipants] = useState([]) 
+    const [selectedParticipants, setSelectedParticipants] = useState([])
     const [newGroupName, setNewGroupName] = useState('')
-    const [isCreatingGroupConversation, setIsCreatingGroupConversation] = useState(false) 
+    const [isCreatingGroupConversation, setIsCreatingGroupConversation] = useState(false)
     const [createGroupError, setCreateGroupError] = useState(null)
     const [showParticipantsModal, setShowParticipantsModal] = useState(false)
     const PLACEHOLDER_PHOTO_URL = 'https://picsum.photos/200/300'
+    const socketRef = useRef(null);
+    const [userToDM, setUserToDM] = useState("")
+    const [isSocketConnected, setIsSocketConnected] = useState(false);
     const { toggleAside } = useAside()
     const location = useLocation()
     const getUserPhotoUrl = (user) => {
@@ -82,7 +90,15 @@ function MessagesPage({ currentUserId }) {
         }).format(date)
     }
 
-    
+    const waitUntilSocketReady = (callback, retries = 20, delay = 100) => {
+        if (!socket) {
+            if (retries === 0) return console.error("Socket aún no está listo después de varios intentos.");
+            setTimeout(() => waitUntilSocketReady(callback, retries - 1, delay), delay);
+        } else {
+            callback();
+        }
+    };
+
     const fetchConversations = async () => {
         setIsLoadingConversations(true)
         setConversationsError(null)
@@ -109,13 +125,13 @@ function MessagesPage({ currentUserId }) {
         }
     }
     useEffect(() => {
-        
+
         if (currentUserId) {
             fetchConversations()
         }
     }, [])
-    
-    
+
+
     const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 100) => {
         console.log(`Workspaceing messages for conv ${conversationId}, page ${page}...`)
         try {
@@ -126,7 +142,7 @@ function MessagesPage({ currentUserId }) {
                 const data = await res.json()
                 console.log(`Received messages for conv ${conversationId}, page ${page}:`, data)
                 setMessages(prevMessages => {
-                    
+
                     if (page < messagePagination.current_page) {
                         console.log(`Prepending messages for older page ${page}.`)
                         return [...data.messages, ...prevMessages]
@@ -139,7 +155,7 @@ function MessagesPage({ currentUserId }) {
                         return data.messages
                     }
                 })
-                
+
                 setMessagePagination(data.pagination)
             } else {
                 setMessages(prevMessages => page < messagePagination.current_page ? prevMessages : [])
@@ -148,14 +164,14 @@ function MessagesPage({ currentUserId }) {
             setMessages(prevMessages => page < messagePagination.current_page ? prevMessages : [])
         }
     }, [selectedConversationId, messagePagination.items_per_page, messagePagination.current_page])
-    
+
     const handlecloseConversation = () => {
         setSelectedConversationId(null)
-        if (width<800) {
+        if (width < 800) {
             toggleAside()
         }
     }
-    
+
     useEffect(() => {
         if (selectedConversationId !== null) {
             fetchMessages(selectedConversationId, 1, messagePagination.items_per_page)
@@ -167,10 +183,10 @@ function MessagesPage({ currentUserId }) {
             })
             oldScrollHeightRef.current = 0
         }
-        
+
     }, [selectedConversationId, fetchMessages, messagePagination.items_per_page])
-    
-    
+
+
     const handlersRef = useRef({})
     useEffect(() => {
         handlersRef.current = {
@@ -184,22 +200,41 @@ function MessagesPage({ currentUserId }) {
     const width = useViewportWidth()
 
     const handleConversationSelect = useCallback((conversationId) => {
-        console.log("Conversation selected:", conversationId)
+        console.log("Conversation selected:", conversationId);
+
+        const socket = socketRef.current;
         if (socket && socket.connected) {
-            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`)
-            socket.emit('join_conversation', { conversation_id: conversationId })
+            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`);
+            socket.emit('join_conversation', { conversation_id: conversationId });
         } else {
-            console.warn("Socket no conectado, no se pudo emitir join_conversation")
+            console.warn("Socket no conectado, no se pudo emitir join_conversation");
         }
-        setSelectedConversationId(conversationId)
-        setNewMessageContent('')
-        setSendMessageError(null)
-        if(width<800) {
-            toggleAside()
+
+        setSelectedConversationId(conversationId);
+        setNewMessageContent('');
+        setSendMessageError(null);
+
+        if (width < 800) {
+            toggleAside();
+        }       
+    }, [width, toggleAside]);
+
+    useEffect(() => {
+        if (userToDM && isSocketConnected) {
+            console.log("Socket listo y userToDM presente, iniciando DM...");
+
+            handleSelectUserForDM(userToDM)
+                .then(conversation => {
+                    console.log("Conversación DM creada/obtenida:", conversation);
+                    handleConversationSelect(conversation.id);
+                })
+                .catch(err => {
+                    console.error("Error al obtener/crear conversación DM:", err);
+                });
         }
-    }, [socket, handlersRef])
-    
-    
+    }, [userToDM, isSocketConnected]);
+
+
     useEffect(() => {
         if (currentUserId !== null) {
             console.log(`Intentando conectar WebSocket para user ${currentUserId}...`)
@@ -209,20 +244,115 @@ function MessagesPage({ currentUserId }) {
                     credentials: true
                 }
             })
-            
+            socketRef.current = newSocket;
+
             setSocket(newSocket)
             newSocket.on('connect', () => {
                 console.log('WebSocket conectado!', newSocket.id)
+                setIsSocketConnected(true);
             })
-            
+
             newSocket.on('disconnect', (reason) => {
                 console.log('WebSocket desconectado:', reason)
+                setIsSocketConnected(false);
             })
-            
+
+            newSocket.on('joined_conversation', (conv) => {
+                setConversations(prev => {
+                    const exists = prev.some(c => String(c.id) === String(conv.id));
+                    if (exists) return prev;
+                    return [conv, ...prev];
+                });
+            });
+
             newSocket.on('connect_error', (error) => {
                 console.error('WebSocket Connection Error:', error)
             })
-            
+
+            newSocket.on('user_left_conv', (data) => {
+                console.log('Evento leave_conversation recibido por WebSocket:', data);
+                const { conversation_id, user_id } = data;
+                const current = handlersRef.current;
+                if (String(user_id) === String(current.currentUserId)) {
+                    console(`User ${user_id} (current user) left conversation ${conversation_id}. Removing from list.`);
+                    current.setConversations(prevConversations =>
+                        prevConversations.filter(conv => String(conv.id) !== String(conversation_id))
+                    );
+                    if (String(current.selectedConversationId) === String(conversation_id)) {
+                        console(`Conversation ${conversation_id} was selected. Deselecting.`);
+                        current.setSelectedConversationId(null);
+                        current.setMessages([]);
+                        current.setMessagePagination({
+                            total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+                            has_next: false, has_prev: false, next_page: null, prev_page: null,
+                        });
+                    }
+
+                } else {
+                    console.log(`User ${user_id} (another user) left conversation ${conversation_id}.`);
+                    current.setConversations(prevConversations => {
+                        const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id));
+                        if (conversationIndex !== -1) {
+                            const updatedConversations = [...prevConversations];
+                            const targetConv = updatedConversations[conversationIndex];
+                            updatedConversations[conversationIndex] = {
+                                ...targetConv,
+                                participants: targetConv.participants.filter(p => String(p.user_id) !== String(user_id)),
+                            };
+                            console.log(`Participant ${user_id} removed from conversation ${conversation_id} in state.`);
+                            return updatedConversations;
+                        }
+                        return prevConversations;
+                    });
+                    if (String(current.selectedConversationId) === String(conversation_id)) {
+                        console(`Conversation ${conversation_id} is selected. Adding system message.`);
+
+                        const systemMessage = {
+                            id: `system-${Date.now()}-${Math.random()}`,
+                            conversation_id: conversation_id,
+                            sender_id: null,
+                            content: `Usuario ${user_id} ha salido del chat.`,
+                            timestamp: new Date().toISOString(),
+                            sender: null
+                        };
+                        current.setMessages(prevMessages => [...current.messages, systemMessage]);
+                    }
+                }
+            });
+
+            newSocket.on('participant_added', (data) => {
+                console.log('Evento participant_added recibido por WebSocket:', data);
+                const { conversation_id, participant } = data; 
+                const current = handlersRef.current;
+
+                current.setConversations(prevConversations => {
+                    const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id));
+                    if (conversationIndex !== -1) {
+                        const updatedConversations = [...prevConversations];
+                        const targetConv = updatedConversations[conversationIndex];
+                        if (!targetConv.participants.some(p => String(p.user_id) === String(participant.user_id))) {
+                            updatedConversations[conversationIndex] = {
+                                ...targetConv,
+                                participants: [...targetConv.participants, participant],
+                            };
+                            console.log(`Participant ${participant.user.name || participant.user.username} added to conversation ${conversation_id} in state.`);
+                            return updatedConversations;
+                        } else {
+                             console.log(`Participant ${participant.user.name || participant.user.username} already exists in conversation ${conversation_id} in state.`);
+                             return prevConversations; 
+                        }
+                    }
+                    console.warn(`Received participant_added for conversation ${conversation_id} not found in list. Re-fetching conversations.`);
+                    current.fetchConversations(); 
+                    return prevConversations; 
+                });
+                if (String(participant.user_id) === String(current.currentUserId)) {
+                    console.log(`User ${current.currentUserId} was just added to conversation ${conversation_id}. Selecting it.`);
+                    current.handleConversationSelect(conversation_id); 
+                }
+
+            });
+
             newSocket.on('new_message', (message) => {
                 console.log('--- Nuevo mensaje WS recibido ---')
                 console.log('Mensaje completo recibido:', message)
@@ -248,27 +378,30 @@ function MessagesPage({ currentUserId }) {
                             console.warn("messagesContainerRef.current es null al intentar scrollear en listener WS.")
                         }
                     }, 0)
-                    
+
                 } else {
                     console.log(`CONDICIÓN NO CUMPLIDA. Mensaje es para conv ${message.conversation_id}, seleccionada es ${current.selectedConversationId}. Actualizando lista de conversaciones.`) // Log si la condición NO se cumple
-                    current.setConversations(prevConversations => {
-                        const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(message.conversation_id))
-                        if (conversationIndex !== -1) {
-                            const updatedConversations = [...prevConversations]
-                            updatedConversations[conversationIndex] = {
-                                ...updatedConversations[conversationIndex],
-                                last_message: message,
-                            }
-                            const [movedConv] = updatedConversations.splice(conversationIndex, 1)
-                            return [movedConv, ...updatedConversations]
-                        }
-                        return prevConversations
-                    })
                 }
+                current.setConversations(prevConversations => {
+                    const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(message.conversation_id))
+                    if (conversationIndex !== -1) {
+                        const updatedConversations = [...prevConversations]
+                        updatedConversations[conversationIndex] = {
+                            ...updatedConversations[conversationIndex],
+                            last_message: message,
+                        }
+                        const [movedConv] = updatedConversations.splice(conversationIndex, 1)
+                        return [movedConv, ...updatedConversations]
+                    }
+                    return prevConversations
+                })
                 console.log('--- Fin del handler WS ---')
             })
             return () => {
                 console.log('Desconectando WebSocket...')
+                newSocket.off('user_left_conv')
+                newSocket.off('participant_added')
+                newSocket.off('new_conversation')
                 newSocket.off('connect')
                 newSocket.off('disconnect')
                 newSocket.off('connect_error')
@@ -283,10 +416,12 @@ function MessagesPage({ currentUserId }) {
                 setSocket(null)
             }
         }
-        
+
+
+
     }, [currentUserId])
-    
-    
+
+
     const handleLoadMoreMessages = useCallback(() => {
         console.log("handleLoadMoreMessages called for older messages.")
         if (messagePagination.has_prev && messagePagination.prev_page !== null && messagePagination.prev_page > 0) {
@@ -296,8 +431,8 @@ function MessagesPage({ currentUserId }) {
             console.log("Cannot load more OLDER messages. has_prev:", messagePagination.has_prev, "prev_page:", messagePagination.prev_page)
         }
     }, [messagePagination.has_prev, messagePagination.prev_page, selectedConversationId, fetchMessages, messagePagination.items_per_page])
-    
-    
+
+
     useEffect(() => {
         const loadInitialMessages = async () => {
             if (selectedConversationId !== null) {
@@ -309,7 +444,7 @@ function MessagesPage({ currentUserId }) {
                 oldScrollHeightRef.current = 0
                 setIsLoadingMessages(true)
                 setMessagesError(null)
-                
+
                 try {
                     const resPage1 = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=1&per_page=100`, {
                         credentials: 'include',
@@ -317,17 +452,17 @@ function MessagesPage({ currentUserId }) {
                     if (resPage1.ok) {
                         const dataPage1 = await resPage1.json()
                         console.log(`Initial fetch (Page 1) for pagination info, conv ${selectedConversationId}:`, dataPage1)
-                        
+
                         const totalPages = dataPage1.pagination.total_pages
-                        
+
                         if (totalPages > 0) {
                             const pageToFetch = totalPages
-                            
+
                             console.log(`Workspaceing page ${pageToFetch} (last page) for conv ${selectedConversationId}...`)
                             const resLastPage = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=${pageToFetch}&per_page=100`, {
                                 credentials: 'include',
                             })
-                            
+
                             if (resLastPage.ok) {
                                 const dataLastPage = await resLastPage.json()
                                 console.log(`Workspaceed last page (${pageToFetch}) messages:`, dataLastPage)
@@ -348,8 +483,8 @@ function MessagesPage({ currentUserId }) {
                             setMessages([])
                             setMessagePagination(dataPage1.pagination)
                         }
-                        
-                        
+
+
                     } else {
                         const errorData = await resPage1.json()
                         setMessagesError(errorData.message || `Error fetching initial pagination info: ${resPage1.status}`)
@@ -383,11 +518,11 @@ function MessagesPage({ currentUserId }) {
         }
         loadInitialMessages()
     }, [selectedConversationId])
-    
-    
+
+
     useLayoutEffect(() => {
         const messagesContainer = messagesContainerRef.current
-        
+
         if (messagesContainer && selectedConversationId !== null && messagePagination.current_page > 1 && !isLoadingMessages && !isLoadingMore) {
             const newScrollHeight = messagesContainer.scrollHeight
             const heightDifference = newScrollHeight - oldScrollHeightRef.current
@@ -398,10 +533,10 @@ function MessagesPage({ currentUserId }) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight - messagesContainer.clientHeight
             console.log("Initial load (page 1), scrolling to visual bottom.")
         }
-        
+
     }, [messages, selectedConversationId, messagePagination.current_page, isLoadingMessages, isLoadingMore])
-    
-    
+
+
     const messagesContainer = messagesContainerRef.current
     useEffect(() => {
         const handleScroll = () => {
@@ -416,7 +551,7 @@ function MessagesPage({ currentUserId }) {
             }
             messagesContainer.addEventListener('scroll', handleScroll)
             console.log("Scroll listener attached for conv:", selectedConversationId)
-            
+
             if (isNearTopVisual && !isLoadingMessages && !isLoadingMore && messagePagination.has_next) {
                 console.log("Scrolled near visual top, attempting to load more...")
                 handleLoadMoreMessages()
@@ -431,15 +566,15 @@ function MessagesPage({ currentUserId }) {
         }
         messagesContainer.addEventListener('scroll', handleScroll)
         console.log("Scroll listener attached for conv:", selectedConversationId)
-        
+
         return () => {
             messagesContainer.removeEventListener('scroll', handleScroll)
             console.log("Scroll listener removed for conv:", selectedConversationId)
         }
-        
+
     }, [selectedConversationId, isLoadingMessages, isLoadingMore, messagePagination.has_next, handleLoadMoreMessages])
-    
-    
+
+
     const handleSendMessage = async (e) => {
         e.preventDefault()
         if (!selectedConversationId || !newMessageContent.trim()) {
@@ -448,7 +583,7 @@ function MessagesPage({ currentUserId }) {
         }
         setIsSendingMessage(true)
         setSendMessageError(null)
-        
+
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages`, {
                 method: 'POST',
@@ -472,27 +607,28 @@ function MessagesPage({ currentUserId }) {
             setNewMessageContent('')
         }
     }
-    
-    
+
+
     const getConversationDisplayName = useCallback((conv) => {
-        if (conv.name) {
+
+        if (conv?.name) {
             return conv.name
         } else {
-            if (conv.participants && conv.participants.length > 0) {
-                const otherParticipants = conv.participants.filter(p => String(p.id) !== String(currentUserId))
+            if (conv?.participants && conv?.participants.length > 0) {
+                const otherParticipants = conv?.participants.filter(p => String(p.id) !== String(currentUserId))
                 if (otherParticipants.length > 0) {
                     return otherParticipants.map(p => p.name || `Usuario ${p.id}`).join(', ')
                 } else {
                     return `Yo`
                 }
             } else {
-                console.warn("Conversation participants not loaded for display name:", conv)
-                return `Conversación (ID: ${conv.id})`
+                console.warn("Conversation participants not loaded for display name:", conv || 'putaaaa')
+                return `Conversación (ID: ${conv?.id})`
             }
         }
     }, [currentUserId])
-    
-    
+
+
     const handleLeaveConversation = async (conversationId) => {
         if (!window.confirm(`¿Estás seguro de que quieres salir de esta conversación (ID: ${conversationId})?`)) {
             return
@@ -515,6 +651,10 @@ function MessagesPage({ currentUserId }) {
                         total_items: 0, total_pages: 0, current_page: 0, items_per_page: messagePagination.items_per_page,
                         has_next: false, has_prev: false, next_page: null, prev_page: null,
                     })
+                    socket.emit('user_left_conv', {
+                    conversation_id: conversationId,
+                    user_id: currentUserId, // asegúrate de tener este valor disponible
+                });
                 }
             } else {
                 const errorData = await res.json()
@@ -526,7 +666,7 @@ function MessagesPage({ currentUserId }) {
             console.error(`Network error leaving conversation ${conversationId}:`, error)
         }
     }
-    
+
     const searchUsers = useCallback(async (query) => {
         if (!query || query.trim().length === 0) {
             setUserSearchResults([])
@@ -555,8 +695,8 @@ function MessagesPage({ currentUserId }) {
         } finally {
             setIsSearchingUsers(false)
         }
-    }, [currentUserId]) 
-    
+    }, [currentUserId])
+
     const debouncedSearchUsers = useCallback(debounce(searchUsers, 300), [searchUsers])
     useEffect(() => {
         if (conversationSearchTerm.trim()) {
@@ -565,35 +705,35 @@ function MessagesPage({ currentUserId }) {
         } else {
             setShowSearchResults(false)
             setUserSearchResults([])
-            setUserSearchError(null) 
+            setUserSearchError(null)
         }
         return () => {
-            debouncedSearchUsers.cancel() 
+            debouncedSearchUsers.cancel()
         }
     }, [conversationSearchTerm, debouncedSearchUsers])
-    
-    
+
+
     const handleStartGroupCreation = () => {
         console.log("Starting group creation mode.")
         setIsCreatingGroup(true)
-        setSelectedParticipants([]) 
+        setSelectedParticipants([])
         setNewGroupName('')
-        setConversationSearchTerm('') 
-        setUserSearchResults([]) 
-        setUserSearchError(null) 
+        setConversationSearchTerm('')
+        setUserSearchResults([])
+        setUserSearchError(null)
     }
-    
+
     const handleSelectUserForGroup = (user) => {
         console.log("Toggling user selection for group:", user)
         const isSelected = selectedParticipants.some(p => String(p.id) === String(user.id))
-        
+
         if (isSelected) {
             setSelectedParticipants(prev => prev.filter(p => String(p.id) !== String(user.id)))
             if (user.username.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
-            (user.name && user.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) { 
-                setUserSearchResults(prev => [...prev, user].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name))) 
+                (user.name && user.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) {
+                setUserSearchResults(prev => [...prev, user].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name)))
             }
-            
+
         } else {
             setSelectedParticipants(prev => [...prev, user])
         }
@@ -601,9 +741,9 @@ function MessagesPage({ currentUserId }) {
     const handleRemoveParticipant = (participantToRemove) => {
         console.log("Removing participant:", participantToRemove)
         setSelectedParticipants(prev => prev.filter(p => String(p.id) !== String(participantToRemove.id)))
-        if (participantToRemove.username.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
-        (participantToRemove.name && participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) { 
-            setUserSearchResults(prev => [...prev, participantToRemove].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name))) 
+        if (participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
+            (participantToRemove.name && participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) {
+            setUserSearchResults(prev => [...prev, participantToRemove].sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name)))
         }
     }
     const handleCreateGroup = async () => {
@@ -616,12 +756,12 @@ function MessagesPage({ currentUserId }) {
             alert("Por favor, ingresa un nombre para el grupo.")
             return
         }
-        
+
         setIsCreatingGroupConversation(true)
         setCreateGroupError(null)
         const participantIds = selectedParticipants.map(p => p.id)
-        participantIds.push(currentUserId) 
-        
+        participantIds.push(currentUserId)
+
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
                 method: 'POST',
@@ -630,12 +770,12 @@ function MessagesPage({ currentUserId }) {
                 body: JSON.stringify({
                     participant_ids: participantIds,
                     name: newGroupName.trim(),
-                    is_group: true, 
+                    is_group: true,
                 }),
             })
 
             if (res.ok) {
-                const conversation = await res.json() 
+                const conversation = await res.json()
                 console.log("Group conversation created:", conversation)
                 setConversations(prevConversations => {
                     const conversationDataForList = { ...conversation, last_message: conversation.last_message || null, }
@@ -650,12 +790,12 @@ function MessagesPage({ currentUserId }) {
                 setConversationSearchTerm('')
                 setUserSearchResults([])
                 handleConversationSelect(conversation.id)
-                
+
             } else {
                 const errorData = await res.json()
                 setCreateGroupError(errorData.message || `Error creating group: ${res.status}`)
                 console.error("Error creating group:", res.status, errorData)
-                alert(`Error creating group: ${errorData.message || res.status}`) 
+                alert(`Error creating group: ${errorData.message || res.status}`)
             }
         } catch (error) {
             setCreateGroupError(`Network error creating group: ${error.message}`)
@@ -665,76 +805,242 @@ function MessagesPage({ currentUserId }) {
             setIsCreatingGroupConversation(false)
         }
     }
-    
+
     const handleCancelGroupCreation = () => {
         console.log("Cancelling group creation mode.")
         setIsCreatingGroup(false)
         setSelectedParticipants([])
         setNewGroupName('')
-        setConversationSearchTerm('') 
-        setUserSearchResults([]) 
-        setUserSearchError(null) 
+        setConversationSearchTerm('')
+        setUserSearchResults([])
+        setUserSearchError(null)
     }
-    
-    const handleSelectUserForDM = async (user) => {
-        console.log("Selected user for DM:", user)
-        setConversationSearchTerm('') 
+
+    const handleSelectUserForDM = useCallback(async (user) => {
+        console.log("Selected user for DM:", user);
+
+        setConversationSearchTerm('');
+        setUserSearchResults([]);
+
         try {
-            const res = await fetch(`${API_BASE_URL}/messages/users/${user.id}/conversation`, {
-                method: "POST",
+
+            const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include', 
-            })
-            
+                credentials: 'include',
+                body: JSON.stringify({
+                    participant_ids: [parseInt(currentUserId), user.userId || user.id],
+                    name: null,
+                }),
+            });
+
             if (res.ok) {
-                const conversation = await res.json()
-                console.log("DM conversation created/obtained:", conversation)
+                const conversation = await res.json();
+                console.log("Conversación DM creada/obtenida:", conversation);
+
                 setConversations(prevConversations => {
-                    const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id))
+                    const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id));
                     if (existingIndex !== -1) {
-                        const updatedConversations = [...prevConversations]
-                        const [movedConv] = updatedConversations.splice(existingIndex, 1)
-                        const updatedMovedConv = { ...movedConv, ...conversation }
-                        return [updatedMovedConv, ...updatedConversations]
+                        const updatedConversations = [...prevConversations];
+                        const [movedConv] = updatedConversations.splice(existingIndex, 1);
+
+                        const updatedMovedConv = { ...movedConv, ...conversation };
+                        return [updatedMovedConv, ...updatedConversations];
                     } else {
-                        return [conversation, ...prevConversations]
+                        return [conversation, ...prevConversations];
                     }
-                })
-                handleConversationSelect(conversation.id)
+                });
+
+                waitUntilSocketReady(() => handleConversationSelect(conversation.id));
+
             } else {
-                const errorData = await res.json()
-                console.error("Error starting DM:", res.status, errorData)
-                alert(`Error starting DM: ${errorData.message || res.status}`) 
+                const errorData = await res.json();
+                console.error("Error al iniciar DM:", res.status, errorData);
+                alert(`Error al iniciar chat: ${errorData.message || res.status}`);
             }
         } catch (error) {
-            console.error("Network error starting DM:", error)
-            alert(`Network error starting DM: ${error.message}`)
+            console.error("Error de red al iniciar DM:", error);
+            
         }
-    }
+    }, [currentUserId, setConversationSearchTerm, setUserSearchResults, setConversations, handleConversationSelect, API_BASE_URL]);
+
+
+
+    useEffect(() => {
+        console.log("MessagesPage mounted or location state changed. Checking location.state...");
+        console.log("Location state:", location.state);
+
+        // Verifica si hay un conversationIdToOpen en el estado de navegación (para abrir chat existente)
+        if (location.state && location.state.conversationIdToOpen !== undefined) {
+            const convIdToOpen = location.state.conversationIdToOpen;
+            console.log(`Found conversationIdToOpen in state: ${convIdToOpen}. Attempting to select it.`);
+            handleConversationSelect(convIdToOpen);
+            // *** Consume el estado después de usarlo ***
+            // Esto evita que el efecto se re-ejecute si el componente se re-renderiza
+            // mientras location.state.conversationIdToOpen todavía está presente.
+            navigate(location.pathname, { replace: true, state: {} });
+
+
+        } else if (location.state && location.state.user !== undefined) { // *** Manejar el objeto user pasado desde ProfilePage ***
+            setUserToDM(location.state.user)
+            console.log(`Found user object in state:`, userToDM, `. Attempting to initiate DM.`);
+            // *** AÑADE ESTE LOG PARA VERIFICAR LA PROPIEDAD userId JUSTO ANTES DE LLAMAR AL HANDLER ***
+            console.log("User object from state:", userToDM);
+            console.log("userToDM.userId:", userToDM.userId);
+            console.log("userToDM.id:", userToDM.id); // También verifica .id por si acaso
+
+            // Llama a handleSelectUserForDM con el objeto user recibido
+            handleSelectUserForDM(userToDM);
+            // *** Consume el estado después de usarlo ***
+            // Esto evita que el efecto se re-ejecute si el componente se re-renderiza
+            // mientras location.state.user todavía está presente.
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+
+    }, []);
+
     const handleToggleParticipantsModal = () => {
         if (selectedConversationId !== null) {
             setShowParticipantsModal(prev => !prev)
             console.log("Toggling participants modal, new state:", !showParticipantsModal)
         }
     }
-    
-        useEffect(() => {
-            if (location.state && location.state.conversationIdToOpen !== undefined) {
-                const convIdToOpen = location.state.conversationIdToOpen;
-                console.log(`Found conversationIdToOpen in state: ${convIdToOpen}. Attempting to select it.`);
-                handleConversationSelect(convIdToOpen);
-                navigate(location.pathname, { replace: true, state: {} }); 
+
+    const handleToggleParticipantSelection = (user) => {
+        setSelectedParticipants(prevSelected => {
+            if (String(user.id) === String(currentUserId)) {
+                console.log("Cannot select self as group participant via UI.");
+                return prevSelected;
             }
-        }, [location.state, handleConversationSelect]);
-    
+            const isSelected = prevSelected.some(p => String(p.id) === String(user.id));
+            if (isSelected) {
+                return prevSelected.filter(p => String(p.id) !== String(user.id));
+            } else {
+                return [...prevSelected, user];
+            }
+        });
+    };
+
+    const handleInviteUserToGroup = useCallback(async (conversationId, userToInvite) => {
+        console.log(`Attempting to invite user ${userToInvite?.id} to conversation ${conversationId}`);
+
+        if (!conversationId || !userToInvite || !userToInvite.id) {
+            console.error("Cannot invite: missing conversationId or userToInvite (or userToInvite.userId)");
+            alert("Error: Información de invitación incompleta.");
+            return;
+        }
+        setIsInvitingUser(true);
+        setInviteSearchError(null);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/participants`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    user_id: userToInvite.id,
+                }),
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                console.log("User invited successfully:", result);
+                socket.emit('participant_added', {
+                conversation_id: conversationId,
+                participant: result  // asegúrate de que tenga `user_id` y `user`
+                });
+            } else {
+                const errorData = await res.json();
+                console.error("Error inviting user:", res.status, errorData);
+                setInviteSearchError(errorData.message || `Error inviting user: ${res.status}`);
+                alert(`Error al invitar usuario: ${errorData.message || res.status}`);
+            }
+        } catch (error) {
+            console.error("Network error inviting user:", error);
+            setInviteSearchError(`Network error inviting user: ${error.message}`);
+            alert(`Error de red al invitar usuario: ${error.message}`);
+        } finally {
+            setIsInvitingUser(false);
+            setInviteSearchTerm('');
+            setInviteSearchResults([]);
+        }
+    }, [API_BASE_URL, currentUserId, selectedConversationId, conversations]);
+
     const selectedConversation = conversations.find(c => c.id === selectedConversationId)
-    const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined 
-    
+    const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined
+
+
+    const searchUsersForInvite = useCallback(async (query) => {
+        if (!query || query.trim().length === 0) {
+            setInviteSearchResults([]);
+            setIsLoadingInviteSearch(false);
+            return;
+        }
+        setIsLoadingInviteSearch(true);
+        setInviteSearchError(null);
+        try {
+            const res = await fetch(`${API_BASE_URL}/users/search?term=${encodeURIComponent(query)}`, {
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                console.log("Invite user search results:", data);
+                const currentParticipantIds = selectedConversation?.participants?.map(p => String(p.id)) || [];
+                const filteredResults = data.filter(user =>
+                    String(user.id) !== String(currentUserId)
+                    && !currentParticipantIds.includes(String(user.id))
+                );
+
+                setInviteSearchResults(filteredResults);
+            } else {
+                const errorData = await res.json();
+                setInviteSearchError(errorData.message || `Error searching users: ${res.status}`);
+                console.error("Error searching users for invite:", res.status, errorData);
+                setInviteSearchResults([]);
+            }
+        } catch (error) {
+            setInviteSearchError(`Network error searching users for invite: ${error.message}`);
+            console.error("Network error searching users for invite:", error);
+            setInviteSearchResults([]);
+        } finally {
+            setIsLoadingInviteSearch(false);
+        }
+    }, [API_BASE_URL, currentUserId, selectedConversation, inviteSearchTerm]);
+
+    useEffect(() => {
+        const debounceDelay = 200;
+        let timer;
+        if (timer) {
+            clearTimeout(timer);
+        }
+        if (inviteSearchTerm.trim().length > 0) {
+            console.log(`Debouncing search for invite term: "${inviteSearchTerm}". Setting timer...`);
+            timer = setTimeout(() => {
+                console.log(`Debounce timer finished for term: "${inviteSearchTerm}". Calling searchUsersForInvite.`);
+                searchUsersForInvite(inviteSearchTerm);
+            }, debounceDelay);
+        } else {
+            console.log("Invite search term is empty. Clearing results.");
+            setInviteSearchResults([]);
+            setInviteSearchError(null);
+            setIsLoadingInviteSearch(false);
+        }
+        return () => {
+            console.log("Cleaning up debounce timer.");
+            if (timer) {
+                clearTimeout(timer);
+            }
+        };
+    }, [inviteSearchTerm, searchUsersForInvite]);
+
+
     return (
-        <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]":" grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
-            <div className={`${(useViewportWidth() < 800 && selectedConversationId)?'chat-converation-hide':''} justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden`}>
+        <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]" : " grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden`}>
                 {(isFormVisible) ?
                     <div>
                         <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
@@ -748,8 +1054,8 @@ function MessagesPage({ currentUserId }) {
                                 <div>
                                     {!isCreatingGroup ? (
                                         <button
-                                        onClick={handleStartGroupCreation} 
-                                        className='flex p-4 gap-2 items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
+                                            onClick={handleStartGroupCreation}
+                                            className='flex p-4 gap-2 items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
                                         >
                                             <UserGroupIcon className="-ml-0.5 size-5" aria-hidden="true" />
                                             New project group
@@ -757,14 +1063,14 @@ function MessagesPage({ currentUserId }) {
                                     ) : (
                                         <div className="flex gap-2 items-center max-h-[45px]">
                                             <button
-                                                onClick={handleCreateGroup} 
-                                                disabled={selectedParticipants.length === 0 || !newGroupName.trim() || isCreatingGroupConversation} 
+                                                onClick={handleCreateGroup}
+                                                disabled={selectedParticipants.length === 0 || !newGroupName.trim() || isCreatingGroupConversation}
                                                 className={`text-white bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2" ${selectedParticipants.length === 0 || !newGroupName.trim() || isCreatingGroupConversation ? 'cursor-not-allowed' : 'bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600'}`}
                                             >
                                                 {isCreatingGroupConversation ? 'Creating project...' : 'Create project group'}
                                             </button>
                                             <button
-                                                onClick={handleCancelGroupCreation} 
+                                                onClick={handleCancelGroupCreation}
                                                 className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2"
                                             >
                                                 Cancel
@@ -819,7 +1125,7 @@ function MessagesPage({ currentUserId }) {
                                         </ul>
                                     </div>
                                 )}
-                                {(conversationSearchTerm.trim().length > 0 || isCreatingGroup) && ( 
+                                {(conversationSearchTerm.trim().length > 0 || isCreatingGroup) && (
                                     <div ref={searchResultsRef} className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800  border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                         {isSearchingUsers ? (
                                             <div className="p-4 text-center text-gray-500 dark:text-gray-400">Buscando usuarios...</div>
@@ -831,10 +1137,10 @@ function MessagesPage({ currentUserId }) {
                                                     const isSelected = selectedParticipants.some(p => String(p.id) === String(user.id))
                                                     return (
                                                         <li
-                                                            key={`user-search-${user.id}`} 
+                                                            key={`user-search-${user.id}`}
                                                             className="flex items-center gap-x-4 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                                                             onClick={() => isCreatingGroup ? handleSelectUserForGroup(user) : handleSelectUserForDM(user)}
-                                                        >                                                          
+                                                        >
                                                             <img
                                                                 className="size-8 flex-none rounded-full bg-gray-50"
                                                                 src={getUserPhotoUrl(user, 'small')}
@@ -846,7 +1152,7 @@ function MessagesPage({ currentUserId }) {
                                                                 </p>
                                                             </div>
                                                             {isCreatingGroup && (
-                                                                <div className="ml-auto"> 
+                                                                <div className="ml-auto">
                                                                     {isSelected ? (
                                                                         <CheckIcon className="size-5 text-green-500 dark:text-green-400" aria-hidden="true" />
                                                                     ) : (
@@ -924,7 +1230,7 @@ function MessagesPage({ currentUserId }) {
                     </ul>
                 )}
             </div>
-            <div className={`${(useViewportWidth() < 800 && selectedConversationId)?'chat-messages':''}flex flex-col`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-messages' : ''}flex flex-col`}>
                 {isLoadingMessages && selectedConversationId !== null && <p className="text-end absolute"></p>}
                 {isLoadingMore && selectedConversationId !== null && <p className="text-end absolute"></p>}
                 {messagesError && <p className="text-red-500">{messagesError}</p>}
@@ -941,9 +1247,9 @@ function MessagesPage({ currentUserId }) {
                                 : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-4">
                                     <button type='button' onClick={handleToggleParticipantsModal} disabled={selectedConversation == undefined} className='flex flex-row-reverse justify-end items-center gap-2'>
                                         {getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}
-                                    <img src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() : (selectedConversation.participants && selectedConversation.participants.length === 2 ? getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') : getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                        <img src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() : (selectedConversation.participants && selectedConversation.participants.length === 2 ? getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') : getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     </button>
-                                    <ArrowLeftIcon className="w-6 h-6 cursor-pointer" onClick={handlecloseConversation}/>
+                                    <ArrowLeftIcon className="w-6 h-6 cursor-pointer" onClick={handlecloseConversation} />
                                 </div>)
                             }
                         </div>
@@ -958,15 +1264,15 @@ function MessagesPage({ currentUserId }) {
                                         <XMarkIcon className="size-6" aria-hidden="true" />
                                     </button>
                                     <h3 className="text-lg font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">
-                                      Members 
+                                        Members
                                     </h3>
                                     {selectedConversation.participants && selectedConversation.participants.length > 1 ? (
-                                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2"> 
+                                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
                                             {selectedConversation.participants.map(participant => (
                                                 <li key={participant.id} className="flex items-center gap-3">
                                                     <img
                                                         className="size-8 flex-none rounded-full bg-gray-50"
-                                                        src={getUserPhotoUrl(participant, 'small')} 
+                                                        src={getUserPhotoUrl(participant, 'small')}
                                                         alt={`Foto de perfil de ${participant.username || participant.name}`}
                                                     />
                                                     <div className="min-w-0 flex-auto">
@@ -986,12 +1292,55 @@ function MessagesPage({ currentUserId }) {
 
                                     {isGroupConversation && (
                                         <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <div className="relative mb-2 overflow-hidden">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar usuario para invitar"
+                                                    className="block p-2 ps-10 outline-none text-sm text-gray-900 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                                    value={inviteSearchTerm}
+                                                    onChange={(e) => setInviteSearchTerm(e.target.value)}
+                                                />
+                                                <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                                                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                             <button
-                                                onClick={() => handleLeaveConversation(selectedConversation.id)} 
-                                                className="w-full px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                                onClick={() => handleLeaveConversation(selectedConversation.id)}
+                                                className="ext-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
                                             >
-                                                Salir del Grupo
+                                                Leave group
                                             </button>
+                                            {isLoadingInviteSearch ? (
+                                                <div className="text-center text-gray-500 dark:text-gray-400 text-sm">Buscando...</div>
+                                            ) : inviteSearchError ? (
+                                                <div className="text-center text-red-500 dark:text-red-400 text-sm">Error: {inviteSearchError}</div>
+                                            ) : inviteSearchResults.length > 0 ? (
+                                                <div className="max-h-24 overflow-y-auto  rounded-lg mb-2">
+                                                    {inviteSearchResults.map(user => (
+                                                        <div
+                                                            key={user.userId || user.id}
+                                                            className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
+                                                            onClick={() => {
+                                                                if (selectedConversationId) {
+                                                                    handleInviteUserToGroup(selectedConversationId, user);
+                                                                } else {
+                                                                    alert("Error: No hay conversación seleccionada para invitar.");
+                                                                }
+                                                            }}
+                                                        >
+                                                            <img src={getUserPhotoUrl(user)} alt={user.name || user.username} className='size-7 rounded-full bg-gray-50'></img>
+                                                            <span className="text-gray-900 dark:text-white">{user.name || user.username}</span>
+                                                            {isInvitingUser && isInvitingUser === user.userId && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">Invitando...</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : inviteSearchTerm && !isLoadingInviteSearch && (
+                                                <div className="text-center text-gray-500 dark:text-gray-400 text-sm">No se encontraron usuarios.</div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1000,15 +1349,15 @@ function MessagesPage({ currentUserId }) {
                         {isLoadingMore && <p className="text-center text-sm text-gray-600 dark:text-gray-400"></p>}
                         {messages.map(message => (
                             <div
-                            key={message.id}
-                            className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
+                                key={message.id}
+                                className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${String(message.sender_id) === String(currentUserId) ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
                                     <div>
                                         {String(message.sender.id) !== String(currentUserId) ?
-                                        <p className="text-xs text-left font-semibold mb-1">
-                                            {String(message.sender.name)}
-                                        </p>:<p></p>}
+                                            <p className="text-xs text-left font-semibold mb-1">
+                                                {String(message.sender.name)}
+                                            </p> : <p></p>}
                                         <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
                                             {message.content}
                                         </p>

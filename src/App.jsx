@@ -94,10 +94,10 @@ function App() {
                :<Routes>
                 {isLoggedIn ? (
                     <>
-                      <Route path="/" element={<HomePage />} />
+                      <Route path="/" element={<HomePage currentUserId={userId} />} />
                       <Route path="/profile/:id" element={<ProfilePage onLogout={handleLogout} />} />
                       <Route path="/messages" element={<MessagesPage currentUserId={userId}/>} />
-                      <Route path="/matches" element={<MatchesPage />} />
+                      <Route path="/matches" element={<MatchesPage currentUserId={userId}/>} />
                       <Route path="/search" element={<SearchPage />} />
                       <Route path="/login" element={<Navigate to="/" replace />} />
                       <Route path="/register" element={<Navigate to="/" replace />} />
