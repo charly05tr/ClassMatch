@@ -4,8 +4,8 @@ import io from 'socket.io-client'; // Importar el cliente de Socket.IO
 // Asumimos que tienes un componente UserCard o similar para mostrar información del usuario
 // import UserCard from '../components/UserCard'; // Ejemplo
 // Asumimos que tienes una URL base para tu API y WebSocket
-const API_BASE_URL = 'https://classmatchapi-1.onrender.com'; // Ajusta esto a la URL de tu backend Flask
-const WEBSOCKET_URL = 'https://classmatchapi-1.onrender.com'; // Ajusta esto a la URL de tu backend SocketIO
+const API_BASE_URL = 'https://192.168.0.4:5000'; // Ajusta esto a la URL de tu backend Flask
+const WEBSOCKET_URL = 'https://192.168.0.4:5000'; // Ajusta esto a la URL de tu backend SocketIO
 
 // Asegúrate de pasar el currentUserId como prop o usar un contexto de autenticación
 function MatchesPage({ currentUserId }) {

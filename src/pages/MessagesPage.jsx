@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext';
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
-const API_BASE_URL = 'https://classmatchapi-1.onrender.com'
+const API_BASE_URL = 'https://192.168.0.4:5000'
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -24,7 +24,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `https://classmatchapi-1.onrender.com?userId=${currentUserId}`
+    const WEBSOCKET_URL = `https://192.168.0.4:5000?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
