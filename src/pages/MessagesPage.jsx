@@ -1040,7 +1040,7 @@ function MessagesPage({ currentUserId }) {
 
     return (
         <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]" : " grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
-            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start min-w-[300px] w-full max-w-full overflow-hidden`}>
                 {(isFormVisible) ?
                     <div>
                         <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
@@ -1358,7 +1358,7 @@ function MessagesPage({ currentUserId }) {
                                             <p className="text-xs text-left font-semibold mb-1">
                                                 {String(message.sender.name)}
                                             </p> : <p></p>}
-                                        <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
+                                        <p className={`text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
                                             {message.content}
                                         </p>
                                     </div>
@@ -1389,7 +1389,7 @@ function MessagesPage({ currentUserId }) {
                                         <span className="sr-only">Add emoji</span>
                                     </button>
                                     <textarea
-                                        id="chat" rows="1" className="w-full block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        id="chat" rows="1" className="block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         placeholder="Your message..."
                                         value={newMessageContent}
                                         onChange={(e) => setNewMessageContent(e.target.value)}
