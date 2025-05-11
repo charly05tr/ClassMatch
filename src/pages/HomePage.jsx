@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import confetti from 'canvas-confetti';
 
-const API_BASE_URL = "http://192.168.0.4:5000"
+const API_BASE_URL = "https://classmatchapi-1.onrender.com"
 
 const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, hasLiked }) => {
     return (
@@ -69,7 +69,7 @@ function HomePage({ currentUserId }) {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("http://192.168.0.4:5000", {
+                const response = await fetch("https://classmatchapi-1.onrender.com", {
                     credentials: "include",
                     method: "GET"
                 })
