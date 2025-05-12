@@ -59,7 +59,7 @@ function ProfilePage({onLogout}) {
     useEffect(() => {
         const checkLoginStatus = async () => {
 
-            const res = await fetch("http://192.168.0.4:5000/users/debug", { credentials: "include" })
+            const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
             if (res.ok) {
                 const data = await res.json()
                 if (String(data.user_id) === String(id)) {
@@ -75,7 +75,7 @@ function ProfilePage({onLogout}) {
         const fetchProfileData = async () => {
             setIsLoading(true)
             try {
-                const res = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
+                const res = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -144,7 +144,7 @@ function ProfilePage({onLogout}) {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
+                const res = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -212,7 +212,7 @@ function ProfilePage({onLogout}) {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
+            const profileRes = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -247,7 +247,7 @@ function ProfilePage({onLogout}) {
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
 
-            const projectsRes = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
+            const projectsRes = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -442,11 +442,14 @@ function ProfilePage({onLogout}) {
                                 <FontAwesomeIcon icon={faArrowLeft} size="lg" />
                                 {' '}Regresar
                             </button>
-                            <button type='buton' onClick={handleSendMessage} className='text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2'>
+                                <button type='buton' onClick={handleSendMessage} className='text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2'>
                                 Open DM
                             </button>
-                            </div>) : ''
+                            </div>) : <button type='buton' onClick={handleSendMessage} className='justify-self-end text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2'>
+                                Open DM
+                            </button>
                     }
+                            
                 </div>
                 <div className="profile-content">
                     {(isEditing) ?

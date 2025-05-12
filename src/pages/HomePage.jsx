@@ -7,9 +7,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import confetti from 'canvas-confetti';
 
-const API_BASE_URL = "http://192.168.0.4:5000"
+const API_BASE_URL = "api.devconnect.network"
 
-const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, hasLiked }) => {
+const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, matches, loading }) => {
     return (
         <div className='grid justify-center items-center px-4 h-full'>
             <div className="bg-black-100 shadow-xl rounded-xl max-w-lg w-full min-w-[400px]">
@@ -33,11 +33,11 @@ const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, i
                         {String(currentUserId) !== String(users[index].id) && (
                             <button
                                 onClick={handleSendMatch}
-                                disabled={isSendingMatch || hasLiked}
+                                disabled={isSendingMatch || !loading && matches[users[index].id] === 'match' || matches[users[index].id] === 'like'}
                                 type="button"
                                 className="text-white bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                             >
-                                {hasLiked?'Matched':'Match'}
+                                {!loading?((matches[users[index].id] && matches[users[index].id] === 'match') ?("matched"): ((matches[users[index].id] && matches[users[index].id] === "like")?"requested":"match")): "loading"}
                             </button>
                         )}
                         <button
@@ -57,34 +57,34 @@ function HomePage({ currentUserId }) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const navigate = useNavigate()
     const { state } = useLocation()
-    const [hasLiked, setHasLiked] = useState("")
     const [isMatched, setIsMatched] = useState(false);
     const [isSendingMatch, setIsSendingMatch] = useState(false);
     const playerRef = useRef();
-
+    const [matches, setMatches] = useState({})
+    const [loading, setLoading] = useState(true);
     const goToProfile = (index, userId) => {
         navigate(`/profile/${userId}`, { state: { index } })
     }
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await fetch("http://192.168.0.4:5000", {
-                    credentials: "include",
-                    method: "GET"
-                })
-                if (response.ok) {
-                    const data = await response.json();
-                    setUsers(data)
-                } else {
-                    console.error("Error fetching user data:", response.statusText);
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
+    const fetchUsersData = async () => {
+        try {
+            const response = await fetch("https://api.devconnect.network", {
+                credentials: "include",
+                method: "GET"
+            })
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data)
+            } else {
+                console.error("Error fetching user data:", response.statusText);
             }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
         }
+    }
 
-        fetchUserData();
+    useEffect(() => {
+        fetchUsersData();
     }, []);
 
     useEffect(() => {
@@ -93,60 +93,15 @@ function HomePage({ currentUserId }) {
         }
     }, [state]);
 
-    const fetchMatchStatus = useCallback(async (currentIndex, users) => {
-        console.log(currentIndex)
-        console.log(users[currentIndex])
-        if (!currentUserId || !users[currentIndex].id || String(currentUserId) === String(users[currentIndex].id)) {
-            setHasLiked(false);
-            setIsMatched(false);
-            return;
-        }
-        try {
-            const res = await fetch(`${API_BASE_URL}/matches/user/${currentUserId}`, {
-                method: 'GET',
-                credentials: 'include',
-            });
 
-            if (res.ok) {
-                const allMatches = await res.json();
 
-                let likedStatus = false;
-                let matchedStatus = false;
-
-                if (users[currentIndex] in allMatches) {
-                    setHasLiked(true)
-                }
-
-                setHasLiked(likedStatus);
-                setIsMatched(matchedStatus);
-
-            } else {
-                console.error(`Error fetching all matches for user ${currentUserId}:`, res.status);
-                setHasLiked(false);
-                setIsMatched(false);
-            }
-        } catch (error) {
-            console.error(`Network error fetching all matches for user ${currentUserId}:`, error);
-            setHasLiked(false);
-            setIsMatched(false);
-        }
-    }, [currentUserId, users, currentIndex]);
-
-    useEffect(() => {
-        fetchMatchStatus(currentIndex, users)
-    }, [currentIndex, users])
-
-    const handleSendMatch = useCallback(async () => {
+    const handleSendMatch = async () => {
         if (!currentUserId) {
-            alert("Debes iniciar sesión para enviar un match.");
+            console.log("Debes iniciar sesión para enviar un match.");
             return;
         }
         if (!users[currentIndex].id || String(currentUserId) === String(users[currentIndex].id)) {
-            alert("No se puede enviar match a este usuario.");
-            return;
-        }
-        if (hasLiked || isMatched) {
-            alert("Ya has enviado un match a este usuario o ya es un match mutuo.");
+            console.log("No se puede enviar match a este usuario.");
             return;
         }
 
@@ -163,42 +118,51 @@ function HomePage({ currentUserId }) {
 
             if (res.ok) {
                 const matchData = await res.json();
-                if (playerRef.current) {
-                    playerRef.current.play();
-                }
-
-                if (res.status === 201) {
-                    setHasLiked(true);
-                } else if (res.status === 200) {
-                    setHasLiked(true);
-                    setIsMatched(true);
-                    users[currentIndex].match_count += 1
-                    confetti({
-                        particleCount: 100,
-                        spread: 100,
-                        origin: { y: 0.6 }
-                    });
-                } else if (res.status === 409) {
-                    setHasLiked(true);
-                } else {
-                    const errorData = matchData;
-                    alert(`Error al enviar match: ${errorData.message || res.status}`);
-                }
+                fetchUsersData()
 
             } else {
                 const errorData = await res.json();
-                alert(`Error al enviar match: ${errorData.message || res.status}`);
+                console.log(`Error al enviar match: ${errorData.message || res.status}`);
             }
         } catch (error) {
-            alert(`Error de red al enviar match: ${error.message}`);
+            console.log(`Error de red al enviar match: ${error.message}`);
         } finally {
             setIsSendingMatch(false);
         }
-    }, [currentUserId, currentIndex, hasLiked, isMatched, users]);
+    }
+
+    const fetchMatches = async () => {
+        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
+            method: "GET",
+            credentials: "include"
+        })
+        try {
+            if (res.ok) {
+                const data = await res.json()
+                data.forEach(match => {
+                    setMatches(prevMatches => ({
+                        ...prevMatches,
+                        [match.matched_user_id]: match.status,
+                        [match.user_id]: match.status
+                    }));
+                });
+                setLoading(false);
+                if (!loading) {
+                    console.log(matches[1])
+                } 
+            }
+            else {
+                console.log("error cargando los matches")
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
     useEffect(() => {
-        setHasLiked()
-    })
+        fetchMatches()
+    }, [users])
+
 
     return (
         <main className="flex flex-col">
@@ -220,7 +184,7 @@ function HomePage({ currentUserId }) {
                                 exit={{ opacity: 0, x: -100 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <UserCard hasLiked={hasLiked} isSendingMatch={isSendingMatch} index={currentIndex} users={users} goToProfile={goToProfile} currentUserId={currentUserId} handleSendMatch={handleSendMatch} />
+                                <UserCard loading={loading} matches={matches} isSendingMatch={isSendingMatch} index={currentIndex} users={users} goToProfile={goToProfile} currentUserId={currentUserId} handleSendMatch={handleSendMatch} />
                             </motion.div>
                         )}
                     </AnimatePresence>

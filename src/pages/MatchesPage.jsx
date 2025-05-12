@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 // /user/<int:user_id>: los matches (cuando ya se creo un match, o los likes son mutuos) method: get
 // /<int:matched_user_id>: crea un like o un match (en el caso de que el otro usuario tambien le haya dado like) method: post
 // /<int:matched_user_id>: elimina un match o un like method: delete
-// /status/<int:other_user_id>: verifica el estado del match method: get
 
 
 const API_URL_MATCHES = "http://192.168.0.4:5000/matches/"
@@ -18,8 +17,8 @@ function MatchesPage({ currentUserId }) {
     const [matches, setMatches] = useState([])
     const [isMatched, setIsMatched] = useState("")
     const navigate = useNavigate()
-    const goToProfile = (index, userId) => {
-        navigate(`/profile/${userId}`, { state: { index } })
+    const goToProfile = (userId) => {
+        navigate(`/profile/${userId}`)
     }
 
     const fetchMatches = async () => {
@@ -68,12 +67,8 @@ function MatchesPage({ currentUserId }) {
         try {
             if (res.ok) {
                 const data = await res.json()
-                setMatches(prev =>
-                    [
-                        ...prev.filter(m => m.id !== data.id),
-                        data
-                    ]
-                );
+                fetchMatches()
+                
             } else {
                 console.log("Error al crear el match")
             }
@@ -113,7 +108,7 @@ function MatchesPage({ currentUserId }) {
                 <ul>
                     {matches.map(match => (
                         <li key={match.id}>
-                            {match.status === "like" && String(match.matched_user_id) === String(currentUserId)?
+                            {match.status === "liked" && String(match.matched_user_id) === String(currentUserId)?
                                 <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
                                     <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg'>{match.user.name}</button>
@@ -135,7 +130,7 @@ function MatchesPage({ currentUserId }) {
                 <ul>
                     {matches.map(match => (
                         <li key={match.id}>
-                            {match.status === "match" ?
+                            {match.status === "match" && String(match.user_id) !== String(currentUserId)?
                                 <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
                                     <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg'>{match.user.name}</button>
