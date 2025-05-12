@@ -2,14 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faStar as solidStar, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
-import { useNavigate } from 'react-router-dom';
-// end points:
-// /user/<int:user_id>: los matches (cuando ya se creo un match, o los likes son mutuos) method: get
-// /<int:matched_user_id>: crea un like o un match (en el caso de que el otro usuario tambien le haya dado like) method: post
-// /<int:matched_user_id>: elimina un match o un like method: delete
+import { useNavigate } from 'react-router-dom'
 
-
-const API_URL_MATCHES = "http://192.168.0.4:5000/matches/"
+const API_URL_MATCHES = "https://api.devconnect.network/matches/"
 const placeholder = "http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar"
 
 function MatchesPage({ currentUserId }) {
