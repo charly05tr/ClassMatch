@@ -91,7 +91,7 @@ function MatchesPage({ currentUserId }) {
                 <ul>
                     {matches.map(match => (
                         <li key={match.id}>
-                            {match.status === "you_liked" ?
+                            {match.status === "like" && String(match.matched_user_id) !== String(currentUserId) ?
                                 <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
                                     <img src={match.matched_user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     <button onClick={() => goToProfile(match.matched_user_id)} className='text-bold text-lg'>{match.matched_user.name}</button>
@@ -113,7 +113,7 @@ function MatchesPage({ currentUserId }) {
                 <ul>
                     {matches.map(match => (
                         <li key={match.id}>
-                            {match.status === "you_got_liked" ?
+                            {match.status === "like" && String(match.matched_user_id) === String(currentUserId)?
                                 <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
                                     <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg'>{match.user.name}</button>
