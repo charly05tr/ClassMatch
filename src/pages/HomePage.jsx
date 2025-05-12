@@ -108,7 +108,7 @@ function HomePage({ currentUserId }) {
         setIsSendingMatch(true);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
