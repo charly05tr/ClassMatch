@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext';
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
-const API_BASE_URL = 'https://192.168.0.4:5000'
+const API_BASE_URL = 'http://192.168.0.4:5000'
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -24,7 +24,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `https://192.168.0.4:5000?userId=${currentUserId}`
+    const WEBSOCKET_URL = `http://192.168.0.4:5000?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
@@ -70,7 +70,7 @@ function MessagesPage({ currentUserId }) {
     const [isCreatingGroupConversation, setIsCreatingGroupConversation] = useState(false)
     const [createGroupError, setCreateGroupError] = useState(null)
     const [showParticipantsModal, setShowParticipantsModal] = useState(false)
-    const PLACEHOLDER_PHOTO_URL = 'https://picsum.photos/200/300'
+    const PLACEHOLDER_PHOTO_URL = 'http://picsum.photos/200/300'
     const socketRef = useRef(null);
     const [userToDM, setUserToDM] = useState("")
     const [isSocketConnected, setIsSocketConnected] = useState(false);
@@ -1040,7 +1040,7 @@ function MessagesPage({ currentUserId }) {
 
     return (
         <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]" : " grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
-            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start max-w-[500px] min-w-[300px]  w-full max-w-full overflow-hidden`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start  min-w-[300px]  w-full max-w-full overflow-hidden`}>
                 {(isFormVisible) ?
                     <div>
                         <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
@@ -1389,7 +1389,7 @@ function MessagesPage({ currentUserId }) {
                                         <span className="sr-only">Add emoji</span>
                                     </button>
                                     <textarea
-                                        id="chat" rows="1" className="w-full block mx-4 p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        id="chat" rows="1" className="w-full block mx-4 p-2.5 text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         placeholder="Your message..."
                                         value={newMessageContent}
                                         onChange={(e) => setNewMessageContent(e.target.value)}

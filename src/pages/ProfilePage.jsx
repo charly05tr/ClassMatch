@@ -59,7 +59,7 @@ function ProfilePage({onLogout}) {
     useEffect(() => {
         const checkLoginStatus = async () => {
 
-            const res = await fetch("https://192.168.0.4:5000/users/debug", { credentials: "include" })
+            const res = await fetch("http://192.168.0.4:5000/users/debug", { credentials: "include" })
             if (res.ok) {
                 const data = await res.json()
                 if (String(data.user_id) === String(id)) {
@@ -75,7 +75,7 @@ function ProfilePage({onLogout}) {
         const fetchProfileData = async () => {
             setIsLoading(true)
             try {
-                const res = await fetch(`https://192.168.0.4:5000/users/profile/${id}`, {
+                const res = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -144,7 +144,7 @@ function ProfilePage({onLogout}) {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`https://192.168.0.4:5000/projects/user_projects/${id}`, {
+                const res = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -212,7 +212,7 @@ function ProfilePage({onLogout}) {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`https://192.168.0.4:5000/users/profile/${id}`, {
+            const profileRes = await fetch(`http://192.168.0.4:5000/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -247,7 +247,7 @@ function ProfilePage({onLogout}) {
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
 
-            const projectsRes = await fetch(`https://192.168.0.4:5000/projects/user_projects/${id}`, {
+            const projectsRes = await fetch(`http://192.168.0.4:5000/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -454,7 +454,7 @@ function ProfilePage({onLogout}) {
                             <div>
                                 {
                                     (profilePicture === "") ?
-                                        <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
+                                        <img src="http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
                                         : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
                                 }
                             </div>
@@ -473,7 +473,7 @@ function ProfilePage({onLogout}) {
                         : (<div>
                             {
                                 (profilePicture === "") ?
-                                    <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
+                                    <img src="http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar" alt="Profile" className="rounded-full shadow-lg size-16" />
                                     : <img src={profilePicture} alt="Profile" className="rounded-full shadow-lg size-16" />
                             }
                         </div>)}

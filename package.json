@@ -14,13 +14,14 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
     "@lottiefiles/dotlottie-react": "^0.13.5",
     "canvas-confetti": "^1.9.3",
-    "flowbite-react": "^0.11.7",
+    "flowbite-react": "^0.10.0",
     "framer-motion": "^12.9.4",
     "lodash": "^4.17.21",
     "lottie-react": "^2.4.1",
@@ -28,20 +29,18 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.3",
     "socket.io-client": "^4.8.1",
-    "tailwind-scrollbar": "^4.0.2"
+    "tailwind-scrollbar": "^3.1.0",
+    "tailwindcss": "^3.3.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.21",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.5",
     "vite": "^6.3.1"
   }
 }

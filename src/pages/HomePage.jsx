@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Lottie from 'lottie-react';
 import confetti from 'canvas-confetti';
 
-const API_BASE_URL = "https://192.168.0.4:5000"
+const API_BASE_URL = "http://192.168.0.4:5000"
 
 const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, hasLiked }) => {
     return (
@@ -69,7 +69,7 @@ function HomePage({ currentUserId }) {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await fetch("https://192.168.0.4:5000", {
+                const response = await fetch("http://192.168.0.4:5000", {
                     credentials: "include",
                     method: "GET"
                 })
@@ -225,7 +225,7 @@ function HomePage({ currentUserId }) {
                         )}
                     </AnimatePresence>
                     <Lottie
-                        src="https://lottie.host/9d144f3e-0be6-4932-8a96-075f3eb1042e/xgmDE51mPF.lottie"
+                        src="http://lottie.host/9d144f3e-0be6-4932-8a96-075f3eb1042e/xgmDE51mPF.lottie"
                         loop={false}
                         autoplay={false}
                         ref={playerRef}
