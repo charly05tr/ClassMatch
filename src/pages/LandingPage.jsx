@@ -1,4 +1,4 @@
-import {React} from 'react';
+import { React } from 'react';
 // Importa iconos de Heroicons (ajusta la ruta si es necesario)
 // Usamos la variante 'outline' para un look más limpio en la landing
 import { UsersIcon, CodeBracketIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
@@ -13,7 +13,8 @@ function LandingPage() {
         navigate('/login')
     }
     
-    
+
+
     return (
         // Contenedor principal que ocupa al menos toda la altura de la pantalla
         // Usa un fondo oscuro y texto blanco por defecto
@@ -28,7 +29,7 @@ function LandingPage() {
                 <nav className='flex items-center'>
                     {/* Estos serían enlaces reales de tu router (ej. React Router Link) */}
                     <button type="button" onClick={() => goToLogIn()} className="text-gray-300 hover:text-white mr-4">Login</button>
-                    <button type='button'onClick={() => goToRegister()} className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Regístrate</button>
+                    <button type='button' onClick={() => goToRegister()} className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Regístrate</button>
                 </nav>
             </header>
 
@@ -48,9 +49,9 @@ function LandingPage() {
                     </p>
                     {/* Botón de Llamada a la Acción (CTA) principal */}
                     {/* Lleva al usuario a la página de registro */}
-                    <a href="/register" className="text-gray-900 font-bold text-lg py-3 px-8 rounded-full shadow-lg transition duration-300 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80">
+                    <button onClick={() => goToRegister()} className="text-gray-900 font-bold text-lg py-3 px-8 rounded-full shadow-lg transition duration-300 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80">
                         Únete a DevConnect Hoy
-                    </a>
+                    </button>
                 </div>
             </section>
 
@@ -126,9 +127,9 @@ function LandingPage() {
                     </p>
                     {/* Botón de Llamada a la Acción (CTA) secundario */}
                     {/* Lleva al usuario a la página de registro */}
-                    <a href="/register" className="text-gray-900 font-bold text-lg py-3 px-8 rounded-full shadow-lg transition duration-300 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80">
+                    <button onClick={() => goToRegister()} className="text-gray-900 font-bold text-lg py-3 px-8 rounded-full shadow-lg transition duration-300 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80">
                         ¡Regístrate Gratis!
-                    </a>
+                    </button>
                 </div>
             </section>
 
