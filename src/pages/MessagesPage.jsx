@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ConversationListItem from '../components/ConversationListItem'
 import { UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon, CheckIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { useAside } from '/src/context/AsideContext';
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAside } from '/src/context/AsideContext'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
@@ -47,11 +47,11 @@ function MessagesPage({ currentUserId }) {
         next_page: null,
         prev_page: null,
     })
-    const [inviteSearchTerm, setInviteSearchTerm] = useState('');
-    const [inviteSearchResults, setInviteSearchResults] = useState([]);
-    const [isLoadingInviteSearch, setIsLoadingInviteSearch] = useState(false);
-    const [inviteSearchError, setInviteSearchError] = useState(null);
-    const [isInvitingUser, setIsInvitingUser] = useState(false);
+    const [inviteSearchTerm, setInviteSearchTerm] = useState('')
+    const [inviteSearchResults, setInviteSearchResults] = useState([])
+    const [isLoadingInviteSearch, setIsLoadingInviteSearch] = useState(false)
+    const [inviteSearchError, setInviteSearchError] = useState(null)
+    const [isInvitingUser, setIsInvitingUser] = useState(false)
 
     const [newMessageContent, setNewMessageContent] = useState('')
     const [isSendingMessage, setIsSendingMessage] = useState(false)
@@ -71,9 +71,9 @@ function MessagesPage({ currentUserId }) {
     const [createGroupError, setCreateGroupError] = useState(null)
     const [showParticipantsModal, setShowParticipantsModal] = useState(false)
     const PLACEHOLDER_PHOTO_URL = 'http://picsum.photos/200/300'
-    const socketRef = useRef(null);
+    const socketRef = useRef(null)
     const [userToDM, setUserToDM] = useState("")
-    const [isSocketConnected, setIsSocketConnected] = useState(false);
+    const [isSocketConnected, setIsSocketConnected] = useState(false)
     const { toggleAside } = useAside()
     const location = useLocation()
     const getUserPhotoUrl = (user) => {
@@ -92,12 +92,12 @@ function MessagesPage({ currentUserId }) {
 
     const waitUntilSocketReady = (callback, retries = 20, delay = 100) => {
         if (!socket) {
-            if (retries === 0) return console.error("Socket aún no está listo después de varios intentos.");
-            setTimeout(() => waitUntilSocketReady(callback, retries - 1, delay), delay);
+            if (retries === 0) return console.error("Socket aún no está listo después de varios intentos.")
+            setTimeout(() => waitUntilSocketReady(callback, retries - 1, delay), delay)
         } else {
-            callback();
+            callback()
         }
-    };
+    }
 
     const fetchConversations = async () => {
         setIsLoadingConversations(true)
@@ -200,39 +200,39 @@ function MessagesPage({ currentUserId }) {
     const width = useViewportWidth()
 
     const handleConversationSelect = useCallback((conversationId) => {
-        console.log("Conversation selected:", conversationId);
+        console.log("Conversation selected:", conversationId)
 
-        const socket = socketRef.current;
+        const socket = socketRef.current
         if (socket && socket.connected) {
-            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`);
-            socket.emit('join_conversation', { conversation_id: conversationId });
+            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`)
+            socket.emit('join_conversation', { conversation_id: conversationId })
         } else {
-            console.warn("Socket no conectado, no se pudo emitir join_conversation");
+            console.warn("Socket no conectado, no se pudo emitir join_conversation")
         }
 
-        setSelectedConversationId(conversationId);
-        setNewMessageContent('');
-        setSendMessageError(null);
+        setSelectedConversationId(conversationId)
+        setNewMessageContent('')
+        setSendMessageError(null)
 
         if (width < 800) {
-            toggleAside();
-        }       
-    }, [width, toggleAside]);
+            toggleAside()
+        }
+    }, [width, toggleAside])
 
     useEffect(() => {
         if (userToDM && isSocketConnected) {
-            console.log("Socket listo y userToDM presente, iniciando DM...");
+            console.log("Socket listo y userToDM presente, iniciando DM...")
 
             handleSelectUserForDM(userToDM)
                 .then(conversation => {
-                    console.log("Conversación DM creada/obtenida:", conversation);
-                    handleConversationSelect(conversation.id);
+                    console.log("Conversación DM creada/obtenida:", conversation)
+                    handleConversationSelect(conversation.id)
                 })
                 .catch(err => {
-                    console.error("Error al obtener/crear conversación DM:", err);
-                });
+                    console.error("Error al obtener/crear conversación DM:", err)
+                })
         }
-    }, [userToDM, isSocketConnected]);
+    }, [userToDM, isSocketConnected])
 
 
     useEffect(() => {
@@ -244,68 +244,68 @@ function MessagesPage({ currentUserId }) {
                     credentials: true
                 }
             })
-            socketRef.current = newSocket;
+            socketRef.current = newSocket
 
             setSocket(newSocket)
             newSocket.on('connect', () => {
                 console.log('WebSocket conectado!', newSocket.id)
-                setIsSocketConnected(true);
+                setIsSocketConnected(true)
             })
 
             newSocket.on('disconnect', (reason) => {
                 console.log('WebSocket desconectado:', reason)
-                setIsSocketConnected(false);
+                setIsSocketConnected(false)
             })
 
             newSocket.on('joined_conversation', (conv) => {
                 setConversations(prev => {
-                    const exists = prev.some(c => String(c.id) === String(conv.id));
-                    if (exists) return prev;
-                    return [conv, ...prev];
-                });
-            });
+                    const exists = prev.some(c => String(c.id) === String(conv.id))
+                    if (exists) return prev
+                    return [conv, ...prev]
+                })
+            })
 
             newSocket.on('connect_error', (error) => {
                 console.error('WebSocket Connection Error:', error)
             })
 
             newSocket.on('user_left_conv', (data) => {
-                console.log('Evento leave_conversation recibido por WebSocket:', data);
-                const { conversation_id, user_id } = data;
-                const current = handlersRef.current;
+                console.log('Evento leave_conversation recibido por WebSocket:', data)
+                const { conversation_id, user_id } = data
+                const current = handlersRef.current
                 if (String(user_id) === String(current.currentUserId)) {
-                    console(`User ${user_id} (current user) left conversation ${conversation_id}. Removing from list.`);
+                    console(`User ${user_id} (current user) left conversation ${conversation_id}. Removing from list.`)
                     current.setConversations(prevConversations =>
                         prevConversations.filter(conv => String(conv.id) !== String(conversation_id))
-                    );
+                    )
                     if (String(current.selectedConversationId) === String(conversation_id)) {
-                        console(`Conversation ${conversation_id} was selected. Deselecting.`);
-                        current.setSelectedConversationId(null);
-                        current.setMessages([]);
+                        console(`Conversation ${conversation_id} was selected. Deselecting.`)
+                        current.setSelectedConversationId(null)
+                        current.setMessages([])
                         current.setMessagePagination({
                             total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
                             has_next: false, has_prev: false, next_page: null, prev_page: null,
-                        });
+                        })
                     }
 
                 } else {
-                    console.log(`User ${user_id} (another user) left conversation ${conversation_id}.`);
+                    console.log(`User ${user_id} (another user) left conversation ${conversation_id}.`)
                     current.setConversations(prevConversations => {
-                        const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id));
+                        const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id))
                         if (conversationIndex !== -1) {
-                            const updatedConversations = [...prevConversations];
-                            const targetConv = updatedConversations[conversationIndex];
+                            const updatedConversations = [...prevConversations]
+                            const targetConv = updatedConversations[conversationIndex]
                             updatedConversations[conversationIndex] = {
                                 ...targetConv,
                                 participants: targetConv.participants.filter(p => String(p.user_id) !== String(user_id)),
-                            };
-                            console.log(`Participant ${user_id} removed from conversation ${conversation_id} in state.`);
-                            return updatedConversations;
+                            }
+                            console.log(`Participant ${user_id} removed from conversation ${conversation_id} in state.`)
+                            return updatedConversations
                         }
-                        return prevConversations;
-                    });
+                        return prevConversations
+                    })
                     if (String(current.selectedConversationId) === String(conversation_id)) {
-                        console(`Conversation ${conversation_id} is selected. Adding system message.`);
+                        console(`Conversation ${conversation_id} is selected. Adding system message.`)
 
                         const systemMessage = {
                             id: `system-${Date.now()}-${Math.random()}`,
@@ -314,44 +314,44 @@ function MessagesPage({ currentUserId }) {
                             content: `Usuario ${user_id} ha salido del chat.`,
                             timestamp: new Date().toISOString(),
                             sender: null
-                        };
-                        current.setMessages(prevMessages => [...current.messages, systemMessage]);
+                        }
+                        current.setMessages(prevMessages => [...current.messages, systemMessage])
                     }
                 }
-            });
+            })
 
             newSocket.on('participant_added', (data) => {
-                console.log('Evento participant_added recibido por WebSocket:', data);
-                const { conversation_id, participant } = data; 
-                const current = handlersRef.current;
+                console.log('Evento participant_added recibido por WebSocket:', data)
+                const { conversation_id, participant } = data
+                const current = handlersRef.current
 
                 current.setConversations(prevConversations => {
-                    const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id));
+                    const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation_id))
                     if (conversationIndex !== -1) {
-                        const updatedConversations = [...prevConversations];
-                        const targetConv = updatedConversations[conversationIndex];
+                        const updatedConversations = [...prevConversations]
+                        const targetConv = updatedConversations[conversationIndex]
                         if (!targetConv.participants.some(p => String(p.user_id) === String(participant.user_id))) {
                             updatedConversations[conversationIndex] = {
                                 ...targetConv,
                                 participants: [...targetConv.participants, participant],
-                            };
-                            console.log(`Participant ${participant.user.name || participant.user.username} added to conversation ${conversation_id} in state.`);
-                            return updatedConversations;
+                            }
+                            console.log(`Participant ${participant.user.name || participant.user.username} added to conversation ${conversation_id} in state.`)
+                            return updatedConversations
                         } else {
-                             console.log(`Participant ${participant.user.name || participant.user.username} already exists in conversation ${conversation_id} in state.`);
-                             return prevConversations; 
+                            console.log(`Participant ${participant.user.name || participant.user.username} already exists in conversation ${conversation_id} in state.`)
+                            return prevConversations
                         }
                     }
-                    console.warn(`Received participant_added for conversation ${conversation_id} not found in list. Re-fetching conversations.`);
-                    current.fetchConversations(); 
-                    return prevConversations; 
-                });
+                    console.warn(`Received participant_added for conversation ${conversation_id} not found in list. Re-fetching conversations.`)
+                    current.fetchConversations()
+                    return prevConversations
+                })
                 if (String(participant.user_id) === String(current.currentUserId)) {
-                    console.log(`User ${current.currentUserId} was just added to conversation ${conversation_id}. Selecting it.`);
-                    current.handleConversationSelect(conversation_id); 
+                    console.log(`User ${current.currentUserId} was just added to conversation ${conversation_id}. Selecting it.`)
+                    current.handleConversationSelect(conversation_id)
                 }
 
-            });
+            })
 
             newSocket.on('new_message', (message) => {
                 console.log('--- Nuevo mensaje WS recibido ---')
@@ -416,9 +416,6 @@ function MessagesPage({ currentUserId }) {
                 setSocket(null)
             }
         }
-
-
-
     }, [currentUserId])
 
 
@@ -483,7 +480,6 @@ function MessagesPage({ currentUserId }) {
                             setMessages([])
                             setMessagePagination(dataPage1.pagination)
                         }
-
 
                     } else {
                         const errorData = await resPage1.json()
@@ -652,9 +648,9 @@ function MessagesPage({ currentUserId }) {
                         has_next: false, has_prev: false, next_page: null, prev_page: null,
                     })
                     socket.emit('user_left_conv', {
-                    conversation_id: conversationId,
-                    user_id: currentUserId, // asegúrate de tener este valor disponible
-                });
+                        conversation_id: conversationId,
+                        user_id: currentUserId,
+                    })
                 }
             } else {
                 const errorData = await res.json()
@@ -817,10 +813,10 @@ function MessagesPage({ currentUserId }) {
     }
 
     const handleSelectUserForDM = useCallback(async (user) => {
-        console.log("Selected user for DM:", user);
+        console.log("Selected user for DM:", user)
 
-        setConversationSearchTerm('');
-        setUserSearchResults([]);
+        setConversationSearchTerm('')
+        setUserSearchResults([])
 
         try {
 
@@ -834,72 +830,60 @@ function MessagesPage({ currentUserId }) {
                     participant_ids: [parseInt(currentUserId), user.userId || user.id],
                     name: null,
                 }),
-            });
+            })
 
             if (res.ok) {
-                const conversation = await res.json();
-                console.log("Conversación DM creada/obtenida:", conversation);
+                const conversation = await res.json()
+                console.log("Conversación DM creada/obtenida:", conversation)
 
                 setConversations(prevConversations => {
-                    const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id));
+                    const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id))
                     if (existingIndex !== -1) {
-                        const updatedConversations = [...prevConversations];
-                        const [movedConv] = updatedConversations.splice(existingIndex, 1);
+                        const updatedConversations = [...prevConversations]
+                        const [movedConv] = updatedConversations.splice(existingIndex, 1)
 
-                        const updatedMovedConv = { ...movedConv, ...conversation };
-                        return [updatedMovedConv, ...updatedConversations];
+                        const updatedMovedConv = { ...movedConv, ...conversation }
+                        return [updatedMovedConv, ...updatedConversations]
                     } else {
-                        return [conversation, ...prevConversations];
+                        return [conversation, ...prevConversations]
                     }
-                });
+                })
 
-                waitUntilSocketReady(() => handleConversationSelect(conversation.id));
+                waitUntilSocketReady(() => handleConversationSelect(conversation.id))
 
             } else {
-                const errorData = await res.json();
-                console.error("Error al iniciar DM:", res.status, errorData);
-                alert(`Error al iniciar chat: ${errorData.message || res.status}`);
+                const errorData = await res.json()
+                console.error("Error al iniciar DM:", res.status, errorData)
+                alert(`Error al iniciar chat: ${errorData.message || res.status}`)
             }
         } catch (error) {
-            console.error("Error de red al iniciar DM:", error);
-            
+            console.error("Error de red al iniciar DM:", error)
+
         }
-    }, [currentUserId, setConversationSearchTerm, setUserSearchResults, setConversations, handleConversationSelect, API_BASE_URL]);
+    }, [currentUserId, setConversationSearchTerm, setUserSearchResults, setConversations, handleConversationSelect, API_BASE_URL])
 
 
 
     useEffect(() => {
-        console.log("MessagesPage mounted or location state changed. Checking location.state...");
-        console.log("Location state:", location.state);
-
-        // Verifica si hay un conversationIdToOpen en el estado de navegación (para abrir chat existente)
+        console.log("MessagesPage mounted or location state changed. Checking location.state...")
+        console.log("Location state:", location.state)
         if (location.state && location.state.conversationIdToOpen !== undefined) {
-            const convIdToOpen = location.state.conversationIdToOpen;
-            console.log(`Found conversationIdToOpen in state: ${convIdToOpen}. Attempting to select it.`);
-            handleConversationSelect(convIdToOpen);
-            // *** Consume el estado después de usarlo ***
-            // Esto evita que el efecto se re-ejecute si el componente se re-renderiza
-            // mientras location.state.conversationIdToOpen todavía está presente.
-            navigate(location.pathname, { replace: true, state: {} });
+            const convIdToOpen = location.state.conversationIdToOpen
+            console.log(`Found conversationIdToOpen in state: ${convIdToOpen}. Attempting to select it.`)
+            handleConversationSelect(convIdToOpen)
+            navigate(location.pathname, { replace: true, state: {} })
 
-
-        } else if (location.state && location.state.user !== undefined) { // *** Manejar el objeto user pasado desde ProfilePage ***
+        } else if (location.state && location.state.user !== undefined) {
             setUserToDM(location.state.user)
-            console.log(`Found user object in state:`, userToDM, `. Attempting to initiate DM.`);
-            // *** AÑADE ESTE LOG PARA VERIFICAR LA PROPIEDAD userId JUSTO ANTES DE LLAMAR AL HANDLER ***
-            console.log("User object from state:", userToDM);
-            console.log("userToDM.userId:", userToDM.userId);
-            console.log("userToDM.id:", userToDM.id); // También verifica .id por si acaso
-
-            // Llama a handleSelectUserForDM con el objeto user recibido
-            handleSelectUserForDM(userToDM);
-            // *** Consume el estado después de usarlo ***
-            // Esto evita que el efecto se re-ejecute si el componente se re-renderiza
-            // mientras location.state.user todavía está presente.
-            navigate(location.pathname, { replace: true, state: {} });
+            console.log(`Found user object in state:`, userToDM, `. Attempting to initiate DM.`)
+            console.log("User object from state:", userToDM)
+            console.log("userToDM.userId:", userToDM.userId)
+            console.log("userToDM.id:", userToDM.id)
+            handleSelectUserForDM(userToDM)
+            navigate(location.pathname, { replace: true, state: {} })
         }
 
-    }, []);
+    }, [])
 
     const handleToggleParticipantsModal = () => {
         if (selectedConversationId !== null) {
@@ -911,28 +895,28 @@ function MessagesPage({ currentUserId }) {
     const handleToggleParticipantSelection = (user) => {
         setSelectedParticipants(prevSelected => {
             if (String(user.id) === String(currentUserId)) {
-                console.log("Cannot select self as group participant via UI.");
-                return prevSelected;
+                console.log("Cannot select self as group participant via UI.")
+                return prevSelected
             }
-            const isSelected = prevSelected.some(p => String(p.id) === String(user.id));
+            const isSelected = prevSelected.some(p => String(p.id) === String(user.id))
             if (isSelected) {
-                return prevSelected.filter(p => String(p.id) !== String(user.id));
+                return prevSelected.filter(p => String(p.id) !== String(user.id))
             } else {
-                return [...prevSelected, user];
+                return [...prevSelected, user]
             }
-        });
-    };
+        })
+    }
 
     const handleInviteUserToGroup = useCallback(async (conversationId, userToInvite) => {
-        console.log(`Attempting to invite user ${userToInvite?.id} to conversation ${conversationId}`);
+        console.log(`Attempting to invite user ${userToInvite?.id} to conversation ${conversationId}`)
 
         if (!conversationId || !userToInvite || !userToInvite.id) {
-            console.error("Cannot invite: missing conversationId or userToInvite (or userToInvite.userId)");
-            alert("Error: Información de invitación incompleta.");
-            return;
+            console.error("Cannot invite: missing conversationId or userToInvite (or userToInvite.userId)")
+            alert("Error: Información de invitación incompleta.")
+            return
         }
-        setIsInvitingUser(true);
-        setInviteSearchError(null);
+        setIsInvitingUser(true)
+        setInviteSearchError(null)
 
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/participants`, {
@@ -944,31 +928,31 @@ function MessagesPage({ currentUserId }) {
                 body: JSON.stringify({
                     user_id: userToInvite.id,
                 }),
-            });
+            })
 
             if (res.ok) {
-                const result = await res.json();
-                console.log("User invited successfully:", result);
+                const result = await res.json()
+                console.log("User invited successfully:", result)
                 socket.emit('participant_added', {
-                conversation_id: conversationId,
-                participant: result  // asegúrate de que tenga `user_id` y `user`
-                });
+                    conversation_id: conversationId,
+                    participant: result
+                })
             } else {
-                const errorData = await res.json();
-                console.error("Error inviting user:", res.status, errorData);
-                setInviteSearchError(errorData.message || `Error inviting user: ${res.status}`);
-                alert(`Error al invitar usuario: ${errorData.message || res.status}`);
+                const errorData = await res.json()
+                console.error("Error inviting user:", res.status, errorData)
+                setInviteSearchError(errorData.message || `Error inviting user: ${res.status}`)
+                alert(`Error al invitar usuario: ${errorData.message || res.status}`)
             }
         } catch (error) {
-            console.error("Network error inviting user:", error);
-            setInviteSearchError(`Network error inviting user: ${error.message}`);
-            alert(`Error de red al invitar usuario: ${error.message}`);
+            console.error("Network error inviting user:", error)
+            setInviteSearchError(`Network error inviting user: ${error.message}`)
+            alert(`Error de red al invitar usuario: ${error.message}`)
         } finally {
-            setIsInvitingUser(false);
-            setInviteSearchTerm('');
-            setInviteSearchResults([]);
+            setIsInvitingUser(false)
+            setInviteSearchTerm('')
+            setInviteSearchResults([])
         }
-    }, [API_BASE_URL, currentUserId, selectedConversationId, conversations]);
+    }, [API_BASE_URL, currentUserId, selectedConversationId, conversations])
 
     const selectedConversation = conversations.find(c => c.id === selectedConversationId)
     const isGroupConversation = selectedConversation?.name !== null && selectedConversation?.name !== undefined
@@ -976,66 +960,92 @@ function MessagesPage({ currentUserId }) {
 
     const searchUsersForInvite = useCallback(async (query) => {
         if (!query || query.trim().length === 0) {
-            setInviteSearchResults([]);
-            setIsLoadingInviteSearch(false);
-            return;
+            setInviteSearchResults([])
+            setIsLoadingInviteSearch(false)
+            return
         }
-        setIsLoadingInviteSearch(true);
-        setInviteSearchError(null);
+        setIsLoadingInviteSearch(true)
+        setInviteSearchError(null)
         try {
             const res = await fetch(`${API_BASE_URL}/users/search?term=${encodeURIComponent(query)}`, {
                 credentials: 'include'
-            });
+            })
             if (res.ok) {
-                const data = await res.json();
-                console.log("Invite user search results:", data);
-                const currentParticipantIds = selectedConversation?.participants?.map(p => String(p.id)) || [];
+                const data = await res.json()
+                console.log("Invite user search results:", data)
+                const currentParticipantIds = selectedConversation?.participants?.map(p => String(p.id)) || []
                 const filteredResults = data.filter(user =>
                     String(user.id) !== String(currentUserId)
                     && !currentParticipantIds.includes(String(user.id))
-                );
+                )
 
-                setInviteSearchResults(filteredResults);
+                setInviteSearchResults(filteredResults)
             } else {
-                const errorData = await res.json();
-                setInviteSearchError(errorData.message || `Error searching users: ${res.status}`);
-                console.error("Error searching users for invite:", res.status, errorData);
-                setInviteSearchResults([]);
+                const errorData = await res.json()
+                setInviteSearchError(errorData.message || `Error searching users: ${res.status}`)
+                console.error("Error searching users for invite:", res.status, errorData)
+                setInviteSearchResults([])
             }
         } catch (error) {
-            setInviteSearchError(`Network error searching users for invite: ${error.message}`);
-            console.error("Network error searching users for invite:", error);
-            setInviteSearchResults([]);
+            setInviteSearchError(`Network error searching users for invite: ${error.message}`)
+            console.error("Network error searching users for invite:", error)
+            setInviteSearchResults([])
         } finally {
-            setIsLoadingInviteSearch(false);
+            setIsLoadingInviteSearch(false)
         }
-    }, [API_BASE_URL, currentUserId, selectedConversation, inviteSearchTerm]);
+    }, [API_BASE_URL, currentUserId, selectedConversation, inviteSearchTerm])
 
     useEffect(() => {
-        const debounceDelay = 200;
-        let timer;
+        const debounceDelay = 200
+        let timer
         if (timer) {
-            clearTimeout(timer);
+            clearTimeout(timer)
         }
         if (inviteSearchTerm.trim().length > 0) {
-            console.log(`Debouncing search for invite term: "${inviteSearchTerm}". Setting timer...`);
+            console.log(`Debouncing search for invite term: "${inviteSearchTerm}". Setting timer...`)
             timer = setTimeout(() => {
-                console.log(`Debounce timer finished for term: "${inviteSearchTerm}". Calling searchUsersForInvite.`);
-                searchUsersForInvite(inviteSearchTerm);
-            }, debounceDelay);
+                console.log(`Debounce timer finished for term: "${inviteSearchTerm}". Calling searchUsersForInvite.`)
+                searchUsersForInvite(inviteSearchTerm)
+            }, debounceDelay)
         } else {
-            console.log("Invite search term is empty. Clearing results.");
-            setInviteSearchResults([]);
-            setInviteSearchError(null);
-            setIsLoadingInviteSearch(false);
+            console.log("Invite search term is empty. Clearing results.")
+            setInviteSearchResults([])
+            setInviteSearchError(null)
+            setIsLoadingInviteSearch(false)
         }
         return () => {
-            console.log("Cleaning up debounce timer.");
+            console.log("Cleaning up debounce timer.")
             if (timer) {
-                clearTimeout(timer);
+                clearTimeout(timer)
             }
-        };
-    }, [inviteSearchTerm, searchUsersForInvite]);
+        }
+    }, [inviteSearchTerm, searchUsersForInvite])
+
+
+    const fetchRepos = async () => {
+        const res = await fetch("https://api.devconnect.network/github/repos", {
+            method: "GET",
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        try{
+            if(res.ok) {
+                const data = await res.json()
+                console.log(data)
+                setRepos(data)
+            } else {
+                console.log(res)
+            }
+        } catch(e){
+            console.error(e)
+        }
+    }
+
+    useEffect(() => {
+        fetchRepos()
+    },[])
 
 
     return (
@@ -1243,11 +1253,16 @@ function MessagesPage({ currentUserId }) {
                             className="text-xl font-bold fixed py-2 px-3 msg-container-header"
                         >
                             {selectedConversationId === null
-                                ? ''
+                                ? <div className='flex justify-center items-center text-center text-gray-400'><h1>start a conversation</h1></div>
                                 : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-4">
                                     <button type='button' onClick={handleToggleParticipantsModal} disabled={selectedConversation == undefined} className='flex flex-row-reverse justify-end items-center gap-2'>
                                         {getConversationDisplayName(conversations.find(c => c.id === selectedConversationId))}
-                                        <img src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() : (selectedConversation.participants && selectedConversation.participants.length === 2 ? getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') : getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo' className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                        <img
+                                            src={selectedConversation ? (isGroupConversation ? getUserPhotoUrl() :
+                                                (selectedConversation.participants && selectedConversation.participants.length === 2 ?
+                                                    getUserPhotoUrl(selectedConversation.participants.find(p => String(p.id) !== String(currentUserId)), 'default') :
+                                                    getUserPhotoUrl())) : getUserPhotoUrl()} alt='foo'
+                                            className='size-12 flex-none rounded-full bg-gray-50'></img>
                                     </button>
                                     <ArrowLeftIcon className="w-6 h-6 cursor-pointer" onClick={handlecloseConversation} />
                                 </div>)
@@ -1324,9 +1339,9 @@ function MessagesPage({ currentUserId }) {
                                                             className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
                                                             onClick={() => {
                                                                 if (selectedConversationId) {
-                                                                    handleInviteUserToGroup(selectedConversationId, user);
+                                                                    handleInviteUserToGroup(selectedConversationId, user)
                                                                 } else {
-                                                                    alert("Error: No hay conversación seleccionada para invitar.");
+                                                                    alert("Error: No hay conversación seleccionada para invitar.")
                                                                 }
                                                             }}
                                                         >
