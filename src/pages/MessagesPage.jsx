@@ -759,8 +759,8 @@ function MessagesPage({ currentUserId }) {
 
         setIsCreatingGroupConversation(true)
         setCreateGroupError(null)
-        const participantIds = selectedParticipants.map(p => p.id)
-        participantIds.push(currentUserId)
+        const participantIds = selectedParticipants.map(p => String(p.id))
+        participantIds.push(String(currentUserId))
 
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
