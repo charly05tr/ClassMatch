@@ -64,7 +64,7 @@ const RegisterPage = () => {
                     <li className='animated-div bg-gradient-to-br from-purple-600 to-blue-500'></li>
                 </ul>
             </div>
-            <main className="grid justify-center px-4 items-center h-full register-container">
+            <main className="grid justify-center px-4 items-center register-container mt-10">
                 <form onSubmit={handleSubmit} className="w-full max-w-5xl">
                     <div className="text-2xl text-center mb-2 font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-purple-600 to-blue-500">DevConnect</div>
                     <Fieldset className="space-y-6 rounded-xl bg-white/5 p-6 sm:p-10">
