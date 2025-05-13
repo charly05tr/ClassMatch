@@ -74,7 +74,7 @@ function MatchesPage({ currentUserId }) {
 
 
     return (
-        <div className='grid shadow inset-shadow-initial rounded justify-start grid-rows-3 p-4 gap-2 w-fit'>
+        <div className='grid shadow inset-shadow-initial rounded justify-start grid-rows-[auto] p-4 gap-2 w-fit'>
             <div className=' rounded p-4'>
                 <h1 className='text-center'>Matches requested</h1>
                 <hr className='mb-1 opacity-50' />
