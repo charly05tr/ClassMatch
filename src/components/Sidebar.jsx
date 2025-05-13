@@ -61,12 +61,12 @@ const [displayMatches, setDisplayMatches] = useState(false)
               </Link>
             </>
           )}
-        </aside>
-        {(displayMatches)??
+        {(displayMatches)?
           <div>
             <MatchesPage currentUserId={userId}/>
-          </div>
+          </div>:""
         }
+        </aside>
       <div className='background'>
           <div className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></div>
           <div className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></div>
