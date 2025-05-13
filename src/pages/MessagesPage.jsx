@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faArchive, faCodeBranch, faCodeCommit} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ConversationListItem from '../components/ConversationListItem'
 import { UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
-const API_BASE_URL = 'http://192.168.0.4:5000'
+const API_BASE_URL = 'https://api.devconnect.network'
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -24,7 +24,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `http://192.168.0.4:5000?userId=${currentUserId}`
+    const WEBSOCKET_URL = `https://api.devconnect.network?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
@@ -1024,7 +1024,7 @@ function MessagesPage({ currentUserId }) {
 
 
     const fetchRepos = async () => {
-        const res = await fetch("http://192.168.0.4:5000/github/repos", {
+        const res = await fetch("https://api.devconnect.network/github/repos", {
             method: "GET",
             credentials: 'include',
             headers: {
@@ -1034,9 +1034,7 @@ function MessagesPage({ currentUserId }) {
         try {
             if (res.ok) {
                 const data = await res.json()
-                console.log(data)
                 setRepos(data)
-                console.log(repos)
             } else {
                 console.log(res)
                 setRepos(null)
@@ -1051,19 +1049,45 @@ function MessagesPage({ currentUserId }) {
     }, [])
 
      const sesionWithGitHub = () => {
-        window.location.href = 'http://192.168.0.4:5000/github/login';
+        window.location.href = 'https://api.devconnect.network/github/login';
     }
-    const [selectedRepo, setSelectedRepo] = useState("")
+    const [selectedRepo, setSelectedRepo] = useState({})
+    const [isRepoSelected, setIsRepoSelected] = useState(false)
 
+    const checkRepo = async () => {
+        if (selectedConversationId === null) {
+            return
+        }
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
+             method:"POST",
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        try {
+            if (res.status === 302) {
+                const data = await res.json()
+                const repo = repos.find(repo => repo.id.toString() === String(data.github_repo_id))
+                setSelectedRepo(repo)
+                console.log(repo)
+                setIsRepoSelected(true)
+            } else {
+                setIsRepoSelected(false)
+            }
+        } catch(e) {
+            setIsRepoSelected(false)
+        }
+    }
     const handleSelectRepo = async (event) => {
         if (selectedConversationId === null) {
             return
         }
 
         const selectedRepoId = event.target.value
-        const repo = repos.find(repo => repo.id.toString() === selectedRepoId)
+        const repo = repos.find(repo => repo.id.toString() === String(selectedRepoId))
         setSelectedRepo(repo)
-        const res = await fetch(`http://192.168.0.4:5000/repos/${selectedConversationId}`, {
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
             method:"POST",
             credentials: 'include',
             headers: {
@@ -1076,13 +1100,20 @@ function MessagesPage({ currentUserId }) {
         })
         try{
             if(res.ok) {
-                console.log(`----------------------------------------->${selectedRepo}`)
+                setIsRepoSelected(true)
             }
-            else("error al linkear el repo")
+            else{
+                setSelectedRepo(null)
+                setIsRepoSelected(true)
+            }
         } catch (e) {
-            console.error(e)
+            setIsRepoSelected(false)
         }
     }
+
+    useEffect(() => {
+       checkRepo()
+    },[selectedConversationId])
 
 
     return (
@@ -1293,13 +1324,15 @@ function MessagesPage({ currentUserId }) {
                                 ? ''
                                 : (<div className="flex flex-row-reverse justify-end mt-2 items-center mb-2 gap-4">
                                     <div className='ml-auto'>
-                                        {(repos)?
-                                        <select onChange={handleSelectRepo} value={selectedRepo?.id?.toString() ?? ""} className="text-gray-900 text-xs rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                                            <option defaultValue>Select repository to link with this chat</option>
-                                            {repos.map( repo => (
-                                                <option value={repo.id.toString()} key={repo.id}>{repo.name}</option>
-                                            ))}
-                                        </select>
+                                        {(repos)?<div>{(!isRepoSelected)?
+                                                <select onChange={handleSelectRepo} value={selectedRepo?.id?.toString() ?? ""} className="text-gray-900 text-xs rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                                    <option defaultValue>Select repository to link with this chat</option>
+                                                    {repos.map( repo => (
+                                                        <option value={repo.id.toString()} key={repo.id}>{repo.name}</option>
+                                                    ))}
+                                                </select>: <a href={selectedRepo.html_url} className='text-gray-200 font-light flex gap-2 text-lg'>{<p><FontAwesomeIcon icon={faArchive} />{selectedRepo.name}</p>} {<p><FontAwesomeIcon icon={faCodeBranch} />{selectedRepo.default_branch}</p>}</a>
+                                            }
+                                        </div>
                                         :<button onClick={sesionWithGitHub} type="button" className="text-white-400 bg-[#24292F] hover:bg-[#24292F]/90 focus:ring-4 focus:outline-none focus:ring-[#24292F]/50 font-medium rounded-lg text-xs px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30 ">
                                         <svg className="w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M10 .333A9.911 9.911 0 0 0 6.866 19.65c.5.092.678-.215.678-.477 0-.237-.01-1.017-.014-1.845-2.757.6-3.338-1.169-3.338-1.169a2.627 2.627 0 0 0-1.1-1.451c-.9-.615.07-.6.07-.6a2.084 2.084 0 0 1 1.518 1.021 2.11 2.11 0 0 0 2.884.823c.044-.503.268-.973.63-1.325-2.2-.25-4.516-1.1-4.516-4.9A3.832 3.832 0 0 1 4.7 7.068a3.56 3.56 0 0 1 .095-2.623s.832-.266 2.726 1.016a9.409 9.409 0 0 1 4.962 0c1.89-1.282 2.717-1.016 2.717-1.016.366.83.402 1.768.1 2.623a3.827 3.827 0 0 1 1.02 2.659c0 3.807-2.319 4.644-4.525 4.889a2.366 2.366 0 0 1 .673 1.834c0 1.326-.012 2.394-.012 2.72 0 .263.18.572.681.475A9.911 9.911 0 0 0 10 .333Z" clipRule="evenodd" />
@@ -1419,14 +1452,14 @@ function MessagesPage({ currentUserId }) {
                                 key={message.id}
                                 className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${String(message.sender_id) === String(currentUserId) ? 'bg-blue-600 text-white' : 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100'}`}>
+                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${(parseInt(message.sender_id) !== 13)?String(message.sender_id) === String(currentUserId) ? 'bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-purple-700 via-purple-800 to-purple-900 hover:bg-gradient-to-br ':'text-white bg-gradient-to-r from-green-700 via-green-800 to-green-900 hover:bg-gradient-to-br rounded-lg text-sm'}`}>
                                     <div>
                                         {String(message.sender.id) !== String(currentUserId) ?
                                             <p className="text-xs text-left font-semibold mb-1">
                                                 {String(message.sender.name)}
                                             </p> : <p></p>}
                                         <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
-                                            {message.content}
+                                            {(parseInt(message.sender_id) === 13)?<FontAwesomeIcon icon={faCodeCommit} />:''} {message.content}
                                         </p>
                                     </div>
                                     <p className="text-xs msg-timestamp text-right opacity-80">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

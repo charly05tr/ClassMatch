@@ -30,11 +30,11 @@ function Sidebar({ isLoggedIn, userId }) {
                 {" "}
                 <p>Messages</p>
               </Link>
-              <Link to="/search">
+              {/* <Link to="/search">
                 <i className="fas fa-search"></i>
                 {" "}
-                <p>Search</p>
-              </Link>
+                <p>Search</p> */}
+              {/* </Link> */}
               <Link to={`/profile/${userId}`}>
                 <i className="fa-regular fa-circle-user fa-solid fa-lg"></i>
                 {" "}

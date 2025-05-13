@@ -19,13 +19,13 @@ const RegisterPage = () => {
         navigate('/login')
     }
     const sesionWithGitHub = () => {
-        window.location.href = 'http://192.168.0.4:5000/github/login';
+        window.location.href = 'https://api.devconnect.network/github/login';
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-            const res = await fetch('http://192.168.0.4:5000/users/register', {
+            const res = await fetch('https://api.devconnect.network/users/register', {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 credentials: "include",

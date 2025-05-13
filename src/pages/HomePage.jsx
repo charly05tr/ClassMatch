@@ -37,7 +37,7 @@ const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, i
                                 type="button"
                                 className="text-white bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
                             >
-                                {!loading?((matches[users[index].id] && matches[users[index].id] === 'match') ?("matched"): ((matches[users[index].id] && matches[users[index].id] === "like")?"requested":"match")): "loading"}
+                                {!loading ? ((matches[users[index].id] && matches[users[index].id] === 'match') ? ("matched") : ((matches[users[index].id] && matches[users[index].id] === "like") ? "requested" : "match")) : "loading"}
                             </button>
                         )}
                         <button
@@ -68,7 +68,7 @@ function HomePage({ currentUserId }) {
 
     const fetchUsersData = async () => {
         try {
-            const response = await fetch("http://192.168.0.4:5000", {
+            const response = await fetch("https://api.devconnect.network", {
                 credentials: "include",
                 method: "GET"
             })
@@ -108,7 +108,7 @@ function HomePage({ currentUserId }) {
         setIsSendingMatch(true);
 
         try {
-            const res = await fetch(`http://192.168.0.4:5000/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -132,7 +132,7 @@ function HomePage({ currentUserId }) {
     }
 
     const fetchMatches = async () => {
-        const res = await fetch(`http://192.168.0.4:5000/matches/user/${currentUserId}`, {
+        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
             method: "GET",
             credentials: "include"
         })
@@ -149,7 +149,7 @@ function HomePage({ currentUserId }) {
                 setLoading(false);
                 if (!loading) {
                     console.log(matches[1])
-                } 
+                }
             }
             else {
                 console.log("error cargando los matches")
@@ -160,9 +160,8 @@ function HomePage({ currentUserId }) {
     }
 
     useEffect(() => {
-        fetchMatches()
+        fetchMatches()  
     }, [users])
-
 
     return (
         <main className="flex flex-col">
