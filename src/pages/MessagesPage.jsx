@@ -1452,14 +1452,14 @@ function MessagesPage({ currentUserId }) {
                                 key={message.id}
                                 className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${(parseInt(message.sender_id) !== 13)?String(message.sender_id) === String(currentUserId) ? 'bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-purple-700 via-purple-800 to-purple-900 hover:bg-gradient-to-br ':'text-white bg-gradient-to-r from-green-700 via-green-800 to-green-900 hover:bg-gradient-to-br rounded-lg text-sm'}`}>
+                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${(parseInt(message.sender_id) != 3)?String(message.sender_id) === String(currentUserId) ? 'bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-purple-700 via-purple-800 to-purple-900 hover:bg-gradient-to-br ':'text-white bg-gradient-to-r from-green-700 via-green-800 to-green-900 hover:bg-gradient-to-br rounded-lg text-sm'}`}>
                                     <div>
                                         {String(message.sender.id) !== String(currentUserId) ?
                                             <p className="text-xs text-left font-semibold mb-1">
                                                 {String(message.sender.name)}
                                             </p> : <p></p>}
                                         <p className={`text-base text-lg whitespace-pre-wrap pr-4 break-words${String(message.sender_id) !== String(currentUserId) ? 'text-left' : 'text-right'}`}>
-                                            {(parseInt(message.sender_id) === 13)?<FontAwesomeIcon icon={faCodeCommit} />:''} {message.content}
+                                            {(parseInt(message.sender_id) === 3)?<FontAwesomeIcon icon={faCodeCommit} />:''} {message.content}
                                         </p>
                                     </div>
                                     <p className="text-xs msg-timestamp text-right opacity-80">{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
