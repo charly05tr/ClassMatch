@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useAside } from '/src/context/AsideContext';
 import './sidebar.css';
+import MatchesPage from '../pages/MatchesPage'
+import { useState } from 'react';
+
 function Sidebar({ isLoggedIn, userId }) {
+const [displayMatches, setDisplayMatches] = useState(false)
+
 
   const { isOpen } = useAside();
   return (
@@ -20,11 +25,11 @@ function Sidebar({ isLoggedIn, userId }) {
                 {" "}
                 <p>Home</p>
               </Link>
-              <Link to="/matches">
+              <button onClick={setDisplayMatches(true)}>
                 <i className="fas fa-star"></i>
                 {" "}
                 <p>Matches</p>
-              </Link>
+              </button>
               <Link to="/messages">
                 <i className="fa-regular fa-message fa-solid"></i>
                 {" "}
@@ -57,6 +62,11 @@ function Sidebar({ isLoggedIn, userId }) {
             </>
           )}
         </aside>
+        {(displayMatches)??
+          <div>
+            <MatchesPage currentUserId={userId}/>
+          </div>
+        }
       <div className='background'>
           <div className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></div>
           <div className='animated-div bg-gradient-to-br from-purple-600 to-blue-500 '></div>
