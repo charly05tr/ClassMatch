@@ -57,9 +57,10 @@
   width: 100%;
 }
 @media(max-width:800px) {
-  .msg-container{
+  /* .msg-container{
     position: fixed;
-  }
+    height: 100dvh;
+  } */
 .custom-scrollbar::-webkit-scrollbar {
   display: none;
 }
