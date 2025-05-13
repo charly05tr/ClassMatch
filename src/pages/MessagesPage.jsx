@@ -76,6 +76,7 @@ function MessagesPage({ currentUserId }) {
     const [isSocketConnected, setIsSocketConnected] = useState(false)
     const { toggleAside } = useAside()
     const location = useLocation()
+    const [repos, setRepos] = useState([])
     const getUserPhotoUrl = (user) => {
         return (user && user.profile_picture) ? user.profile_picture : PLACEHOLDER_PHOTO_URL
     }
@@ -1035,6 +1036,7 @@ function MessagesPage({ currentUserId }) {
                 const data = await res.json()
                 console.log(data)
                 setRepos(data)
+                console.log(repos)
             } else {
                 console.log(res)
             }
