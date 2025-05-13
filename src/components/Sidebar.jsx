@@ -25,7 +25,7 @@ const [displayMatches, setDisplayMatches] = useState(false)
                 {" "}
                 <p>Home</p>
               </Link>
-              <button onClick={setDisplayMatches(true)}>
+              <button onClick={() => setDisplayMatches(true)}>
                 <i className="fas fa-star"></i>
                 {" "}
                 <p>Matches</p>
