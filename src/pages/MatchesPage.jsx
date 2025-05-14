@@ -4,7 +4,7 @@ import { faStar as solidStar, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL_MATCHES = "http://192.168.0.5:5000/matches/"
+const API_URL_MATCHES = "https://api.devconnect.network/matches/"
 const placeholder = "http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar"
 
 function MatchesPage({ currentUserId }) {
@@ -74,7 +74,7 @@ function MatchesPage({ currentUserId }) {
 
 
     return (
-        <div className='flex rounded-lg flex-col gap-2 border-r border-yellow-300/40 w-full h-full w-[350px]'>
+        <div className='flex rounded-lg flex-col gap-2 w-full'>
             {(matches.length > 0) ?
                 <>
                     <div className='rounded-lg h-fit w-full'>
@@ -128,8 +128,11 @@ function MatchesPage({ currentUserId }) {
                             </ul>}
                     </div>
                     <div className='rounded h-fit'>
-                        <h1 className='text-start font-bold p-4 w-full text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches</h1>
+                         {matches.filter(match => match.status === "match" && String(match.user_id) !== String(currentUserId)).length === 0 ? (
+                            ''
+                        ) :
                         <ul>
+                            <h1 className='text-start font-bold p-4 w-full text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches</h1>
                             {matches.map(match => (
                                 <li key={match.id}>
                                     {match.status === "match" && String(match.user_id) !== String(currentUserId) ?
@@ -146,7 +149,7 @@ function MatchesPage({ currentUserId }) {
                                         : ''}
                                 </li>
                             ))}
-                        </ul>
+                        </ul>}
                     </div></> : <h1 className='text-center mt-[50vh] px-10 text-transparent bg-clip-text bg-gradient-to-r to-yellow-800 from-yellow-200'>No matches</h1>}
         </div>
     )

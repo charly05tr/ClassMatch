@@ -2,11 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import './HomePage.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
-import Lottie from 'lottie-react';
-import confetti from 'canvas-confetti';
-
+import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useSwipeable } from 'react-swipeable';
 const API_BASE_URL = "api.devconnect.network"
 
 const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, matches, loading }) => {
@@ -51,88 +49,122 @@ const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, i
     )
 }
 
+function useViewportWidth() {
+    const [width, setWidth] = useState(window.innerWidth)
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth)
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
+    return width
+}
+
+
 function HomePage({ currentUserId }) {
 
     const [users, setUsers] = useState([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const navigate = useNavigate()
     const { state } = useLocation()
-    const [isMatched, setIsMatched] = useState(false);
-    const [isSendingMatch, setIsSendingMatch] = useState(false);
-    const playerRef = useRef();
+    const [isMatched, setIsMatched] = useState(false)
+    const [isSendingMatch, setIsSendingMatch] = useState(false)
+    const playerRef = useRef()
     const [matches, setMatches] = useState({})
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true)
+    const [animaDic, setAnimaDic] = useState(0)
+    const viewportWidth = useViewportWidth()
+
     const goToProfile = (index, userId) => {
         navigate(`/profile/${userId}`, { state: { index } })
     }
+    
+
+
+    const handlers = useSwipeable({
+        onSwipedLeft: () => {
+            if (currentIndex < users.length - 1) {
+                setAnimaDic(1)
+                setCurrentIndex(currentIndex + 1)
+            }
+        },
+        onSwipedRight: () => {
+            if (currentIndex > 0) {
+                setAnimaDic(-1)
+                setCurrentIndex(currentIndex - 1)
+            }
+        },
+        preventScrollOnSwipe: true,
+        trackTouch: true,
+        trackMouse: false,
+    })
 
     const fetchUsersData = async () => {
         try {
-            const response = await fetch("http://192.168.0.5:5000", {
+            const response = await fetch("https://api.devconnect.network", {
                 credentials: "include",
                 method: "GET"
             })
             if (response.ok) {
-                const data = await response.json();
+                const data = await response.json()
                 setUsers(data)
             } else {
-                console.error("Error fetching user data:", response.statusText);
+                console.error("Error fetching user data:", response.statusText)
             }
         } catch (error) {
-            console.error("Error fetching user data:", error);
+            console.error("Error fetching user data:", error)
         }
     }
 
     useEffect(() => {
-        fetchUsersData();
-    }, []);
+        fetchUsersData()
+    }, [])
 
     useEffect(() => {
         if (state?.index !== undefined) {
-            setCurrentIndex(state.index);
+            setCurrentIndex(state.index)
         }
-    }, [state]);
+    }, [state])
 
 
 
     const handleSendMatch = async () => {
         if (!currentUserId) {
-            console.log("Debes iniciar sesión para enviar un match.");
-            return;
+            console.log("Debes iniciar sesión para enviar un match.")
+            return
         }
         if (!users[currentIndex].id || String(currentUserId) === String(users[currentIndex].id)) {
-            console.log("No se puede enviar match a este usuario.");
-            return;
+            console.log("No se puede enviar match a este usuario.")
+            return
         }
 
-        setIsSendingMatch(true);
+        setIsSendingMatch(true)
 
         try {
-            const res = await fetch(`http://192.168.0.5:5000/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-            });
+            })
 
             if (res.ok) {
-                const matchData = await res.json();
+                const matchData = await res.json()
                 fetchUsersData()
 
             } else {
-                const errorData = await res.json();
-                console.log(`Error al enviar match: ${errorData.message || res.status}`);
+                const errorData = await res.json()
+                console.log(`Error al enviar match: ${errorData.message || res.status}`)
             }
         } catch (error) {
-            console.log(`Error de red al enviar match: ${error.message}`);
+            console.log(`Error de red al enviar match: ${error.message}`)
         } finally {
-            setIsSendingMatch(false);
+            setIsSendingMatch(false)
         }
     }
 
     const fetchMatches = async () => {
-        const res = await fetch(`http://192.168.0.5:5000/matches/user/${currentUserId}`, {
+        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
             method: "GET",
             credentials: "include"
         })
@@ -144,9 +176,9 @@ function HomePage({ currentUserId }) {
                         ...prevMatches,
                         [match.matched_user_id]: match.status,
                         [match.user_id]: match.status
-                    }));
-                });
-                setLoading(false);
+                    }))
+                })
+                setLoading(false)
                 if (!loading) {
                     console.log(matches[1])
                 }
@@ -160,47 +192,40 @@ function HomePage({ currentUserId }) {
     }
 
     useEffect(() => {
-        fetchMatches()  
+        fetchMatches()
     }, [users])
+
 
     return (
         <main className="flex flex-col">
             <div className='grid-container'>
                 <div className='arrow arrow-left md:mr-4 mr-2'>
-                    {(!currentIndex < 1) ?
-                        <button type='button' title='backward' onClick={() => setCurrentIndex(currentIndex - 1)}>
-                            <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+                    {((!currentIndex < 1) && (viewportWidth > 800)) ?
+                        <button type='button' title='backward' onClick={() => { setCurrentIndex(currentIndex - 1); setAnimaDic(-1) }}>
+                            <FontAwesomeIcon icon={faArrowLeft} size="2xl" />
                         </button>
                         : ''}
                 </div>
-                <div className='relative overflow-hidden rounded shadow'>
+                <div className='relative overflow-hidden rounded shadow touch-pan-x' {...handlers}>
                     <AnimatePresence mode="wait">
                         {users.length > 0 && (
                             <motion.div
                                 key={users[currentIndex].id}
-                                initial={{ opacity: 0, x: 100 }}
+                                initial={{ opacity: 0, x: animaDic > 0 ? 300 : -300 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -100 }}
+                                exit={{ opacity: 0, x: animaDic > 0 ? -300 : 300 }}
                                 transition={{ duration: 0.3 }}
                             >
                                 <UserCard loading={loading} matches={matches} isSendingMatch={isSendingMatch} index={currentIndex} users={users} goToProfile={goToProfile} currentUserId={currentUserId} handleSendMatch={handleSendMatch} />
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    <Lottie
-                        src="http://lottie.host/9d144f3e-0be6-4932-8a96-075f3eb1042e/xgmDE51mPF.lottie"
-                        loop={false}
-                        autoplay={false}
-                        ref={playerRef}
-                        className="stars"
-                        style={{ width: 150, height: 150, zIndex: 999, position: 'absolute' }}
-                    />
                 </div>
 
                 <div className='arrow arrow-right md:ml-4 ml-2'>
-                    {(currentIndex < users.length - 1) ?
-                        <button type='button' title='foward' onClick={() => setCurrentIndex(currentIndex + 1)}>
-                            <FontAwesomeIcon icon={faArrowRight} size="lg" />
+                    {((currentIndex < users.length - 1 ) && viewportWidth > 800) ?
+                        <button type='button' title='foward' onClick={() => { setCurrentIndex(currentIndex + 1); setAnimaDic(1) }}>
+                            <FontAwesomeIcon icon={faArrowRight} size="2xl" />
                         </button>
                         : ''}
                 </div>
@@ -208,4 +233,4 @@ function HomePage({ currentUserId }) {
         </main>
     )
 }
-export default HomePage;
+export default HomePage

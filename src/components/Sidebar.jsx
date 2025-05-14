@@ -3,25 +3,34 @@ import { useAside } from '/src/context/AsideContext'
 import './sidebar.css'
 import MatchesPage from '../pages/MatchesPage'
 import { useState, useRef, useEffect } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+
+function useViewportWidth() {
+    const [width, setWidth] = useState(window.innerWidth)
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth)
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
+    return width
+}
 
 function Sidebar({ isLoggedIn, userId }) {
   const [displayMatches, setDisplayMatches] = useState(false)
   const { isOpen } = useAside()
   const ref = useRef()
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
-        setDisplayMatches(false)
-      }
-    }
-    document.addEventListener('pointerdown', handleClickOutside)
+  // useEffect(() => {
+  //   function handleClickOutside(event) {
+  //     if (ref.current && !ref.current.contains(event.target)) {
+  //       setDisplayMatches(false)
+  //     }
+  //   }
+  //   document.addEventListener('pointerdown', handleClickOutside)
 
-    return () => {
-      document.removeEventListener('pointerdown', handleClickOutside)
-    }
-  }, [])
+  //   return () => {
+  //     document.removeEventListener('pointerdown', handleClickOutside)
+  //   }
+  // }, [])
 
 
   return (
@@ -40,21 +49,23 @@ function Sidebar({ isLoggedIn, userId }) {
                   {" "}
                   <p>Home</p>
                 </Link>
-                <a onClick={() => setDisplayMatches(prev => !prev)} className='z-10 cursor-pointer'>
-                  <i className="fas fa-star"></i>
-                  {" "}
-                  <p>Matches</p>
-                </a>
+                {(useViewportWidth() < 800)?
+                  <Link to="/matches" className='z-10'>
+                    <i className="fas fa-star"></i>
+                    {" "}
+                    <p>Matches</p>
+                  </Link>:
+                  <a onClick={() => setDisplayMatches(prev => !prev)} className='z-10 cursor-pointer'>
+                    <i className="fas fa-star"></i>
+                    {" "}
+                    <p>Matches</p>
+                  </a>
+                }
                 <Link to="/messages" className='z-10'>
                   <i className="fa-regular fa-message fa-solid"></i>
                   {" "}
                   <p>Messages</p>
                 </Link>
-                {/* <Link to="/search">
-                <i className="fas fa-search"></i>
-                {" "}
-                <p>Search</p> */}
-                {/* </Link> */}
                 <Link to={`/profile/${userId}`} className='z-10'>
                   <i className="fa-regular fa-circle-user fa-solid fa-lg"></i>
                   {" "}
@@ -91,27 +102,11 @@ function Sidebar({ isLoggedIn, userId }) {
           </div>
         </div>
       }
-      {/* <AnimatePresence> */}
         {(displayMatches) ? (
-          // <motion.div
-          //   ref={ref}
-          //   initial={{ opacity: 0, x: 100 }}
-          //   animate={{ opacity: 1, x: 0 }}
-          //   exit={{ opacity: 0, x: -100 }}
-          //   transition={{
-          //     type: 'spring',
-          //     stiffness: 300,
-          //     damping: 25
-          //   }}
-          //   className='z-10'
-          // >
-
-            <div className='z-10 sticky top-0 h-[100vh] overflow-y-auto'>
+            <div className='z-10 sticky top-0 h-[100vh] overflow-y-auto w-[350px] border-r border-yellow-300/40 rounded-xl'>
               <MatchesPage currentUserId={userId} />
             </div>)
           : ''}
-          {/* // </motion.div>) */}
-      {/* // </AnimatePresence> */}
     </div>
   )
 }
