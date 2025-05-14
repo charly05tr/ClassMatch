@@ -74,11 +74,11 @@ function ConversationListItem({
                 {/* Texto Principal */}
                 <div className="min-w-0 flex-auto">
                     {/* Nombre de la conversación (Grupo o Participantes DM) */}
-                    <p className="font-semibold leading-6 text-gray-900 dark:text-gray-100">
+                    <p className="font-semibold leading-6 text-gray-100">
                         {getConversationDisplayName(conv)} {/* Usar la función auxiliar pasada como prop */}
                     </p>
                     {/* Preview del Último Mensaje */}
-                    <p className="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400 truncate">
+                    <p className="mt-1 text-sm leading-5 text-gray-400 truncate">
                         {lastMessagePreview} {/* Usar el preview determinado arriba */}
                     </p>
                 </div>
@@ -89,7 +89,7 @@ function ConversationListItem({
             <div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
                 {/* Timestamp del Último Mensaje (Solo Hora y AM/PM) */}
                 {conv.last_message && (
-                    <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs leading-5 text-gray-500 text-gray-400">
                         {formatTime(conv.last_message.timestamp)} {/* Usar la función auxiliar pasada como prop */}
                     </p>
                 )}

@@ -26,7 +26,7 @@ function App() {
     const checkLoginStatus = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
+        const res = await fetch("http://192.168.0.5:5000/users/debug", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           // console.log("Data recibida de /debug:", data)
@@ -64,7 +64,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("https://api.devconnect.network/users/logout", { credentials: "include" })
+      const res = await fetch("http://192.168.0.5:5000/users/logout", { credentials: "include" })
       if (res.ok) {
         window.location.href = '/'
         setIsLoggedIn(false)
@@ -83,9 +83,9 @@ function App() {
     <div className=' w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]'>
     <AsideProvider>
       <div className='grid-container-app' >
-        {!isLoading && <Sidebar isLoggedIn={isLoggedIn} userId={userId} />}
+          {!isLoading && <Sidebar isLoggedIn={isLoggedIn} userId={userId} />}
         <div>
-          <main style={{ flexGrow: 1 }} className="relative  w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+          <main style={{ flexGrow: 1 }} className="relative w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
             {isLoading ? (
               <div className="flex justify-center items-center fixed w-full min-h-screen bg-gray-50 dark:bg-gray-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(217,216,255,0.5),rgba(255,255,255,0.9))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
                 <p className="text-xl text-gray-600 dark:text-gray-300">Cargando...</p>

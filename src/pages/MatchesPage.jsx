@@ -4,7 +4,7 @@ import { faStar as solidStar, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL_MATCHES = "https://api.devconnect.network/matches/"
+const API_URL_MATCHES = "http://192.168.0.5:5000/matches/"
 const placeholder = "http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar"
 
 function MatchesPage({ currentUserId }) {
@@ -63,7 +63,7 @@ function MatchesPage({ currentUserId }) {
             if (res.ok) {
                 const data = await res.json()
                 fetchMatches()
-                
+
             } else {
                 console.log("Error al crear el match")
             }
@@ -74,73 +74,80 @@ function MatchesPage({ currentUserId }) {
 
 
     return (
-        <div className='grid shadow inset-shadow-initial rounded justify-start grid-rows-[auto] p-4 gap-2 w-fit'>
-            <div className=' rounded p-4'>
-                <h1 className='text-center'>Matches requested</h1>
-                <hr className='mb-1 opacity-50' />
-                <ul>
-                    {matches.map(match => (
-                        <li key={match.id}>
-                            {match.status === "like" && String(match.matched_user_id) !== String(currentUserId) ?
-                                <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
-                                    <img src={match.matched_user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
-                                    <button onClick={() => goToProfile(match.matched_user_id)} className='text-bold text-lg'>{match.matched_user.name}</button>
-                                    <div className='flex flex-col justify-end items-end h-full gap-2'>
-                                        <button onClick={() => handleDeleteMatch(match.matched_user_id)}>
-                                            <FontAwesomeIcon icon={faXmark} />
-                                        </button>
-                                        <p className='ml-2 text-xs self-end text-gray-500'>{match.timestamp}</p>
-                                    </div>
-                                </div>
-                                : ''}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            <div className='rounded p-4'>
-                <h1 className='text-center'>Matches received</h1>
-                <hr className='mb-1 opacity-50' />
-                <ul>
-                    {matches.map(match => (
-                        <li key={match.id}>
-                            {match.status === "liked" && String(match.matched_user_id) === String(currentUserId)?
-                                <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
-                                    <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
-                                    <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg'>{match.user.name}</button>
-                                    <div className='flex flex-col justify-end items-end h-full gap-2'>
-                                        <button onClick={() => handleCreateMatch(match.user_id)}>
-                                            <FontAwesomeIcon icon={regularStar} />
-                                        </button>
-                                        <p className='ml-2 text-xs self-end text-gray-500'>{match.timestamp}</p>
-                                    </div>
-                                </div>
-                                : ''}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-            <div className='rounded p-4'>
-                <h1 className='text-center'>Matches</h1>
-                <hr className='mb-1 opacity-50' />
-                <ul>
-                    {matches.map(match => (
-                        <li key={match.id}>
-                            {match.status === "match" && String(match.user_id) !== String(currentUserId)?
-                                <div className='flex items-center gap-2 justify-around rounded shadow p-2 w-full'>
-                                    <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
-                                    <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg'>{match.user.name}</button>
-                                    <div className='flex flex-col justify-end items-end h-full gap-2'>
-                                        <button onClick={() => handleDeleteMatch(match.user_id)}>
-                                            <FontAwesomeIcon icon={solidStar} />
-                                        </button>
-                                        <p className='ml-2 text-xs self-end text-gray-500'>{match.timestamp}</p>
-                                    </div>
-                                </div>
-                                : ''}
-                        </li>
-                    ))}
-                </ul>
-            </div>
+        <div className='flex rounded-lg flex-col gap-2 border-r border-yellow-300/40 w-full h-full w-[350px]'>
+            {(matches.length > 0) ?
+                <>
+                    <div className='rounded-lg h-fit w-full'>
+                    <h1 className='text-start text-4xl font-bold pl-4 py-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-800 from-yellow-200'>Match</h1>
+                      {matches.filter(match => match.status === "like" && String(match.matched_user_id) !== String(currentUserId)).length === 0 ? (
+                            ''
+                        ) :
+                        <ul>
+                            <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches requested</h1>
+                            {matches.map(match => (
+                                <li key={match.id}>
+
+                                    {match.status === "like" && String(match.matched_user_id) !== String(currentUserId) ?
+                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                            <img src={match.matched_user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                            <button onClick={() => goToProfile(match.matched_user_id)} className='text-bold text-lg justify-self-start'>{match.matched_user.name}</button>
+                                            <div className='flex flex-col justify-end items-end h-full gap-2'>
+                                                <button onClick={() => handleDeleteMatch(match.matched_user_id)}>
+                                                    <FontAwesomeIcon icon={faXmark} />
+                                                </button>
+                                                <p className='ml-2 text-xs self-end text-gray-300'>{match.timestamp}</p>
+                                            </div>
+                                        </div>
+                                        : ''}
+                                </li>
+                            ))}
+                        </ul>}
+                    </div>
+                    <div className='rounded-lg h-fit w-full'>
+                        {matches.filter(match => match.status === "liked" && String(match.matched_user_id) === String(currentUserId)).length === 0 ? (
+                            ''
+                        ) :
+                            <ul>
+                                <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches received</h1>
+                                {matches
+                                    .filter(match => match.status === "liked" && String(match.matched_user_id) === String(currentUserId))
+                                    .map(match => (
+                                        <li key={match.user_id} className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                            <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50' />
+                                            <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg justify-self-start'>
+                                                {match.user.name}
+                                            </button>
+                                            <div className='flex flex-col justify-end items-end h-full gap-2'>
+                                                <button onClick={() => handleCreateMatch(match.user_id)}>
+                                                    <FontAwesomeIcon icon={regularStar} />
+                                                </button>
+                                                <p className='ml-2 text-xs self-end text-gray-300'>{match.timestamp}</p>
+                                            </div>
+                                        </li>
+                                    ))}
+                            </ul>}
+                    </div>
+                    <div className='rounded h-fit'>
+                        <h1 className='text-start font-bold p-4 w-full text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches</h1>
+                        <ul>
+                            {matches.map(match => (
+                                <li key={match.id}>
+                                    {match.status === "match" && String(match.user_id) !== String(currentUserId) ?
+                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                            <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
+                                            <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg justify-self-start'>{match.user.name}</button>
+                                            <div className='flex flex-col justify-end items-end h-full gap-2'>
+                                                <button onClick={() => handleDeleteMatch(match.user_id)}>
+                                                    <FontAwesomeIcon icon={solidStar} />
+                                                </button>
+                                                <p className='ml-2 text-xs self-end text-gray-300'>{match.timestamp}</p>
+                                            </div>
+                                        </div>
+                                        : ''}
+                                </li>
+                            ))}
+                        </ul>
+                    </div></> : <h1 className='text-center mt-[50vh] px-10 text-transparent bg-clip-text bg-gradient-to-r to-yellow-800 from-yellow-200'>No matches</h1>}
         </div>
     )
 }
