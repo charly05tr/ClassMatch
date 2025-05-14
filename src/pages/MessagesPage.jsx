@@ -1322,7 +1322,7 @@ function MessagesPage({ currentUserId }) {
                         >
                             {selectedConversationId === null
                                 ? ''
-                                : (<div className="flex flex-row-reverse mt-2 items-center mb-2 gap-4 with-full">
+                                : (<div className="flex flex-row-reverse justify-start mt-2 items-center mb-2 gap-4 w-full">
                                     <div>
                                         {(repos) ? <div>{(!isRepoSelected) ?
                                             <select onChange={handleSelectRepo} value={selectedRepo?.id?.toString() ?? ""} className="text-gray-900 text-xs rounded focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
