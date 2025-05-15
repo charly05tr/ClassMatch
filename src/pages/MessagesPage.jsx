@@ -1510,7 +1510,7 @@ function MessagesPage({ currentUserId }) {
                             </form>
                         )}
                     </div>
-                ) : (viewPortWidth > 800)?<div className='text-center mt-[50vh] text-gray-400 fixed'><h1>Select a conversation.</h1></div>:""}
+                ) : (viewPortWidth > 800)?<div className='text-center mt-[50vh] text-gray-400 fixed ml-[50%]'><h1>Select a conversation.</h1></div>:""}
             </div>
         </div >
     )
