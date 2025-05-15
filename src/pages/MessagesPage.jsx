@@ -78,6 +78,7 @@ function MessagesPage({ currentUserId }) {
     const location = useLocation()
     const [repos, setRepos] = useState([])
     const viewPortWidth = useViewportWidth()
+
     const getUserPhotoUrl = (user) => {
         return (user && user.profile_picture) ? user.profile_picture : PLACEHOLDER_PHOTO_URL
     }
@@ -143,7 +144,6 @@ function MessagesPage({ currentUserId }) {
                 setMessages(prevMessages => {
 
                     if (page < messagePagination.current_page) {
-                        console.log(`Prepending messages for older page ${page}.`)
                         return [...data.messages, ...prevMessages]
                     } else if (page === 1 && prevMessages.length === 0) {
                         return data.messages
@@ -152,7 +152,7 @@ function MessagesPage({ currentUserId }) {
                         return data.messages
                     }
                 })
-
+                setIsLoadingMessages(false)
                 setMessagePagination(data.pagination)
             } else {
                 setMessages(prevMessages => page < messagePagination.current_page ? prevMessages : [])
@@ -181,7 +181,7 @@ function MessagesPage({ currentUserId }) {
             oldScrollHeightRef.current = 0
         }
 
-    }, [selectedConversationId, fetchMessages, messagePagination.items_per_page])
+    }, [selectedConversationId, messagePagination.items_per_page])
 
 
     const handlersRef = useRef({})
@@ -399,87 +399,87 @@ function MessagesPage({ currentUserId }) {
     }, [messagePagination.has_prev, messagePagination.prev_page, selectedConversationId, fetchMessages, messagePagination.items_per_page])
 
 
-    useEffect(() => {
-        const loadInitialMessages = async () => {
-            if (selectedConversationId !== null) {
-                setMessages([])
-                setMessagePagination({
-                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
-                    has_next: false, has_prev: false, next_page: null, prev_page: null,
-                })
-                oldScrollHeightRef.current = 0
-                setIsLoadingMessages(true)
-                setMessagesError(null)
+    // useEffect(() => {
+    //     const loadInitialMessages = async () => {
+    //         if (selectedConversationId !== null) {
+    //             setMessages([])
+    //             setMessagePagination({
+    //                 total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+    //                 has_next: false, has_prev: false, next_page: null, prev_page: null,
+    //             })
+    //             oldScrollHeightRef.current = 0
+    //             setIsLoadingMessages(true)
+    //             setMessagesError(null)
 
-                try {
-                    const resPage1 = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=1&per_page=100`, {
-                        credentials: 'include',
-                    })
-                    if (resPage1.ok) {
-                        const dataPage1 = await resPage1.json()
-                        const totalPages = dataPage1.pagination.total_pages
+    //             try {
+    //                 const resPage1 = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=1&per_page=100`, {
+    //                     credentials: 'include',
+    //                 })
+    //                 if (resPage1.ok) {
+    //                     const dataPage1 = await resPage1.json()
+    //                     const totalPages = dataPage1.pagination.total_pages
 
-                        if (totalPages > 0) {
-                            const pageToFetch = totalPages
+    //                     if (totalPages > 0) {
+    //                         const pageToFetch = totalPages
 
-                            console.log(`Workspaceing page ${pageToFetch} (last page) for conv ${selectedConversationId}...`)
-                            const resLastPage = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=${pageToFetch}&per_page=100`, {
-                                credentials: 'include',
-                            })
+    //                         console.log(`Workspaceing page ${pageToFetch} (last page) for conv ${selectedConversationId}...`)
+    //                         const resLastPage = await fetch(`${API_BASE_URL}/messages/conversations/${selectedConversationId}/messages?page=${pageToFetch}&per_page=100`, {
+    //                             credentials: 'include',
+    //                         })
 
-                            if (resLastPage.ok) {
-                                const dataLastPage = await resLastPage.json()
-                                setMessages(dataLastPage.messages)
-                                setMessagePagination(dataLastPage.pagination)
-                            } else {
-                                const errorData = await resLastPage.json()
-                                setMessagesError(errorData.message || `Error fetching last page of messages: ${resLastPage.status}`)
-                                console.error("Error fetching last page of messages:", resLastPage.status, errorData)
-                                setMessages([])
-                                setMessagePagination({
-                                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
-                                    has_next: false, has_prev: false, next_page: null, prev_page: null,
-                                })
-                            }
-                        } else {
-                            console.log("No messages found in conversation.")
-                            setMessages([])
-                            setMessagePagination(dataPage1.pagination)
-                        }
+    //                         if (resLastPage.ok) {
+    //                             const dataLastPage = await resLastPage.json()
+    //                             setMessages(dataLastPage.messages)
+    //                             setMessagePagination(dataLastPage.pagination)
+    //                         } else {
+    //                             const errorData = await resLastPage.json()
+    //                             setMessagesError(errorData.message || `Error fetching last page of messages: ${resLastPage.status}`)
+    //                             console.error("Error fetching last page of messages:", resLastPage.status, errorData)
+    //                             setMessages([])
+    //                             setMessagePagination({
+    //                                 total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+    //                                 has_next: false, has_prev: false, next_page: null, prev_page: null,
+    //                             })
+    //                         }
+    //                     } else {
+    //                         console.log("No messages found in conversation.")
+    //                         setMessages([])
+    //                         setMessagePagination(dataPage1.pagination)
+    //                     }
 
-                    } else {
-                        const errorData = await resPage1.json()
-                        setMessagesError(errorData.message || `Error fetching initial pagination info: ${resPage1.status}`)
-                        console.error("Error fetching initial pagination info:", resPage1.status, errorData)
-                        setMessages([])
-                        setMessagePagination({
-                            total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
-                            has_next: false, has_prev: false, next_page: null, prev_page: null,
-                        })
-                    }
+    //                 } else {
+    //                     const errorData = await resPage1.json()
+    //                     setMessagesError(errorData.message || `Error fetching initial pagination info: ${resPage1.status}`)
+    //                     console.error("Error fetching initial pagination info:", resPage1.status, errorData)
+    //                     setMessages([])
+    //                     setMessagePagination({
+    //                         total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+    //                         has_next: false, has_prev: false, next_page: null, prev_page: null,
+    //                     })
+    //                 }
 
-                } catch (error) {
-                    setMessagesError(`Network error fetching messages: ${error.message}`)
-                    console.error("Network error fetching messages:", error)
-                    setMessages([])
-                    setMessagePagination({
-                        total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
-                        has_next: false, has_prev: false, next_page: null, prev_page: null,
-                    })
-                } finally {
-                    setIsLoadingMessages(false)
-                }
-            } else {
-                setMessages([])
-                setMessagePagination({
-                    total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
-                    has_next: false, has_prev: false, next_page: null, prev_page: null,
-                })
-                oldScrollHeightRef.current = 0
-            }
-        }
-        loadInitialMessages()
-    }, [selectedConversationId])
+    //             } catch (error) {
+    //                 setMessagesError(`Network error fetching messages: ${error.message}`)
+    //                 console.error("Network error fetching messages:", error)
+    //                 setMessages([])
+    //                 setMessagePagination({
+    //                     total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+    //                     has_next: false, has_prev: false, next_page: null, prev_page: null,
+    //                 })
+    //             } finally {
+    //                 setIsLoadingMessages(false)
+    //             }
+    //         } else {
+    //             setMessages([])
+    //             setMessagePagination({
+    //                 total_items: 0, total_pages: 0, current_page: 0, items_per_page: 100,
+    //                 has_next: false, has_prev: false, next_page: null, prev_page: null,
+    //             })
+    //             oldScrollHeightRef.current = 0
+    //         }
+    //     }
+    //     loadInitialMessages()
+    // }, [selectedConversationId])
 
 
     useLayoutEffect(() => {
@@ -917,7 +917,6 @@ function MessagesPage({ currentUserId }) {
             })
             if (res.ok) {
                 const data = await res.json()
-                console.log("Invite user search results:", data)
                 const currentParticipantIds = selectedConversation?.participants?.map(p => String(p.id)) || []
                 const filteredResults = data.filter(user =>
                     String(user.id) !== String(currentUserId)
@@ -947,19 +946,15 @@ function MessagesPage({ currentUserId }) {
             clearTimeout(timer)
         }
         if (inviteSearchTerm.trim().length > 0) {
-            console.log(`Debouncing search for invite term: "${inviteSearchTerm}". Setting timer...`)
             timer = setTimeout(() => {
-                console.log(`Debounce timer finished for term: "${inviteSearchTerm}". Calling searchUsersForInvite.`)
                 searchUsersForInvite(inviteSearchTerm)
             }, debounceDelay)
         } else {
-            console.log("Invite search term is empty. Clearing results.")
             setInviteSearchResults([])
             setInviteSearchError(null)
             setIsLoadingInviteSearch(false)
         }
         return () => {
-            console.log("Cleaning up debounce timer.")
             if (timer) {
                 clearTimeout(timer)
             }
@@ -980,7 +975,6 @@ function MessagesPage({ currentUserId }) {
                 const data = await res.json()
                 setRepos(data)
             } else {
-                console.log(res)
                 setRepos(null)
             }
         } catch (e) {
@@ -1014,7 +1008,6 @@ function MessagesPage({ currentUserId }) {
                 const data = await res.json()
                 const repo = repos.find(repo => repo.id.toString() === String(data.github_repo_id))
                 setSelectedRepo(repo)
-                console.log(repo)
                 setIsRepoSelected(true)
             } else {
                 setIsRepoSelected(false)
