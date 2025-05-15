@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
-const API_BASE_URL = 'http://192.168.0.5:5000'
+const API_BASE_URL = 'https://api.devconnect.network'
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -24,7 +24,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `http://192.168.0.5:5000?userId=${currentUserId}`
+    const WEBSOCKET_URL = `https://api.devconnect.network?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
@@ -1025,7 +1025,7 @@ function MessagesPage({ currentUserId }) {
 
 
     const fetchRepos = async () => {
-        const res = await fetch("http://192.168.0.5:5000/github/repos", {
+        const res = await fetch("https://api.devconnect.network/github/repos", {
             method: "GET",
             credentials: 'include',
             headers: {
@@ -1050,7 +1050,7 @@ function MessagesPage({ currentUserId }) {
     }, [])
 
     const sesionWithGitHub = () => {
-        window.location.href = 'http://192.168.0.5:5000/github/login';
+        window.location.href = 'https://api.devconnect.network/github/login';
     }
     const [selectedRepo, setSelectedRepo] = useState({})
     const [isRepoSelected, setIsRepoSelected] = useState(false)
@@ -1059,7 +1059,7 @@ function MessagesPage({ currentUserId }) {
         if (selectedConversationId === null) {
             return
         }
-        const res = await fetch(`http://192.168.0.5:5000/repos/${selectedConversationId}`, {
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {
@@ -1088,7 +1088,7 @@ function MessagesPage({ currentUserId }) {
         const selectedRepoId = event.target.value
         const repo = repos.find(repo => repo.id.toString() === String(selectedRepoId))
         setSelectedRepo(repo)
-        const res = await fetch(`http://192.168.0.5:5000/repos/${selectedConversationId}`, {
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {

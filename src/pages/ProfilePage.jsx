@@ -70,7 +70,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
     useEffect(() => {
         const checkLoginStatus = async () => {
 
-            const res = await fetch("http://192.168.0.5:5000/users/debug", { credentials: "include" })
+            const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
             if (res.ok) {
                 const data = await res.json()
                 if (String(data.user_id) === String(id)) {
@@ -91,7 +91,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
         const fetchProfileData = async () => {
             setIsLoading(true)
             try {
-                const res = await fetch(`http://192.168.0.5:5000/users/profile/${id}`, {
+                const res = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -160,7 +160,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`http://192.168.0.5:5000/projects/user_projects/${id}`, {
+                const res = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -228,7 +228,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`http://192.168.0.5:5000/users/profile/${id}`, {
+            const profileRes = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -263,7 +263,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
 
-            const projectsRes = await fetch(`http://192.168.0.5:5000/projects/user_projects/${id}`, {
+            const projectsRes = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
