@@ -110,7 +110,6 @@ function MessagesPage({ currentUserId }) {
             })
             if (res.ok) {
                 const data = await res.json()
-                console.log("Conversations fetched:", data)
                 setConversations(data)
             } else {
                 const errorData = await res.json()
@@ -135,25 +134,21 @@ function MessagesPage({ currentUserId }) {
 
 
     const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 100) => {
-        console.log(`Workspaceing messages for conv ${conversationId}, page ${page}...`)
         try {
             const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
                 credentials: 'include',
             })
             if (res.ok) {
                 const data = await res.json()
-                console.log(`Received messages for conv ${conversationId}, page ${page}:`, data)
                 setMessages(prevMessages => {
 
                     if (page < messagePagination.current_page) {
                         console.log(`Prepending messages for older page ${page}.`)
                         return [...data.messages, ...prevMessages]
                     } else if (page === 1 && prevMessages.length === 0) {
-                        console.log("Replacing messages with page 1 (initial).")
                         return data.messages
                     }
                     else {
-                        console.log(`Replacing messages with page ${page} (assuming last page initial load).`)
                         return data.messages
                     }
                 })
@@ -202,11 +197,8 @@ function MessagesPage({ currentUserId }) {
     const width = useViewportWidth()
 
     const handleConversationSelect = useCallback((conversationId) => {
-        console.log("Conversation selected:", conversationId)
-
         const socket = socketRef.current
         if (socket && socket.connected) {
-            console.log(`Intentando unirse a la room de conversación: conversation_${conversationId}`)
             socket.emit('join_conversation', { conversation_id: conversationId })
         } else {
             console.warn("Socket no conectado, no se pudo emitir join_conversation")
@@ -223,11 +215,8 @@ function MessagesPage({ currentUserId }) {
 
     useEffect(() => {
         if (userToDM && isSocketConnected) {
-            console.log("Socket listo y userToDM presente, iniciando DM...")
-
             handleSelectUserForDM(userToDM)
                 .then(conversation => {
-                    console.log("Conversación DM creada/obtenida:", conversation)
                     handleConversationSelect(conversation.id)
                 })
                 .catch(err => {
@@ -239,7 +228,6 @@ function MessagesPage({ currentUserId }) {
 
     useEffect(() => {
         if (currentUserId !== null) {
-            console.log(`Intentando conectar WebSocket para user ${currentUserId}...`)
             const newSocket = io(`${WEBSOCKET_URL}`, {
                 cors: {
                     origin: "http://192.168.0.4:5173",
@@ -250,12 +238,10 @@ function MessagesPage({ currentUserId }) {
 
             setSocket(newSocket)
             newSocket.on('connect', () => {
-                console.log('WebSocket conectado!', newSocket.id)
                 setIsSocketConnected(true)
             })
 
             newSocket.on('disconnect', (reason) => {
-                console.log('WebSocket desconectado:', reason)
                 setIsSocketConnected(false)
             })
 
@@ -272,16 +258,13 @@ function MessagesPage({ currentUserId }) {
             })
 
             newSocket.on('user_left_conv', (data) => {
-                console.log('Evento leave_conversation recibido por WebSocket:', data)
                 const { conversation_id, user_id } = data
                 const current = handlersRef.current
                 if (String(user_id) === String(current.currentUserId)) {
-                    console(`User ${user_id} (current user) left conversation ${conversation_id}. Removing from list.`)
                     current.setConversations(prevConversations =>
                         prevConversations.filter(conv => String(conv.id) !== String(conversation_id))
                     )
                     if (String(current.selectedConversationId) === String(conversation_id)) {
-                        console(`Conversation ${conversation_id} was selected. Deselecting.`)
                         current.setSelectedConversationId(null)
                         current.setMessages([])
                         current.setMessagePagination({
@@ -301,7 +284,6 @@ function MessagesPage({ currentUserId }) {
                                 ...targetConv,
                                 participants: targetConv.participants.filter(p => String(p.user_id) !== String(user_id)),
                             }
-                            console.log(`Participant ${user_id} removed from conversation ${conversation_id} in state.`)
                             return updatedConversations
                         }
                         return prevConversations
@@ -323,7 +305,6 @@ function MessagesPage({ currentUserId }) {
             })
 
             newSocket.on('participant_added', (data) => {
-                console.log('Evento participant_added recibido por WebSocket:', data)
                 const { conversation_id, participant } = data
                 const current = handlersRef.current
 
@@ -337,10 +318,8 @@ function MessagesPage({ currentUserId }) {
                                 ...targetConv,
                                 participants: [...targetConv.participants, participant],
                             }
-                            console.log(`Participant ${participant.user.name || participant.user.username} added to conversation ${conversation_id} in state.`)
                             return updatedConversations
                         } else {
-                            console.log(`Participant ${participant.user.name || participant.user.username} already exists in conversation ${conversation_id} in state.`)
                             return prevConversations
                         }
                     }
@@ -349,21 +328,15 @@ function MessagesPage({ currentUserId }) {
                     return prevConversations
                 })
                 if (String(participant.user_id) === String(current.currentUserId)) {
-                    console.log(`User ${current.currentUserId} was just added to conversation ${conversation_id}. Selecting it.`)
                     current.handleConversationSelect(conversation_id)
                 }
 
             })
 
             newSocket.on('new_message', (message) => {
-                console.log('--- Nuevo mensaje WS recibido ---')
-                console.log('Mensaje completo recibido:', message)
                 const current = handlersRef.current
-                console.log('ID de conversación del mensaje (message.conversation_id):', message.conversation_id)
-                console.log('ID de conversación seleccionada (current.selectedConversationId):', current.selectedConversationId)
-                console.log('¿Son iguales (comparando como string)?', String(message.conversation_id) === String(current.selectedConversationId))
+    
                 if (current.selectedConversationId !== null && String(message.conversation_id) === String(current.selectedConversationId)) {
-                    console.log(`¡CONDICIÓN CUMPLIDA! Mensaje para la conversación activa (${current.selectedConversationId}). Añadiendo a la vista.`)
                     current.setMessages(prevMessages => [...prevMessages, message])
                     setTimeout(() => {
                         const container = current.messagesContainerRef.current
@@ -374,15 +347,12 @@ function MessagesPage({ currentUserId }) {
                                 } else {
                                     container.scrollTop = 0
                                 }
-                                console.log("Scroll al fondo después de añadir nuevo mensaje (via setTimeout + rAF).")
                             })
                         } else {
                             console.warn("messagesContainerRef.current es null al intentar scrollear en listener WS.")
                         }
                     }, 0)
 
-                } else {
-                    console.log(`CONDICIÓN NO CUMPLIDA. Mensaje es para conv ${message.conversation_id}, seleccionada es ${current.selectedConversationId}. Actualizando lista de conversaciones.`) // Log si la condición NO se cumple
                 }
                 current.setConversations(prevConversations => {
                     const conversationIndex = prevConversations.findIndex(conv => String(conv.id) === String(message.conversation_id))
@@ -397,10 +367,8 @@ function MessagesPage({ currentUserId }) {
                     }
                     return prevConversations
                 })
-                console.log('--- Fin del handler WS ---')
             })
             return () => {
-                console.log('Desconectando WebSocket...')
                 newSocket.off('user_left_conv')
                 newSocket.off('participant_added')
                 newSocket.off('new_conversation')
@@ -413,7 +381,6 @@ function MessagesPage({ currentUserId }) {
             }
         } else {
             if (socket) {
-                console.log('Desconectando WebSocket debido a logout...')
                 socket.disconnect()
                 setSocket(null)
             }
@@ -450,8 +417,6 @@ function MessagesPage({ currentUserId }) {
                     })
                     if (resPage1.ok) {
                         const dataPage1 = await resPage1.json()
-                        console.log(`Initial fetch (Page 1) for pagination info, conv ${selectedConversationId}:`, dataPage1)
-
                         const totalPages = dataPage1.pagination.total_pages
 
                         if (totalPages > 0) {
@@ -464,7 +429,6 @@ function MessagesPage({ currentUserId }) {
 
                             if (resLastPage.ok) {
                                 const dataLastPage = await resLastPage.json()
-                                console.log(`Workspaceed last page (${pageToFetch}) messages:`, dataLastPage)
                                 setMessages(dataLastPage.messages)
                                 setMessagePagination(dataLastPage.pagination)
                             } else {
@@ -524,12 +488,9 @@ function MessagesPage({ currentUserId }) {
         if (messagesContainer && selectedConversationId !== null && messagePagination.current_page > 1 && !isLoadingMessages && !isLoadingMore) {
             const newScrollHeight = messagesContainer.scrollHeight
             const heightDifference = newScrollHeight - oldScrollHeightRef.current
-            console.log("Adjusting scroll...", { oldScrollHeight: oldScrollHeightRef.current, newScrollHeight, heightDifference })
             messagesContainer.scrollTop += heightDifference
-            console.log("Scroll adjusted to:", messagesContainer.scrollTop)
         } else if (messagesContainer && selectedConversationId !== null && messagePagination.current_page === 1 && messages.length > 0 && !isLoadingMessages) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight - messagesContainer.clientHeight
-            console.log("Initial load (page 1), scrolling to visual bottom.")
         }
 
     }, [messages, selectedConversationId, messagePagination.current_page, isLoadingMessages, isLoadingMore])
@@ -543,12 +504,10 @@ function MessagesPage({ currentUserId }) {
             if (!messagesContainer || selectedConversationId === null || isLoadingMessages || isLoadingMore || !messagePagination.has_next) {
                 if (messagesContainer) {
                     messagesContainer.removeEventListener('scroll', handleScroll)
-                    console.log("Scroll listener cleanup.")
                 }
                 return
             }
             messagesContainer.addEventListener('scroll', handleScroll)
-            console.log("Scroll listener attached for conv:", selectedConversationId)
 
             if (isNearTopVisual && !isLoadingMessages && !isLoadingMore && messagePagination.has_next) {
                 console.log("Scrolled near visual top, attempting to load more...")
@@ -558,16 +517,13 @@ function MessagesPage({ currentUserId }) {
         if (!messagesContainer || selectedConversationId === null || isLoadingMessages || isLoadingMore || !messagePagination.has_next) {
             if (messagesContainer) {
                 messagesContainer.removeEventListener('scroll', handleScroll)
-                console.log("Scroll listener cleanup.")
             }
             return
         }
         messagesContainer.addEventListener('scroll', handleScroll)
-        console.log("Scroll listener attached for conv:", selectedConversationId)
 
         return () => {
             messagesContainer.removeEventListener('scroll', handleScroll)
-            console.log("Scroll listener removed for conv:", selectedConversationId)
         }
 
     }, [selectedConversationId, isLoadingMessages, isLoadingMore, messagePagination.has_next, handleLoadMoreMessages])
@@ -576,7 +532,6 @@ function MessagesPage({ currentUserId }) {
     const handleSendMessage = async (e) => {
         e.preventDefault()
         if (!selectedConversationId || !newMessageContent.trim()) {
-            console.log("Cannot send empty message or no conversation selected.")
             return
         }
         setIsSendingMessage(true)
@@ -640,7 +595,6 @@ function MessagesPage({ currentUserId }) {
             })
 
             if (res.ok) {
-                console.log(`Left conversation ${conversationId}`)
                 setConversations(conversations.filter(conv => conv.id !== conversationId))
                 if (selectedConversationId === conversationId) {
                     setSelectedConversationId(null)
@@ -678,7 +632,6 @@ function MessagesPage({ currentUserId }) {
             })
             if (res.ok) {
                 const data = await res.json()
-                console.log("User search results:", data)
                 setUserSearchResults(data.filter(user => String(user.id) !== String(currentUserId)))
             } else {
                 const errorData = await res.json()
@@ -712,7 +665,6 @@ function MessagesPage({ currentUserId }) {
 
 
     const handleStartGroupCreation = () => {
-        console.log("Starting group creation mode.")
         setIsCreatingGroup(true)
         setSelectedParticipants([])
         setNewGroupName('')
@@ -737,7 +689,6 @@ function MessagesPage({ currentUserId }) {
         }
     }
     const handleRemoveParticipant = (participantToRemove) => {
-        console.log("Removing participant:", participantToRemove)
         setSelectedParticipants(prev => prev.filter(p => String(p.id) !== String(participantToRemove.id)))
         if (participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()) ||
             (participantToRemove.name && participantToRemove.name.toLowerCase().includes(conversationSearchTerm.toLowerCase()))) {
@@ -836,7 +787,6 @@ function MessagesPage({ currentUserId }) {
 
             if (res.ok) {
                 const conversation = await res.json()
-                console.log("Conversación DM creada/obtenida:", conversation)
 
                 setConversations(prevConversations => {
                     const existingIndex = prevConversations.findIndex(conv => String(conv.id) === String(conversation.id))
@@ -867,20 +817,13 @@ function MessagesPage({ currentUserId }) {
 
 
     useEffect(() => {
-        console.log("MessagesPage mounted or location state changed. Checking location.state...")
-        console.log("Location state:", location.state)
         if (location.state && location.state.conversationIdToOpen !== undefined) {
             const convIdToOpen = location.state.conversationIdToOpen
-            console.log(`Found conversationIdToOpen in state: ${convIdToOpen}. Attempting to select it.`)
             handleConversationSelect(convIdToOpen)
             navigate(location.pathname, { replace: true, state: {} })
 
         } else if (location.state && location.state.user !== undefined) {
             setUserToDM(location.state.user)
-            console.log(`Found user object in state:`, userToDM, `. Attempting to initiate DM.`)
-            console.log("User object from state:", userToDM)
-            console.log("userToDM.userId:", userToDM.userId)
-            console.log("userToDM.id:", userToDM.id)
             handleSelectUserForDM(userToDM)
             navigate(location.pathname, { replace: true, state: {} })
         }
