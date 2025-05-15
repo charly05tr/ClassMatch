@@ -99,7 +99,7 @@
             width: 100%; 
             height: 60px;       
             padding-top: 0; 
-            padding: 0 10px;         
+            padding: 0px;         
             border-right: none; 
             justify-content: center;
             align-content: center;
@@ -119,7 +119,7 @@
         width: 100%; 
         height: 60px;       
         padding-top: 0; 
-        padding: 0 10px;         
+        padding: 0px;         
         border-right: none; 
         background-color: rgba(0,0,0, 0.2);  
         p {
@@ -149,11 +149,14 @@
 @media (max-width: 500px) {
     .aside {      
         justify-content: center;
+        border: solid 1px white;
         align-content: center;
         background-color: rgba(0,0,0, 0.2);
         position: sticky;
         width: 100%; 
         height: 60px;  
+        margin:0px;
+        padding: 0;
         border: none;       
         aside {
             padding: 0;

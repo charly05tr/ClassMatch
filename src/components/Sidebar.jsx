@@ -44,7 +44,8 @@ function Sidebar({ isLoggedIn, userId }) {
 
             {isLoggedIn && (
               <>
-                  <img src="/logo_devconnect.png" className='size-10 mt-10'></img>
+                {(viewPortWidth > 800) ?
+                  <img src="/logo_devconnect.png" className='size-10 mt-10'></img>:""}
                   <Link to="/" className='z-10'>
                   <i className="fas fa-house"></i>
                   {" "}
