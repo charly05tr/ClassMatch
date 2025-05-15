@@ -26,7 +26,7 @@ function App() {
     const checkLoginStatus = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
+        const res = await fetch("http://192.168.0.5:5000/users/debug", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           // console.log("Data recibida de /debug:", data)
@@ -64,7 +64,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("https://api.devconnect.network/users/logout", { credentials: "include" })
+      const res = await fetch("http://192.168.0.5:5000/users/logout", { credentials: "include" })
       if (res.ok) {
         window.location.href = '/'
         setIsLoggedIn(false)
@@ -95,7 +95,7 @@ function App() {
                 {isLoggedIn ? (
                     <>
                       <Route path="/" element={<HomePage currentUserId={userId} />} />
-                      <Route path="/profile/:id" element={<ProfilePage onLogout={handleLogout} />} />
+                      <Route path="/profile/:id" element={<ProfilePage onLogout={handleLogout} id={userId}/>} />
                       <Route path="/messages" element={<MessagesPage currentUserId={userId}/>} />
                       <Route path="/matches" element={<MatchesPage currentUserId={userId}/>} />
                       <Route path="/search" element={<SearchPage />} />

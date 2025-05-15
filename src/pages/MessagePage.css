@@ -13,6 +13,16 @@
   background-color: rgb(0, 38, 84); 
   border-radius: 6px;
 }
+.custom-scrollbar-hidden::-webkit-scrollbar {
+  width: 1px;
+}
+.custom-scrollbar-hidden::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar-hidden::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 38, 84, 0.2); 
+  border-radius: 6px;
+}
 
 .send-message{
   position: sticky;
@@ -32,15 +42,15 @@
 }
 
 .item-bg-color-selected {
-  background-color: rgb(0, 38, 84);
+  background-color: rgb(46, 8, 129);
 }
 
 .item-bg-color {
-  background-color: rgba(0, 38, 84, 0.5);
+  background-color: rgba(25, 25, 112, 0.5);
 }
 
 .item-bg-color:hover{
-  background-color: rgba(0, 38, 84, 0.7);
+  background-color: rgba(25, 25, 112, 0.7);
 }
 
 .chat-converation-hide {

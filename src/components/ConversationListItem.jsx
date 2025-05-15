@@ -11,8 +11,7 @@ const PLACEHOLDER_PHOTO_URL = 'https://picsum.photos/200/300'; // Placeholder m�
 
 // Función para obtener la URL de la foto de un usuario (si no es global, pásala como prop)
 const getUserPhotoUrl = (user) => {
-    const initials = user && user.username ? user.username.charAt(0).toUpperCase() : 'U';
-    return (user && user.profile_picture_url) ? user.profile_picture_url : PLACEHOLDER_PHOTO_URL;
+    return (user && user.profile_picture) ? user.profile_picture : PLACEHOLDER_PHOTO_URL;
 };
 
 
@@ -26,6 +25,7 @@ function ConversationListItem({
     // Pasar funciones auxiliares como props
     getConversationDisplayName,
     formatTime,
+
     // getUserPhotoUrl // Si no es global o importable, pásala también
 }) {
 
@@ -35,7 +35,7 @@ function ConversationListItem({
     // Determinar la URL de la foto para este item de lista
     // Lógica: Foto del otro participante para DM de 2, placeholder para grupo o otros casos
     const photoUrl = !conv.name && conv.participants && conv.participants.length === 2 && conv.participants.find(p => p.id !== currentUserId)
-        ? getUserPhotoUrl(conv.participants.find(p => p.id !== currentUserId))
+        ? getUserPhotoUrl(conv.participants.find(p => String(p.id) !== String(currentUserId)))
         : PLACEHOLDER_PHOTO_URL; // Usar el placeholder genérico
 
 
@@ -59,7 +59,7 @@ function ConversationListItem({
             onClick={() => onSelectConversation(conv.id)} // Llama al handler del padre
             className={clsx(
                 'flex justify-between gap-x-6 py-5 px-4 cursor-pointer transition duration-200 mb-1', // Clases base de LI
-                isSelected ? 'item-bg-color-selected' : 'item-bg-color' // Clases de selección/hover (ajustar bg/dark:bg)
+                isSelected ? 'bg-gradient-to-r from-sky-700/90 via-blue-900 to-sky-900/90 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-sky-700/50 via-blue-900/70 to-sky-900/50 hover:bg-gradient-to-br text-white' // Clases de selección/hover (ajustar bg/dark:bg)
                 // Puedes añadir un borde azul si está seleccionado: isSelected && 'border-l-4 border-blue-500'
             )}
         >
@@ -78,7 +78,7 @@ function ConversationListItem({
                         {getConversationDisplayName(conv)} {/* Usar la función auxiliar pasada como prop */}
                     </p>
                     {/* Preview del Último Mensaje */}
-                    <p className="mt-1 text-sm leading-5 text-gray-400 truncate">
+                    <p className="mt-1 text-sm leading-5 text-gray-100  truncate">
                         {lastMessagePreview} {/* Usar el preview determinado arriba */}
                     </p>
                 </div>

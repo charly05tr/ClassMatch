@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash'
-const API_BASE_URL = 'https://api.devconnect.network'
+const API_BASE_URL = 'http://192.168.0.5:5000'
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -24,7 +24,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `https://api.devconnect.network?userId=${currentUserId}`
+    const WEBSOCKET_URL = `http://192.168.0.5:5000?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
@@ -77,6 +77,7 @@ function MessagesPage({ currentUserId }) {
     const { toggleAside } = useAside()
     const location = useLocation()
     const [repos, setRepos] = useState([])
+    const viewPortWidth = useViewportWidth()
     const getUserPhotoUrl = (user) => {
         return (user && user.profile_picture) ? user.profile_picture : PLACEHOLDER_PHOTO_URL
     }
@@ -1024,7 +1025,7 @@ function MessagesPage({ currentUserId }) {
 
 
     const fetchRepos = async () => {
-        const res = await fetch("https://api.devconnect.network/github/repos", {
+        const res = await fetch("http://192.168.0.5:5000/github/repos", {
             method: "GET",
             credentials: 'include',
             headers: {
@@ -1049,7 +1050,7 @@ function MessagesPage({ currentUserId }) {
     }, [])
 
     const sesionWithGitHub = () => {
-        window.location.href = 'https://api.devconnect.network/github/login';
+        window.location.href = 'http://192.168.0.5:5000/github/login';
     }
     const [selectedRepo, setSelectedRepo] = useState({})
     const [isRepoSelected, setIsRepoSelected] = useState(false)
@@ -1058,7 +1059,7 @@ function MessagesPage({ currentUserId }) {
         if (selectedConversationId === null) {
             return
         }
-        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
+        const res = await fetch(`http://192.168.0.5:5000/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {
@@ -1087,7 +1088,7 @@ function MessagesPage({ currentUserId }) {
         const selectedRepoId = event.target.value
         const repo = repos.find(repo => repo.id.toString() === String(selectedRepoId))
         setSelectedRepo(repo)
-        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
+        const res = await fetch(`http://192.168.0.5:5000/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {
@@ -1118,7 +1119,7 @@ function MessagesPage({ currentUserId }) {
 
     return (
         <div className={`shadow grid text-gray-900 gap-3 dark:text-gray-100 grid-template-rows${useViewportWidth() < 800 ? "grid-cols-[1fr]" : " grid-cols-[1fr_2fr] h-100 pl-4 min-h-screen"}`}>
-            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start  min-w-[300px]  w-full  overflow-hidden`}>
+            <div className={`${(useViewportWidth() < 800 && selectedConversationId) ? 'chat-converation-hide' : ''} justify-self-start  min-w-[300px] max-w-[500px] w-full  overflow-hidden`}>
                 {(isFormVisible) ?
                     <div>
                         <header className='border-left pl-4 grid grid-cols-[auto_auto] justify-start w-full"'>
@@ -1178,7 +1179,7 @@ function MessagesPage({ currentUserId }) {
                                         id="conversation-search"
                                         ref={searchInputRef}
                                         className="block w-full p-2 ps-10 outline-none text-sm text-gray-900  bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                        placeholder={isCreatingGroup ? 'Search users to add' : 'Search chat'}
+                                        placeholder={isCreatingGroup ? 'Search users to add' : 'Search user to DM'}
                                         value={conversationSearchTerm}
                                         onChange={(e) => setConversationSearchTerm(e.target.value)}
                                     />
@@ -1356,7 +1357,7 @@ function MessagesPage({ currentUserId }) {
                             }
                         </div>
                         {showParticipantsModal && selectedConversation && isGroupConversation && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 custom-scrollbar">
                                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm relative">
                                     <button
                                         onClick={handleToggleParticipantsModal}
@@ -1369,7 +1370,7 @@ function MessagesPage({ currentUserId }) {
                                         Members
                                     </h3>
                                     {selectedConversation.participants && selectedConversation.participants.length > 1 ? (
-                                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                                             {selectedConversation.participants.map(participant => (
                                                 <li key={participant.id} className="flex items-center gap-3">
                                                     <img
@@ -1454,7 +1455,7 @@ function MessagesPage({ currentUserId }) {
                                 key={message.id}
                                 className={`flex mb-2 rounded-lg ${String(message.sender_id) === String(currentUserId) ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${(parseInt(message.sender_id) != 3) ? String(message.sender_id) === String(currentUserId) ? 'bg-gradient-to-r from-blue-700/60 via-blue-800 to-blue-900 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-purple-500/30 to-pink-500/20  hover:bg-gradient-to-br ' : 'text-white bg-gradient-to-r from-sky-900/50 to-teal-300/20 hover:bg-gradient-to-l rounded-lg text-sm'}`}>
+                                <div className={`grid grid-cols[auto_auto] grid-rows-[1] max-w-sm lg:max-w-md p-2 mx-2 min-w-[60px] rounded-lg shadow ${(parseInt(message.sender_id) != 3) ? String(message.sender_id) === String(currentUserId) ? 'bg-gradient-to-r from-blue-700/60 via-blue-800 to-blue-900 hover:bg-gradient-to-br text-white' : 'bg-gradient-to-r from-teal-900 to-teal-800 hover:bg-gradient-to-br ' : 'text-white bg-gradient-to-r to-sky-800 from-sky-900 hover:bg-gradient-to-l rounded-lg text-sm'}`}>
                                     <div>
                                         {String(message.sender.id) !== String(currentUserId) ?
                                             <p className="text-xs text-left font-semibold mb-1">
@@ -1509,7 +1510,7 @@ function MessagesPage({ currentUserId }) {
                             </form>
                         )}
                     </div>
-                ) : (useViewportWidth > 800)?<div className='text-center mt-[50vh] text-gray-400'><h1>Select a conversation.</h1></div>:""}
+                ) : (viewPortWidth > 800)?<div className='text-center mt-[50vh] text-gray-400'><h1>Select a conversation.</h1></div>:""}
             </div>
         </div >
     )

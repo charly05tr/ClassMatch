@@ -5,13 +5,13 @@ import MatchesPage from '../pages/MatchesPage'
 import { useState, useRef, useEffect } from 'react'
 
 function useViewportWidth() {
-    const [width, setWidth] = useState(window.innerWidth)
-    useEffect(() => {
-        const handleResize = () => setWidth(window.innerWidth)
-        window.addEventListener("resize", handleResize)
-        return () => window.removeEventListener("resize", handleResize)
-    }, [])
-    return width
+  const [width, setWidth] = useState(window.innerWidth)
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+  return width
 }
 
 function Sidebar({ isLoggedIn, userId }) {
@@ -31,7 +31,7 @@ function Sidebar({ isLoggedIn, userId }) {
   //     document.removeEventListener('pointerdown', handleClickOutside)
   //   }
   // }, [])
-
+  const viewPortWidth = useViewportWidth()
 
   return (
     <div className='flex aside-container' ref={ref}>
@@ -44,17 +44,18 @@ function Sidebar({ isLoggedIn, userId }) {
 
             {isLoggedIn && (
               <>
-                <Link to="/" className='z-10'>
+                  <img src="/logo_devconnect.png" className='size-10 mt-10'></img>
+                  <Link to="/" className='z-10'>
                   <i className="fas fa-house"></i>
                   {" "}
                   <p>Home</p>
                 </Link>
-                {(useViewportWidth() < 800)?
+                {(viewPortWidth < 800) ?
                   <Link to="/matches" className='z-10'>
                     <i className="fas fa-star"></i>
                     {" "}
                     <p>Matches</p>
-                  </Link>:
+                  </Link> :
                   <a onClick={() => setDisplayMatches(prev => !prev)} className='z-10 cursor-pointer'>
                     <i className="fas fa-star"></i>
                     {" "}
@@ -102,11 +103,11 @@ function Sidebar({ isLoggedIn, userId }) {
           </div>
         </div>
       }
-        {(displayMatches) ? (
-            <div className='z-10 sticky top-0 h-[100vh] overflow-y-auto w-[350px] border-r border-yellow-300/40 rounded-xl'>
-              <MatchesPage currentUserId={userId} />
-            </div>)
-          : ''}
+      {(displayMatches) ? (
+        <div className='z-10 sticky top-0 h-[100vh] overflow-y-auto w-[350px] bg-transparent rounded-xl custom-scrollbar'>
+          <MatchesPage currentUserId={userId} />
+        </div>)
+        : ''}
     </div>
   )
 }

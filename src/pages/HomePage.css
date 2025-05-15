@@ -8,28 +8,12 @@
     height: 90vh;
 }
 
-.arrow {
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-}
-
 @media(max-width:500px) {
     .grid-container {
         display: grid;
         grid-template-columns: 1fr;
         align-items: center;
     }
-    .arrow {
-        width: 40px;
-        height: 100px;
-        z-index: 99;
-        display: flex;
-        justify-content: center;
-        align-self: center;
-        cursor: pointer;
-    }
-
     .arrow-left {
         z-index: 99;
         position: absolute;
@@ -40,8 +24,4 @@
         position: absolute;
         right: 4%;
     }
-}
-
-.stars {
-    z-index: 999;
 }

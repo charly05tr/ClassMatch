@@ -5,49 +5,9 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useSwipeable } from 'react-swipeable';
-const API_BASE_URL = "api.devconnect.network"
+import ProfilePage from './ProfilePage'
+import './MessagePage.css'
 
-const UserCard = ({ index, users, goToProfile, currentUserId, handleSendMatch, isSendingMatch, matches, loading }) => {
-    return (
-        <div className='grid justify-center items-center px-4 h-full'>
-            <div className="bg-black-100 shadow-xl rounded-xl max-w-lg w-full min-w-[400px]">
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-28 rounded-t-xl relative">
-                    <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2">
-                        {(users[index].profile_picture) ? <img src={users[index].profile_picture} alt="Profile" className='rounded-full shadow-lg w-20 h-20' /> : <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-yellow-400 border-4 border-white"></div>}
-                    </div>
-                </div>
-                <div className="pt-16 pb-6 px-6 text-center">
-                    <h1 className="text-xl font-bold">{users[index].name} {users[index].first_name}</h1>
-                    <p className="text-sm text-pink-600 font-medium mt-1">{users[index].profesion}</p>
-                    <div className="mt-6 grid grid-cols-2 gap-y-10 gap-x-4 text-sm text-gray-600">
-                        <div className=" bg-gray-200 rounded-lg py-4 shadow">
-                            <p className='text-gray-900 font-medium text-2xl'>{users[index].match_count}</p>
-                            <div className="text-yellow-500 mb-1 text-xl font-bold">⚡Matches</div>
-                        </div>
-                        <div className=" bg-gray-200 rounded-lg py-4 shadow">
-                            <p className='text-gray-900 font-medium text-2xl'>{users[index].projects_count}</p>
-                            <div className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">💼 Projects</div>
-                        </div>
-                        {String(currentUserId) !== String(users[index].id) && (
-                            <button
-                                onClick={handleSendMatch}
-                                disabled={isSendingMatch || !loading && matches[users[index].id] === 'match' || matches[users[index].id] === 'like'}
-                                type="button"
-                                className="text-white bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
-                            >
-                                {!loading ? ((matches[users[index].id] && matches[users[index].id] === 'match') ? ("matched") : ((matches[users[index].id] && matches[users[index].id] === "like") ? "requested" : "match")) : "loading"}
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => goToProfile(index, users[index].id)}
-                            className="text-white bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 shadow-lg shadow-cyan-500/50 dark:shadow-lg dark:shadow-cyan-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2">See Portfolio</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 function useViewportWidth() {
     const [width, setWidth] = useState(window.innerWidth)
@@ -66,18 +26,16 @@ function HomePage({ currentUserId }) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const navigate = useNavigate()
     const { state } = useLocation()
-    const [isMatched, setIsMatched] = useState(false)
     const [isSendingMatch, setIsSendingMatch] = useState(false)
     const playerRef = useRef()
     const [matches, setMatches] = useState({})
     const [loading, setLoading] = useState(true)
     const [animaDic, setAnimaDic] = useState(0)
     const viewportWidth = useViewportWidth()
-
     const goToProfile = (index, userId) => {
         navigate(`/profile/${userId}`, { state: { index } })
     }
-    
+
 
 
     const handlers = useSwipeable({
@@ -93,25 +51,28 @@ function HomePage({ currentUserId }) {
                 setCurrentIndex(currentIndex - 1)
             }
         },
-        preventScrollOnSwipe: true,
+        preventScrollOnSwipe: false,
         trackTouch: true,
         trackMouse: false,
     })
 
     const fetchUsersData = async () => {
         try {
-            const response = await fetch("https://api.devconnect.network", {
+            const response = await fetch(`http://192.168.0.5:5000/${currentUserId}`, {
                 credentials: "include",
                 method: "GET"
             })
             if (response.ok) {
                 const data = await response.json()
                 setUsers(data)
+                setLoading(false)
             } else {
                 console.error("Error fetching user data:", response.statusText)
+                setLoading(false)
             }
         } catch (error) {
             console.error("Error fetching user data:", error)
+            setLoading(false)
         }
     }
 
@@ -140,7 +101,7 @@ function HomePage({ currentUserId }) {
         setIsSendingMatch(true)
 
         try {
-            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`http://192.168.0.5:5000/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -164,7 +125,7 @@ function HomePage({ currentUserId }) {
     }
 
     const fetchMatches = async () => {
-        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
+        const res = await fetch(`http://192.168.0.5:5000/matches/user/${currentUserId}`, {
             method: "GET",
             credentials: "include"
         })
@@ -197,38 +158,58 @@ function HomePage({ currentUserId }) {
 
 
     return (
-        <main className="flex flex-col">
-            <div className='grid-container'>
-                <div className='arrow arrow-left md:mr-4 mr-2'>
-                    {((!currentIndex < 1) && (viewportWidth > 800)) ?
-                        <button type='button' title='backward' onClick={() => { setCurrentIndex(currentIndex - 1); setAnimaDic(-1) }}>
-                            <FontAwesomeIcon icon={faArrowLeft} size="2xl" />
-                        </button>
-                        : ''}
+        <main className='overflow-y-auto h-screen custom-scrollbar-hidden'>
+            {(viewportWidth > 800)?
+            <form className="max-w-md mx-auto my-4 top-4 sticky">
+                <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                <div className="relative">
+                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                        </svg>
+                    </div>
+                    <input type="search" id="default-search" className="outline-none block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-3xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 focus:border-blue-900" placeholder="Search users and projects (coming soon)" required />
                 </div>
-                <div className='relative overflow-hidden rounded shadow touch-pan-x' {...handlers}>
-                    <AnimatePresence mode="wait">
+            </form>:""}
+            <div className='arrow-left fixed bottom-[50%] ml-4'>
+                {((!currentIndex < 1) && (viewportWidth > 800)) ?
+                    <button type='button' title='backward' onClick={() => { setCurrentIndex(currentIndex - 1); setAnimaDic(-1) }}>
+                        <FontAwesomeIcon icon={faArrowLeft} size="2xl" />
+                    </button>
+                    : ''}
+            </div>
+            {!loading ?
+                <div className='rounded shadow touch-pan-x  overflow-y-auto h-screen' {...handlers}>
+                    {users && String(currentUserId) !== String(users[currentIndex]?.id) && matches[users[currentIndex]?.id] !== 'match' ? (
+                        <button
+                            onClick={handleSendMatch}
+                            type="button"
+                            disabled={matches[users[currentIndex]?.id] === 'like'}
+                            className="absolute top-[105px] right-[54px] text-white bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:focus:ring-yellow-500 shadow-lg shadow-yellow-500/50 dark:shadow-lg dark:shadow-yellow-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-2"
+                        >
+                            {matches[users[currentIndex]?.id] !== 'like' ? "Match" : "Requested"}
+                        </button>
+                    ) : ""}
+                    <AnimatePresence mode="wait" className=" overflow-y-auto h-screen">
                         {users.length > 0 && (
                             <motion.div
                                 key={users[currentIndex].id}
-                                initial={{ opacity: 0, x: animaDic > 0 ? 300 : -300 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: animaDic > 0 ? -300 : 300 }}
                                 transition={{ duration: 0.3 }}
+                                className=' overflow-y-auto h-screen custom-scrollbar px-5'
                             >
-                                <UserCard loading={loading} matches={matches} isSendingMatch={isSendingMatch} index={currentIndex} users={users} goToProfile={goToProfile} currentUserId={currentUserId} handleSendMatch={handleSendMatch} />
+                                {(!loading) ?
+                                    <ProfilePage id={users[currentIndex].id} isMatched={matches[users[currentIndex]?.id] === 'match'}></ProfilePage> : "Loading"}
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-
-                <div className='arrow arrow-right md:ml-4 ml-2'>
-                    {((currentIndex < users.length - 1 ) && viewportWidth > 800) ?
-                        <button type='button' title='foward' onClick={() => { setCurrentIndex(currentIndex + 1); setAnimaDic(1) }}>
-                            <FontAwesomeIcon icon={faArrowRight} size="2xl" />
-                        </button>
-                        : ''}
-                </div>
+                </div> : ""}
+            <div className='arrow-right fixed bottom-[50%] right-0 mr-4'>
+                {((currentIndex < users.length - 1) && viewportWidth > 800) ?
+                    <button type='button' title='foward' onClick={() => { setCurrentIndex(currentIndex + 1); setAnimaDic(1) }}>
+                        <FontAwesomeIcon icon={faArrowRight} size="2xl" />
+                    </button>
+                    : ''}
             </div>
         </main>
     )

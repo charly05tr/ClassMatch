@@ -4,7 +4,7 @@ import { faStar as solidStar, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL_MATCHES = "https://api.devconnect.network/matches/"
+const API_URL_MATCHES = "http://192.168.0.5:5000/matches/"
 const placeholder = "http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar"
 
 function MatchesPage({ currentUserId }) {
@@ -78,17 +78,17 @@ function MatchesPage({ currentUserId }) {
             {(matches.length > 0) ?
                 <>
                     <div className='rounded-lg h-fit w-full'>
-                    <h1 className='text-start text-4xl font-bold pl-4 py-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-800 from-yellow-200'>Match</h1>
+                    <h1 className='text-start text-4xl font-bold pl-4 py-4 text-transparent bg-clip-text bg-gradient-to-br text-white'>Match</h1>
                       {matches.filter(match => match.status === "like" && String(match.matched_user_id) !== String(currentUserId)).length === 0 ? (
                             ''
                         ) :
                         <ul>
-                            <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches requested</h1>
+                            <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-br text-white'>Matches requested</h1>
                             {matches.map(match => (
                                 <li key={match.id}>
 
                                     {match.status === "like" && String(match.matched_user_id) !== String(currentUserId) ?
-                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-white bg-gradient-to-r from-sky-700/50 via-blue-900/70 to-sky-900/50 hover:bg-gradient-to-br'>
                                             <img src={match.matched_user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
                                             <button onClick={() => goToProfile(match.matched_user_id)} className='text-bold text-lg justify-self-start'>{match.matched_user.name}</button>
                                             <div className='flex flex-col justify-end items-end h-full gap-2'>
@@ -108,11 +108,11 @@ function MatchesPage({ currentUserId }) {
                             ''
                         ) :
                             <ul>
-                                <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches received</h1>
+                                <h1 className='text-start font-bold p-4 text-transparent bg-clip-text bg-gradient-to-br text-white'>Matches received</h1>
                                 {matches
                                     .filter(match => match.status === "liked" && String(match.matched_user_id) === String(currentUserId))
                                     .map(match => (
-                                        <li key={match.user_id} className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                        <li key={match.user_id} className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-white bg-gradient-to-r from-sky-700/50 via-blue-900/70 to-sky-900/50 hover:bg-gradient-to-br'>
                                             <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50' />
                                             <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg justify-self-start'>
                                                 {match.user.name}
@@ -132,13 +132,13 @@ function MatchesPage({ currentUserId }) {
                             ''
                         ) :
                         <ul>
-                            <h1 className='text-start font-bold p-4 w-full text-transparent bg-clip-text bg-gradient-to-r to-yellow-600 from-yellow-100'>Matches</h1>
+                            <h1 className='text-start font-bold p-4 w-full text-transparent bg-clip-text bg-gradient-to-br text-white'>Matches</h1>
                             {matches.map(match => (
                                 <li key={match.id}>
                                     {match.status === "match" && String(match.user_id) !== String(currentUserId) ?
-                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-gray-100 bg-gradient-to-r bg-gradient-to-r to-yellow-400/30 from-yellow-500/40 hover:bg-gradient-to-bl'>
+                                        <div className='mb-1 grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded shadow p-2 w-full text-white bg-gradient-to-r from-sky-700/50 via-blue-900/70 to-sky-900/50 hover:bg-gradient-to-br'>
                                             <img src={match.user.profile_picture || placeholder} className='size-12 flex-none rounded-full bg-gray-50'></img>
-                                            <button onClick={() => goToProfile(match.user_id)} className='text-bold text-lg justify-self-start'>{match.user.name}</button>
+                                            <button onClick={() => navigate('/messages', { state: { user: match.user } })} className='text-bold text-lg justify-self-start'>{match.user.name}</button>
                                             <div className='flex flex-col justify-end items-end h-full gap-2'>
                                                 <button onClick={() => handleDeleteMatch(match.user_id)}>
                                                     <FontAwesomeIcon icon={solidStar} />
@@ -150,7 +150,7 @@ function MatchesPage({ currentUserId }) {
                                 </li>
                             ))}
                         </ul>}
-                    </div></> : <h1 className='text-center mt-[50vh] px-10 text-transparent bg-clip-text bg-gradient-to-r to-yellow-800 from-yellow-200'>No matches</h1>}
+                    </div></> : <h1 className='text-center mt-[50vh] px-10 text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-blue-500'>No matches</h1>}
         </div>
     )
 }
