@@ -9,7 +9,7 @@ import { useAside } from '/src/context/AsideContext'
 import { io } from 'socket.io-client'
 import './MessagePage.css'
 import { debounce } from 'lodash';
-const API_BASE_URL = 'https:/api.devconnect.network'
+const API_BASE_URL = 'https://api.devconnect.network'
 
 
 function useViewportWidth() {
@@ -25,7 +25,7 @@ function useViewportWidth() {
 
 function MessagesPage({ currentUserId }) {
     const navigate = useNavigate()
-    const WEBSOCKET_URL = `https:/api.devconnect.network?userId=${currentUserId}`
+    const WEBSOCKET_URL = `https://api.devconnect.network?userId=${currentUserId}`
     const [userSearchResults, setUserSearchResults] = useState([])
     const [isSearchingUsers, setIsSearchingUsers] = useState(false)
     const [userSearchError, setUserSearchError] = useState(null)
@@ -107,7 +107,7 @@ function MessagesPage({ currentUserId }) {
         setIsLoadingConversations(true)
         setConversationsError(null)
         try {
-            const res = await fetch(`https:/api.devconnect.network/messages/conversations`, {
+            const res = await fetch(`https://api.devconnect.network/messages/conversations`, {
                 credentials: 'include',
             })
             if (res.ok) {
@@ -137,7 +137,7 @@ function MessagesPage({ currentUserId }) {
 
     const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 100) => {
         try {
-            const res = await fetch(`https:/api.devconnect.network/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
+            const res = await fetch(`https://api.devconnect.network/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
                 credentials: 'include',
             })
             if (res.ok) {
