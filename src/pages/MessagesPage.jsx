@@ -231,7 +231,7 @@ function MessagesPage({ currentUserId }) {
         if (currentUserId !== null) {
             const newSocket = io(`${WEBSOCKET_URL}`, {
                 cors: {
-                    origin: "https://www.devconnect.network",
+                    origin: "https://api.devconnect.network",
                     credentials: true
                 }
             })
