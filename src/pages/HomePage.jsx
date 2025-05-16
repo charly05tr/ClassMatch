@@ -32,27 +32,10 @@ function HomePage({ currentUserId }) {
     const [loading, setLoading] = useState(true)
     const [animaDic, setAnimaDic] = useState(0)
     const viewportWidth = useViewportWidth()
+    const [isSearch, setIsSearch] = useState(false)
     const goToProfile = (index, userId) => {
         navigate(`/profile/${userId}`, { state: { index } })
     }
-<<<<<<< HEAD
-    
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await fetch("https://classmatchapi-1.onrender.com", {
-                    credentials: "include",
-                    method: "GET"
-                })
-                if (response.ok) {
-                    const data = await response.json();
-                    setUsers(data)
-                } else {
-                    console.error("Error fetching user data:", response.statusText);
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-=======
 
 
 
@@ -61,7 +44,6 @@ function HomePage({ currentUserId }) {
             if (currentIndex < users.length - 1) {
                 setAnimaDic(1)
                 setCurrentIndex(currentIndex + 1)
->>>>>>> c2c9edfc45671210c1e83fcdacd4b54571b23686
             }
         },
         onSwipedRight: () => {
@@ -77,7 +59,7 @@ function HomePage({ currentUserId }) {
 
     const fetchUsersData = async () => {
         try {
-            const response = await fetch(`https://api.devconnect.network/${currentUserId}`, {
+            const response = await fetch(`http://192.168.0.2:5000/${currentUserId}`, {
                 credentials: "include",
                 method: "GET"
             })
@@ -120,7 +102,7 @@ function HomePage({ currentUserId }) {
         setIsSendingMatch(true)
 
         try {
-            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`http://192.168.0.2:5000/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -144,7 +126,7 @@ function HomePage({ currentUserId }) {
     }
 
     const fetchMatches = async () => {
-        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
+        const res = await fetch(`http://192.168.0.2:5000/matches/user/${currentUserId}`, {
             method: "GET",
             credentials: "include"
         })
@@ -175,21 +157,76 @@ function HomePage({ currentUserId }) {
         fetchMatches()
     }, [users])
 
+    const searchRef = useRef(null)
+    const [results, setResults] = useState([])
+    const [page, setPage] = useState(1)
+    const [isSearching, setIsSearching] = useState(true)
+    const search = async (query) => {
+        const res = await fetch (`http://192.168.0.2:5000/users/search?term=${encodeURIComponent(query)}&page=${page}&per_page=${10}`, {
+            credentials: 'include',
+        })
+        if (res.ok) {
+            const data = await res.json()
+            console.log(data)
+            setResults(data.results)
+            results.forEach(user=>{
+                setUsers(user.id)
+                setLoading(true)
+            })
+            setIsSearching(false)
+        }
+        else {
+            console.log(res)
+        }
+    } 
+
+    const handleSearch = (e) => {
+        e.preventDefault()
+        search(searchRef.current.value)
+        setIsSearch(true)
+    }
+
+    useEffect(() => {
+    setUsers(results);
+}, [results]);
+
 
     return (
         <main className='overflow-y-auto h-screen custom-scrollbar-hidden'>
-            {(viewportWidth > 800)?
-            <form className="max-w-md mx-auto my-4 top-4 sticky">
-                <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                <div className="relative">
-                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-                        </svg>
-                    </div>
-                    <input type="search" id="default-search" className="outline-none block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-3xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 focus:border-blue-900" placeholder="Search users and projects (coming soon)" required />
+            {(viewportWidth > 800) ?
+                <div>
+                    <form onSubmit={handleSearch} className="max-w-md mx-auto my-4 top-4 sticky">
+                        <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                        <div className="relative">
+                            <input ref={searchRef} id="default-search" className="outline-none block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-3xl bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Search users and projects (in progress)" required />
+                            <button type="submit" className="absolute top-0 end-0 p-2.5 text-sm font-medium h-full text-white border-l border-gray-500 focus:outline-none outline-none">
+                                <svg className="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                </svg>
+                                <span className="sr-only">Search</span>
+                            </button>
+                        </div>
+                    </form>
+                    {isSearch && !isSearching? 
+                    <div className='p-4'>
+                        <h1 className='font-semibold text-2xl mb-2 p-2'>Results for: <span className='font-light italic'>{searchRef.current.value}</span></h1>
+                        <ul className='md:columns-3 sm:columns-1 columns-2 gap-2'>
+                        {
+                            results?.map(user => (
+                                <li key={user.id} onClick={()=>{setCurrentIndex(users.findIndex(u => u.id == user.id)); setIsSearch(false);}} className='text-white mb-2 cursor-pointer shadow p-4 bg-gradient-to-r  from-sky-900/70 to-blue-900/50 hover:bg-gradient-to-br rounded-lg flex gap-2 items-start h-fit max-h-[145px] overflow-hidden' >
+                                    <img src={user.profile_picture?user.profile_picture:'http://picsum.photos/200/300'} className='size-12 rounded-full' ></img>
+                                    <div className='ml-1'>
+                                        <h1 className='text-lg'>{user.name}</h1>
+                                        <p className='text-sm mt-2'>{user.profesion || user.profile_description}</p>
+                                    </div>
+                                </li>
+                            ))
+                        }
+                        </ul>
+                    </div>:""}
                 </div>
-            </form>:""}
+                : ""}
+            {!isSearch?<>
             <div className='arrow-left fixed bottom-[50%] ml-4'>
                 {((!currentIndex < 1) && (viewportWidth > 800)) ?
                     <button type='button' title='backward' onClick={() => { setCurrentIndex(currentIndex - 1); setAnimaDic(-1) }}>
@@ -229,7 +266,7 @@ function HomePage({ currentUserId }) {
                         <FontAwesomeIcon icon={faArrowRight} size="2xl" />
                     </button>
                     : ''}
-            </div>
+            </div></>:""}
         </main>
     )
 }

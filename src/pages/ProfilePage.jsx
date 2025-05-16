@@ -72,7 +72,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
 
 
 
-            const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
+            const res = await fetch("http://192.168.0.2:5000/users/debug", { credentials: "include" })
             if (res.ok) {
                 const data = await res.json()
                 if (String(data.user_id) === String(id)) {
@@ -93,7 +93,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
         const fetchProfileData = async () => {
             setIsLoading(true)
             try {
-                const res = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
+                const res = await fetch(`http://192.168.0.2:5000/users/profile/${id}`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -162,7 +162,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
+                const res = await fetch(`http://192.168.0.2:5000/projects/user_projects/${id}`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -230,7 +230,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
         const isUpdatingProfile = originalProfileData && originalProfileData.userId !== null
         const profileMethod = isUpdatingProfile ? "PUT" : "POST"
         try {
-            const profileRes = await fetch(`https://api.devconnect.network/users/profile/${id}`, {
+            const profileRes = await fetch(`http://192.168.0.2:5000/users/profile/${id}`, {
                 method: profileMethod,
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -264,7 +264,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
             setprofesion(profileSavedData.profesion)
             setSocialLinks(profileSavedData.social_links)
             setExperience(profileSavedData.experience)
-            const projectsRes = await fetch(`https://api.devconnect.network/projects/user_projects/${id}`, {
+            const projectsRes = await fetch(`http://192.168.0.2:5000/projects/user_projects/${id}`, {
                 method: 'PUT',
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -403,7 +403,7 @@ function ProfilePage({ onLogout, id: propId, isMatched}) {
             <main className="profile-container shadow grid grid-cols[auto_auto]">
                 <div>
                     <div className="w-full grid grid-cols-[auto_1fr]">
-                        {(!isOwner)?<h2 className='text-white-400 font-light text-4xl'>Portfolios</h2>:
+                        {(!isOwner)?<h2 className='text-white-400 font-light text-4xl mb-4'></h2>:
                         <h2 className='text-white-400 font-light text-4xl'>Portfolio</h2>}
                         {
                             (isOwner && String(id) === String(currentUserId))

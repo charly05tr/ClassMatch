@@ -26,11 +26,7 @@ function App() {
     const checkLoginStatus = async () => {
       setIsLoading(true)
       try {
-<<<<<<< HEAD
-        const res = await fetch("https://classmatchapi-1.onrender.com/users/debug", { credentials: "include" })
-=======
-        const res = await fetch("https://api.devconnect.network/users/debug", { credentials: "include" })
->>>>>>> c2c9edfc45671210c1e83fcdacd4b54571b23686
+        const res = await fetch("http://192.168.0.2:5000/users/debug", { credentials: "include" })
         if (res.ok) {
           const data = await res.json()
           // console.log("Data recibida de /debug:", data)
@@ -68,11 +64,9 @@ function App() {
 
   const handleLogout = async () => {
     try {
-<<<<<<< HEAD
-      const res = await fetch("https://classmatchapi-1.onrender.com/users/logout", { credentials: "include" })
-=======
-      const res = await fetch("https://api.devconnect.network/users/logout", { credentials: "include" })
->>>>>>> c2c9edfc45671210c1e83fcdacd4b54571b23686
+
+
+      const res = await fetch("http://192.168.0.2:5000/users/logout", { credentials: "include" })
       if (res.ok) {
         window.location.href = '/'
         setIsLoggedIn(false)

@@ -20,17 +20,14 @@ function LoginPage({ onLoginSuccess }) {
     }
 
     const sesionWithGitHub = () => {
-        window.location.href = 'https://api.devconnect.network/github/login';
+        window.location.href = 'http://192.168.0.2:5000/github/login';
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         try {
-<<<<<<< HEAD
-            const res = await fetch("https://classmatchapi-1.onrender.com/users/login", {
-=======
-            const res = await fetch("https://api.devconnect.network/users/login", {
->>>>>>> c2c9edfc45671210c1e83fcdacd4b54571b23686
+
+            const res = await fetch("http://192.168.0.2:5000/users/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

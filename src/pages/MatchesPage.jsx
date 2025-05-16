@@ -4,7 +4,7 @@ import { faStar as solidStar, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { faStar as regularStar } from '@fortawesome/free-regular-svg-icons'
 import { useNavigate } from 'react-router-dom'
 
-const API_URL_MATCHES = "https://api.devconnect.network/matches/"
+const API_URL_MATCHES = "http://192.168.0.2:5000/matches/"
 const placeholder = "http://api.dicebear.com/9.x/notionists-neutral/svg?seed=placeholder-avatar"
 
 function MatchesPage({ currentUserId }) {
