@@ -964,7 +964,7 @@ function MessagesPage({ currentUserId }) {
 
 
     const fetchRepos = async () => {
-        const res = await fetch("https:/api.devconnect.network/github/repos", {
+        const res = await fetch("https://api.devconnect.network/github/repos", {
             method: "GET",
             credentials: 'include',
             headers: {
@@ -988,7 +988,7 @@ function MessagesPage({ currentUserId }) {
     }, [])
 
     const sesionWithGitHub = () => {
-        window.location.href = 'https:/api.devconnect.network/github/login';
+        window.location.href = 'https://api.devconnect.network/github/login';
     }
     const [selectedRepo, setSelectedRepo] = useState({})
     const [isRepoSelected, setIsRepoSelected] = useState(false)
@@ -997,7 +997,7 @@ function MessagesPage({ currentUserId }) {
         if (selectedConversationId === null) {
             return
         }
-        const res = await fetch(`https:/api.devconnect.network/repos/${selectedConversationId}`, {
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {
@@ -1025,7 +1025,7 @@ function MessagesPage({ currentUserId }) {
         const selectedRepoId = event.target.value
         const repo = repos.find(repo => repo.id.toString() === String(selectedRepoId))
         setSelectedRepo(repo)
-        const res = await fetch(`https:/api.devconnect.network/repos/${selectedConversationId}`, {
+        const res = await fetch(`https://api.devconnect.network/repos/${selectedConversationId}`, {
             method: "POST",
             credentials: 'include',
             headers: {
