@@ -101,3 +101,10 @@
     bottom: -131px;
     animation-delay: 4s;
   }
+
+  .register-container {
+    height: 100vh;
+    form{
+      z-index: 9999;
+    }
+  }

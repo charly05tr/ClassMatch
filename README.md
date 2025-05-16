@@ -1,12 +1,60 @@
-# React + Vite
+# 🚀 DevConnect: La Red Social para Programadores y Proyectos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📌 Descripción del Proyecto
 
-Currently, two official plugins are available:
+**DevConnect** es una plataforma social diseñada específicamente para la comunidad de programadores. Nuestro objetivo es fomentar la conexión entre desarrolladores talentosos y proyectos innovadores en un entorno que impulsa la colaboración, la visibilidad y el crecimiento profesional.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## ✨ Características Principales
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **👤 Portfolios Personalizados:**  
+  Muestra tus habilidades, tecnologías favoritas y proyectos destacados para construir tu marca personal.
+
+- **🔗 Integración con GitHub:**  
+  Sincroniza tus proyectos de GitHub con tu perfil. Muestra commits y pull requests en tiempo real.
+
+- **💬 Chats Colaborativos por Proyecto:**  
+  Inicia DMs o chats grupales vinculados a proyectos específicos. Recibe notificaciones sobre la actividad del repositorio en tiempo real.
+
+- **🔎 Descubrimiento y Conexión:**  
+  Encuentra programadores por habilidades o intereses, o explora proyectos relevantes.
+
+- **📨 Sistema de Invitaciones:**  
+  Invita fácilmente a otros usuarios a tus grupos de proyecto o comunidad.
+
+---
+
+## ❓ ¿Por Qué DevConnect?
+
+DevConnect es más que una red social. Es un **ecosistema** para potenciar la colaboración en el desarrollo de software, promoviendo la **sincronización de equipos**, la **visibilidad del talento** y la **conexión significativa** dentro de la comunidad tech.
+
+---
+
+## 🛠 Tecnologías Utilizadas
+
+### Frontend
+- **React**
+- **Vite**
+- **Tailwind CSS**
+- **Socket.IO Client**
+
+### Backend
+- **Flask**
+- **Flask-SQLAlchemy**
+- **Flask-Login**
+- **Flask-SocketIO**
+- **SQLAlchemy**
+
+> **Base de Datos:** (PostgreSQL / SQLite / MySQL)  
+> **Servidor Web WebSockets:** (Eventlet / Gevent)
+
+---
+
+## ⚙️ Instalación
+
+### 1. Clona el Repositorio
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd <directorio_del_repositorio>

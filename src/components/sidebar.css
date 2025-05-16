@@ -7,7 +7,7 @@
         height: 100vh;
         width: 250px;
         background-color: rgba(0,0,0, 0.2);
-        padding-top: 20px;
+        padding-top: 10px;
         border-right: rgba(240,240,240, 0.2) outset 1px;
         aside {
             z-index: 999;
@@ -18,6 +18,7 @@
             a:hover {
                 background-color: rgba(10,10,25,0.7 );
                 padding: 15px 75px;
+                width: 100%;
             }
             a {
                 display: flex;
@@ -32,12 +33,15 @@
                     display: block;
                 }
             }
+            img{
+                display: none;
+            }
         }
         
         h1 {
             text-align: center;
             font-size: 30px;
-            padding: 15px 20px;
+            
         }
         button {
             padding: 15px 20px;
@@ -52,10 +56,12 @@
 
     .aside {
         width: 100px;
+        transition: width 0.3s ease;
     }
     aside {
-        margin-top: 20px;
+        top: 5%;
         margin-bottom: 5px;
+        margin-top: 0px;
         display: flex;
         flex-direction: column;
         gap: 20px;
@@ -75,7 +81,15 @@
         }
         
     }
-    
+
+    .aside-no-hover{
+        position: sticky;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100px;
+        transition: width 0.3s ease;
+    }
     
     @media (max-width: 800px) {
         .aside {      
@@ -85,8 +99,10 @@
             width: 100%; 
             height: 60px;       
             padding-top: 0; 
-            padding: 0 10px;         
+            padding: 0px;         
             border-right: none; 
+            justify-content: center;
+            align-content: center;
             border-bottom: rgba(240,240,240, 0.5) outset 1px;        
             .background{
                 display: none;
@@ -103,7 +119,7 @@
         width: 100%; 
         height: 60px;       
         padding-top: 0; 
-        padding: 0 10px;         
+        padding: 0px;         
         border-right: none; 
         background-color: rgba(0,0,0, 0.2);  
         p {
@@ -128,9 +144,34 @@
         padding: 0 5px; 
         gap: 5px; 
     }
-
 }
 
+@media (max-width: 500px) {
+    .aside {      
+        justify-content: center;
+        border: solid 1px white;
+        align-content: center;
+        background-color: rgba(0,0,0, 0.2);
+        position: sticky;
+        width: 100%; 
+        height: 60px;  
+        margin:0px;
+        padding: 0;
+        border: none;       
+        aside {
+            padding: 0;
+            margin: 0;
+        }
+    }
+}
+
+.open{
+    display: block
+}
+
+.closed{
+    display: none
+}
 @keyframes animate {
     0%{
         transform: translateY(-1000px) rotate(0deg);
@@ -145,10 +186,11 @@
   }
   
     .background .animated-div {
-        background: linear-gradient(to bottom right, rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1));
+    background: linear-gradient(to bottom right, rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1));
     position: absolute;
     width: 20px;
     height: 20px;
+    opacity: 1;
     animation: animate 15s linear infinite;
   }
   
@@ -191,6 +233,51 @@
   .background .animated-div:nth-child(4) {
    
     left: 3%;
+    width: 153px;
+    height: 153px;
+    bottom: -200px; 
+    animation-delay: 12s;
+  }
+
+.background .animated-div:nth-child(5) {
+    
+    left: 20%;
+    width: 123px;
+    height: 123px;
+    bottom: -200px; 
+    animation-delay: 0s;
+  }
+  
+  .background .animated-div:nth-child(6) {
+    
+    left: 19%;
+    width: 154px;
+    height: 154px;
+    bottom: -200px; 
+    animation-delay: 2s;
+  }
+  
+  .background .animated-div:nth-child(7) {
+    
+    left: 18%;
+    width: 105px;
+    height: 105px;
+    bottom: -200px; 
+    animation-delay: 6s;
+  }
+  
+  .background .animated-div:nth-child(8) {
+    
+    left: 30%;
+    width: 146px;
+    height: 146px;
+    bottom: -200px;
+    animation-delay: 9s;
+  }
+  
+  .background .animated-div:nth-child(9) {
+   
+    left: 19%;
     width: 153px;
     height: 153px;
     bottom: -200px; 
