@@ -107,7 +107,7 @@ function MessagesPage({ currentUserId }) {
         setIsLoadingConversations(true)
         setConversationsError(null)
         try {
-            const res = await fetch(`${API_BASE_URL}/messages/conversations`, {
+            const res = await fetch(`https:/api.devconnect.network/messages/conversations`, {
                 credentials: 'include',
             })
             if (res.ok) {
@@ -137,7 +137,7 @@ function MessagesPage({ currentUserId }) {
 
     const fetchMessages = useCallback(async (conversationId, page = 1, perPage = 100) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
+            const res = await fetch(`https:/api.devconnect.network/messages/conversations/${conversationId}/messages?page=${page}&per_page=${perPage}`, {
                 credentials: 'include',
             })
             if (res.ok) {
@@ -231,7 +231,7 @@ function MessagesPage({ currentUserId }) {
         if (currentUserId !== null) {
             const newSocket = io(`${WEBSOCKET_URL}`, {
                 cors: {
-                    origin: "http://192.168.0.4:5173",
+                    origin: "https://www.devconnect.network",
                     credentials: true
                 }
             })
