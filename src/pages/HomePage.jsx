@@ -59,7 +59,7 @@ function HomePage({ currentUserId }) {
 
     const fetchUsersData = async () => {
         try {
-            const response = await fetch(`http://192.168.0.2:5000/${currentUserId}`, {
+            const response = await fetch(`https://api.devconnect.network/${currentUserId}`, {
                 credentials: "include",
                 method: "GET"
             })
@@ -102,7 +102,7 @@ function HomePage({ currentUserId }) {
         setIsSendingMatch(true)
 
         try {
-            const res = await fetch(`http://192.168.0.2:5000/matches/${users[currentIndex].id}`, {
+            const res = await fetch(`https://api.devconnect.network/matches/${users[currentIndex].id}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -126,7 +126,7 @@ function HomePage({ currentUserId }) {
     }
 
     const fetchMatches = async () => {
-        const res = await fetch(`http://192.168.0.2:5000/matches/user/${currentUserId}`, {
+        const res = await fetch(`https://api.devconnect.network/matches/user/${currentUserId}`, {
             method: "GET",
             credentials: "include"
         })
@@ -162,7 +162,7 @@ function HomePage({ currentUserId }) {
     const [page, setPage] = useState(1)
     const [isSearching, setIsSearching] = useState(true)
     const search = async (query) => {
-        const res = await fetch (`http://192.168.0.2:5000/users/search?term=${encodeURIComponent(query)}&page=${page}&per_page=${10}`, {
+        const res = await fetch (`https://api.devconnect.network/users/search?term=${encodeURIComponent(query)}&page=${page}&per_page=${10}`, {
             credentials: 'include',
         })
         if (res.ok) {
